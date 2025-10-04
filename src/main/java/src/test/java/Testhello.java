@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import hello;
 
 class Testhello {
 
@@ -34,7 +33,8 @@ class Testhello {
 int i1=2;
 int i2=3;
 int er=5;
-int ar = hello.add(i1, i2);
+add d =new add();
+int ar = add.add2num(i1, i2);
 
 assertTrue(er==ar);
 
