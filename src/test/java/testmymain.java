@@ -1,5 +1,3 @@
-package src.test.java;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.AfterAll;
@@ -8,8 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
-class Testhello {
+class testmymain {
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
@@ -28,16 +25,19 @@ class Testhello {
 	}
 
 	@Test
-	void testadd() 
-	{
-int i1=2;
-int i2=3;
-int er=5;
-add d =new add();
-int ar =d.add2num(i1, i2);
-
-assertTrue(er==ar);
-
+	void testAdd() {
+		
+		int i1=6;
+		int i2=7;
+		int er=13;
+		
+		mymain o= new mymain();
+		
+		int ar=o.add(i2, i1);
+		
+		assertTrue(er==ar);
+		
+		
 	}
 
 }
