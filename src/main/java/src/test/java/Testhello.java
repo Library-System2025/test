@@ -34,7 +34,7 @@ int i1=2;
 int i2=3;
 int er=5;
 add d =new add();
-int ar = add.add2num(i1, i2);
+int ar =d.add2num(i1, i2);
 
 assertTrue(er==ar);
 
