@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="homepageController"
+            prefWidth="600" prefHeight="400">
+
+    <!-- Top Bar with Logout -->
+    <top>
+        <HBox spacing="10.0" alignment="CENTER_RIGHT">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <Button text="Logout" onAction="#handleLogout"/>
+        </HBox>
+    </top>
+
+    <!-- Center Content -->
+    <center>
+        <VBox spacing="20.0">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- Add Book Form -->
+            <TitledPane text="Add Book" expanded="true">
+                <VBox spacing="10.0">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10"/>
+                    </padding>
+                    <TextField fx:id="titleField" promptText="Title"/>
+                    <TextField fx:id="authorField" promptText="Author"/>
+                    <TextField fx:id="isbnField" promptText="ISBN"/>
+                    <Button text="Add Book" onAction="#handleAddBook"/>
+                    <Label fx:id="addBookMessage" textFill="green"/>
+                </VBox>
+            </TitledPane>
+
+            <!-- Search Book -->
+            <TitledPane text="Search Book" expanded="true">
+                <VBox spacing="10.0">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10"/>
+                    </padding>
+                    <TextField fx:id="searchField" promptText="Search by Title / Author / ISBN"/>
+                    <Button text="Search" onAction="#handleSearch"/>
+                    <ListView fx:id="searchResults"/>
+                </VBox>
+            </TitledPane>
+        </VBox>
+    </center>
+</BorderPane>
