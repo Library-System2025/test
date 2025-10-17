@@ -48,7 +48,14 @@
                     </padding>
                     <TextField fx:id="searchField" promptText="Search by Title / Author / ISBN"/>
                     <Button text="Search" onAction="#handleSearch"/>
-                    <ListView fx:id="searchResults"/>
+                    
+                    <TableView fx:id="searchResultsTable" prefHeight="400">
+                        <columns>
+                            <TableColumn fx:id="titleColumn" text="Title" prefWidth="200"/>
+                            <TableColumn fx:id="authorColumn" text="Author" prefWidth="150"/>
+                            <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="150"/>
+                        </columns>
+                    </TableView>
                 </VBox>
             </TitledPane>
         </VBox>

@@ -1,6 +1,3 @@
-
-// الملف: DashboardController.java
-
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.collections.FXCollections;
@@ -9,17 +6,39 @@ import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import javafx.scene.Parent;
+import javafx.scene.control.cell.PropertyValueFactory;
+
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class homepageController {
     @FXML private TextField titleField;
     @FXML private TextField authorField;
     @FXML private TextField isbnField;
     @FXML private TextField searchField;
-    @FXML private ListView<String> searchResults;
     @FXML private Label addBookMessage;
 
-    private ObservableList<String> bookList = FXCollections.observableArrayList();
+    // ➕ TableView
+    @FXML private TableView<Book> searchResultsTable;
+    @FXML private TableColumn<Book, String> titleColumn;
+    @FXML private TableColumn<Book, String> authorColumn;
+    @FXML private TableColumn<Book, String> isbnColumn;
+
+    // تخزين الكتب
+    private Map<String, Book> bookMap = new HashMap<>();
+    private ObservableList<Book> booksList = FXCollections.observableArrayList();
+
+    @FXML
+    public void initialize() {
+        // ربط الأعمدة مع خصائص Book
+        titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+        authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
+        isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+
+        // ربط ObservableList مع الجدول
+        searchResultsTable.setItems(booksList);
+    }
 
     @FXML
     private void handleLogout() {
@@ -34,30 +53,42 @@ public class homepageController {
 
     @FXML
     private void handleAddBook() {
-        String title = titleField.getText();
-        String author = authorField.getText();
-        String isbn = isbnField.getText();
+        String title = titleField.getText().trim();
+        String author = authorField.getText().trim();
+        String isbn = isbnField.getText().trim();
 
         if (!title.isEmpty() && !author.isEmpty() && !isbn.isEmpty()) {
-            String book = title + " - " + author + " (ISBN: " + isbn + ")";
-            bookList.add(book);
-            addBookMessage.setText("Book added successfully.");
-            titleField.clear(); authorField.clear(); isbnField.clear();
+            if (bookMap.containsKey(isbn)) {
+                addBookMessage.setText("❌ Book with this ISBN already exists.");
+            } else {
+                Book newBook = new Book(title, author, isbn);
+                bookMap.put(isbn, newBook);
+                booksList.add(newBook); // تظهر مباشرة في الجدول
+                addBookMessage.setText("✅ Book added successfully.");
+                titleField.clear();
+                authorField.clear();
+                isbnField.clear();
+            }
         } else {
-            addBookMessage.setText("Please fill in all fields.");
+            addBookMessage.setText("⚠️ Please fill in all fields.");
         }
     }
 
     @FXML
     private void handleSearch() {
-        String keyword = searchField.getText().toLowerCase();
-        ObservableList<String> filtered = FXCollections.observableArrayList();
+        String keyword = searchField.getText().toLowerCase().trim();
 
-        for (String book : bookList) {
-            if (book.toLowerCase().contains(keyword)) {
-                filtered.add(book);
+        ObservableList<Book> filteredBooks = FXCollections.observableArrayList();
+
+        for (Book b : bookMap.values()) {
+            if (b.getTitle().toLowerCase().contains(keyword)
+                    || b.getAuthor().toLowerCase().contains(keyword)
+                    || b.getIsbn().toLowerCase().contains(keyword)) {
+                filteredBooks.add(b);
             }
         }
-        searchResults.setItems(filtered);
+
+        // عرض النتائج فقط في الجدول (غير تراكمي)
+        searchResultsTable.setItems(filteredBooks);
     }
 }

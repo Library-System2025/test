@@ -13,7 +13,7 @@ public class mymain extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // تحميل واجهة تسجيل الدخول
-        Parent root = FXMLLoader.load(getClass().getResource("login.fxml")); // ✔️ تأكد أن login.fxml موجود بنفس المسار
+        Parent root = FXMLLoader.load(getClass().getResource("/login.fxml")); // ✔️ تأكد أن login.fxml موجود بنفس المسار
 
         // إعداد المشهد
         Scene scene = new Scene(root);
