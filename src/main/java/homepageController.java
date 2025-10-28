@@ -19,25 +19,26 @@ public class homepageController {
     @FXML private TextField searchField;
     @FXML private Label addBookMessage;
 
-    // ➕ TableView
     @FXML private TableView<Book> searchResultsTable;
     @FXML private TableColumn<Book, String> titleColumn;
     @FXML private TableColumn<Book, String> authorColumn;
     @FXML private TableColumn<Book, String> isbnColumn;
 
-    // تخزين الكتب
+    @FXML private ComboBox<String> searchByCombo;
+
     private Map<String, Book> bookMap = new HashMap<>();
     private ObservableList<Book> booksList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        // ربط الأعمدة مع خصائص Book
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
         isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
 
-        // ربط ObservableList مع الجدول
         searchResultsTable.setItems(booksList);
+
+        searchByCombo.setItems(FXCollections.observableArrayList("All", "Title", "Author", "ISBN"));
+        searchByCombo.getSelectionModel().select("All");
     }
 
     @FXML
@@ -63,32 +64,54 @@ public class homepageController {
             } else {
                 Book newBook = new Book(title, author, isbn);
                 bookMap.put(isbn, newBook);
-                booksList.add(newBook); // تظهر مباشرة في الجدول
+                booksList.add(newBook);
                 addBookMessage.setText("✅ Book added successfully.");
                 titleField.clear();
                 authorField.clear();
                 isbnField.clear();
             }
         } else {
-            addBookMessage.setText("⚠️ Please fill in all fields.");
+            addBookMessage.setText("❗ Please fill in all fields.");
         }
     }
 
     @FXML
     private void handleSearch() {
         String keyword = searchField.getText().toLowerCase().trim();
+        String mode = (searchByCombo.getValue() == null) ? "All" : searchByCombo.getValue();
 
-        ObservableList<Book> filteredBooks = FXCollections.observableArrayList();
-
-        for (Book b : bookMap.values()) {
-            if (b.getTitle().toLowerCase().contains(keyword)
-                    || b.getAuthor().toLowerCase().contains(keyword)
-                    || b.getIsbn().toLowerCase().contains(keyword)) {
-                filteredBooks.add(b);
-            }
+        if (keyword.isEmpty()) {
+            searchResultsTable.setItems(booksList);
+            return;
         }
 
-        // عرض النتائج فقط في الجدول (غير تراكمي)
-        searchResultsTable.setItems(filteredBooks);
+        ObservableList<Book> filtered = FXCollections.observableArrayList();
+
+        for (Book b : bookMap.values()) {
+            String t = b.getTitle().toLowerCase();
+            String a = b.getAuthor().toLowerCase();
+            String i = b.getIsbn().toLowerCase();
+
+            boolean match = false;
+
+            switch (mode) {
+                case "Title":
+                    match = t.contains(keyword);
+                    break;
+                case "Author":
+                    match = a.contains(keyword);
+                    break;
+                case "ISBN":
+                    match = i.contains(keyword);
+                    break;
+                default:
+                    match = t.contains(keyword) || a.contains(keyword) || i.contains(keyword);
+                    break;
+            }
+
+            if (match) filtered.add(b);
+        }
+
+        searchResultsTable.setItems(filtered);
     }
 }

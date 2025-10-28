@@ -46,9 +46,13 @@
                     <padding>
                         <Insets top="10" right="10" bottom="10" left="10"/>
                     </padding>
-                    <TextField fx:id="searchField" promptText="Search by Title / Author / ISBN"/>
-                    <Button text="Search" onAction="#handleSearch"/>
-                    
+
+                    <HBox spacing="10.0" alignment="CENTER_LEFT">
+                        <ComboBox fx:id="searchByCombo" prefWidth="120.0" promptText="Search by"/>
+                        <TextField fx:id="searchField" promptText="Enter keyword..."/>
+                        <Button text="Search" onAction="#handleSearch"/>
+                    </HBox>
+
                     <TableView fx:id="searchResultsTable" prefHeight="400">
                         <columns>
                             <TableColumn fx:id="titleColumn" text="Title" prefWidth="200"/>
