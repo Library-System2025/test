@@ -9,7 +9,7 @@
             fx:controller="LoginController"
             prefWidth="400" prefHeight="250">
     <VBox alignment="CENTER" spacing="15" layoutX="50" layoutY="30">
-        <Label text="Admin Login" style="-fx-font-size: 20px;"/>
+        <Label text="Login" style="-fx-font-size: 20px;"/>
         <TextField fx:id="usernameField" promptText="Username"/>
         <PasswordField fx:id="passwordField" promptText="Password"/>
         <Button text="Login" onAction="#handleLogin"/>

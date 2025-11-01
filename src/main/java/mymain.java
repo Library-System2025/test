@@ -19,7 +19,7 @@ public class mymain extends Application {
         Scene scene = new Scene(root);
 
         // إعداد النافذة
-        primaryStage.setTitle("Library Management - Admin Login");
+        primaryStage.setTitle("Library Management - Login");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

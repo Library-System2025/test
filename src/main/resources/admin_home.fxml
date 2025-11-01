@@ -63,13 +63,19 @@
                                 style="-fx-background-color: #5bc0de; -fx-text-fill: white; -fx-font-weight: bold;"/>
                     </HBox>
 
-                    <TableView fx:id="searchResultsTable" prefHeight="400">
-                        <columns>
-                            <TableColumn fx:id="titleColumn" text="Title" prefWidth="250"/>
-                            <TableColumn fx:id="authorColumn" text="Author" prefWidth="200"/>
-                            <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="150"/>
-                        </columns>
-                    </TableView>
+                <TableView fx:id="searchResultsTable" prefHeight="350" prefWidth="700">
+                <columns>
+                    <TableColumn fx:id="titleColumn" text="Title" prefWidth="150"/>
+                    <TableColumn fx:id="authorColumn" text="Author" prefWidth="130"/>
+                    <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="120"/>
+                    <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
+                    <TableColumn fx:id="dueDateColumn" text="Due Date" prefWidth="120"/>
+                    <TableColumn fx:id="fineColumn" text="Fine ($)" prefWidth="80"/>
+                    <TableColumn fx:id="borrowedByColumn" text="Borrowed By" prefWidth="150"/>
+                </columns>
+            </TableView>
+
+
                 </VBox>
             </TitledPane>
         </VBox>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="LibrarianController"
+            prefWidth="750" prefHeight="500">
+
+    <!-- 🔹 الشريط العلوي -->
+    <top>
+        <HBox spacing="15" alignment="CENTER_RIGHT">
+            <padding>
+                <Insets top="10" right="15" bottom="10" left="15"/>
+            </padding>
+            <Label fx:id="welcomeLabel" text="Librarian Dashboard"
+                   style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+            <Button text="Logout" onAction="#handleLogout"
+                    style="-fx-background-color:#d9534f; -fx-text-fill:white;"/>
+        </HBox>
+    </top>
+
+    <!-- 🔹 المحتوى الرئيسي -->
+    <center>
+        <VBox spacing="15">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- 🔍 البحث -->
+            <HBox spacing="10">
+                <TextField fx:id="searchField" promptText="Search by title or ISBN" prefWidth="300"/>
+                <Button text="Search" onAction="#handleSearch"
+                        style="-fx-background-color:#0275d8; -fx-text-fill:white;"/>
+                <Button text="Reload All" onAction="#handleReload"
+                        style="-fx-background-color:#5bc0de; -fx-text-fill:white;"/>
+            </HBox>
+
+           <TableView fx:id="bookTable" prefHeight="350">
+    <columns>
+        <TableColumn fx:id="titleColumn" text="Title" prefWidth="180"/>
+        <TableColumn fx:id="authorColumn" text="Author" prefWidth="140"/>
+        <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="120"/>
+        <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
+        <TableColumn fx:id="dueDateColumn" text="Due Date" prefWidth="120"/>
+        <TableColumn fx:id="borrowedByColumn" text="Borrowed By" prefWidth="150"/>
+    </columns>
+</TableView>
+
+
+          
+
+            <Label fx:id="infoLabel" textFill="green"/>
+        </VBox>
+    </center>
+</BorderPane>
