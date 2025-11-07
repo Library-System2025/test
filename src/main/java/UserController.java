@@ -42,6 +42,32 @@ public class UserController {
 
         bookTable.setItems(booksList);
         loadBooksFromFile();
+        
+        bookTable.setRowFactory(tv -> new TableRow<Book>() {
+            @Override
+            protected void updateItem(Book book, boolean empty) {
+                super.updateItem(book, empty);
+
+                if (empty || book == null) {
+                    setStyle("");
+                } else {
+                    // إذا المستخدم الحالي هو اللي مستعير الكتاب
+                    if (book.getBorrowedBy() != null && book.getBorrowedBy().equals(accountUsername)) {
+                        setStyle("-fx-background-color: #d0f0c0;"); // 💚 أخضر فاتح
+                    }
+                    // إذا الكتاب مستعار من شخص آخر
+                    else if (book.getStatus().equals("Borrowed") || book.getStatus().equals("Overdue")) {
+                        setStyle("-fx-background-color: #ffd6d6;"); // ❤️ أحمر فاتح
+                    }
+                    // الكتب المتاحة
+                    else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        
     }
 
     // 👋 ضبط اسم المستخدم الحالي بعد تسجيل الدخول
@@ -67,44 +93,77 @@ public class UserController {
     // 📚 استعارة كتاب
     @FXML
     private void handleBorrowBook() {
-        Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
+    	
+    	// 🚫 تحقق أولاً هل المستخدم عليه أي غرامة
+        for (Book b : booksList) {
+            if (b.getBorrowedBy().equals(accountUsername) && b.getFineAmount() > 0) {
+                messageLabel.setText("❌ You have unpaid fines. Please pay them before borrowing.");
+                return;
+            }
+        }
+    	
+    	 // 🔁 حفظ الكتاب المحدد قبل التحديث
+        Book selectedBeforeReload = bookTable.getSelectionModel().getSelectedItem();
 
-        if (selectedBook == null) {
+        // 🔁 تحديث البيانات من الملف
+        reloadBooks();
+
+        // ✅ إعادة اختيار الكتاب في الجدول بعد التحديث
+        if (selectedBeforeReload != null) {
+            for (Book b : booksList) {
+                if (b.getIsbn().equals(selectedBeforeReload.getIsbn())) {
+                    bookTable.getSelectionModel().select(b);
+                    selectedBeforeReload = b;
+                    break;
+                }
+            }
+        }
+
+        // ⚠️ التحقق بعد التحديث
+        if (selectedBeforeReload == null) {
             messageLabel.setText("⚠️ Please select a book first.");
             return;
         }
 
-        if (!selectedBook.getStatus().equals("Available")) {
+        if (!selectedBeforeReload.getStatus().equals("Available")) {
             messageLabel.setText("❌ This book is not available.");
             return;
         }
 
         // ✅ تحديث حالة الكتاب
-        selectedBook.setStatus("Borrowed");
-        selectedBook.setDueDate(LocalDate.now().plusDays(28).toString());
-        selectedBook.setFineAmount(0.0);
-        selectedBook.setBorrowedBy(accountUsername);
+        selectedBeforeReload.setStatus("Borrowed");
+        selectedBeforeReload.setDueDate(LocalDate.now().plusDays(28).toString());
+        selectedBeforeReload.setFineAmount(0.0);
+        selectedBeforeReload.setBorrowedBy(accountUsername);
 
-        // ✅ حفظ و إعادة تحميل الملف
+        // ✅ حفظ و إعادة تحميل الملف بعد التعديل
         saveAllBooksToFile();
         reloadBooks();
 
-        messageLabel.setText("✅ Book borrowed successfully! Due date: " + selectedBook.getDueDate());
+        messageLabel.setText("✅ Book borrowed successfully! Due date: " + selectedBeforeReload.getDueDate());
     }
 
     // 🔁 دالة لإعادة تحميل الكتب بعد أي تعديل
     private void reloadBooks() {
         booksList.clear();
         loadBooksFromFile();
+        bookTable.setItems(booksList); // ✅ أعد ربط الجدول بالقائمة
         bookTable.refresh();
     }
 
+    
     // 💰 دفع الغرامة
     @FXML
     private void handlePayFine() {
-        Book selected = bookTable.getSelectionModel().getSelectedItem();
+    	Book selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             infoLabel.setText("⚠️ Select a book first.");
+            return;
+        }
+        
+        // 🚫 تحقق هل الكتاب مستعار من المستخدم الحالي فقط
+        if (!selected.getBorrowedBy().equals(accountUsername)) {
+            infoLabel.setText("❌ You can only pay fines for books you borrowed.");
             return;
         }
 
@@ -126,31 +185,56 @@ public class UserController {
             return;
         }
 
-        double remaining = selected.getFineAmount() - amountToPay;
-        if (remaining <= 0) {
-            selected.setFineAmount(0);
-            selected.setStatus("Available");
-            selected.setBorrowedBy("");
-            infoLabel.setText("✅ Fine fully paid. You can borrow again!");
-        } else {
-            selected.setFineAmount(remaining);
-            infoLabel.setText("💰 Partial payment done. Remaining: $" + remaining);
+        // 🧮 احسب المبلغ المتبقي
+        double currentFine = selected.getFineAmount();
+        double remaining = currentFine - amountToPay;
+
+        if (remaining < 0) {
+            infoLabel.setText("❌ Payment exceeds fine amount!");
+            return;
         }
 
+     // 🟢 البحث عن فهرس الكتاب في القائمة لتحديثه بشكل صريح
+        int selectedIndex = booksList.indexOf(selected);
+        if (selectedIndex != -1) {
+            selected.setFineAmount(remaining);
+
+            if (remaining <= 0) {
+                selected.returnBook();
+            } else {
+                selected.setStatus("Overdue");
+            }
+            // 🟢 إبلاغ الـ ObservableList بالتغيير
+            booksList.set(selectedIndex, selected);
+        }
+
+        // 💾 احفظ الملف فورًا بعد التعديل
         saveAllBooksToFile();
+        
+        System.out.println("DEBUG: Books saved. Current fine for selected book: " + selected.getFineAmount());
+        
+        // ✅ حدّث الجدول فورًا
         bookTable.refresh();
+
+        // ✅ رسالة الحالة
+        if (remaining <= 0) {
+            infoLabel.setText("✅ Fine fully paid for '" + selected.getTitle() + "'. Book is now available!");
+        } else {
+            infoLabel.setText("💰 Partial payment recorded. Remaining fine: $" + String.format("%.2f", remaining));
+        }
+
+        // 🔄 تنظيف الحقل
         paymentField.clear();
     }
-
+    
+    
     // 🔄 تحديث حالة الغرامات / التأخير
     @FXML
     private void handleReload() {
-        for (Book b : booksList) {
-            b.calculateFine();
-        }
-        saveAllBooksToFile();
-        bookTable.refresh();
-        infoLabel.setText("🔄 Refreshed fine and status info.");
+    	booksList.clear();          // احذف البيانات القديمة
+        loadBooksFromFile();        // أعد تحميلها من الملف
+        bookTable.refresh();        // حدّث الجدول في الواجهة
+        infoLabel.setText("🔄 Data reloaded from file successfully!");
     }
 
     // 📂 تحميل الكتب من الملف
@@ -195,7 +279,7 @@ public class UserController {
 
     @FXML
     private void handleReturnBook() {
-        Book selected = bookTable.getSelectionModel().getSelectedItem();
+    	Book selected = bookTable.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
             messageLabel.setText("⚠️ Please select a book to return.");
@@ -207,18 +291,24 @@ public class UserController {
             return;
         }
 
-        // ✅ التحقق إذا هذا المستخدم هو فعلاً اللي استعار الكتاب
         if (!selected.getBorrowedBy().equals(accountUsername)) {
             messageLabel.setText("❌ You can only return books you borrowed.");
             return;
         }
 
-        // ✅ تنفيذ عملية الإرجاع
-        selected.returnBook();
+        selected.calculateFine();
+
+        // ❗ إذا عليه غرامة لا يرجع كمتاح
+        if (selected.getFineAmount() > 0) {
+            messageLabel.setText("⚠️ Book returned but fine must be paid before it's available.");
+            selected.setStatus("Overdue");
+        } else {
+            selected.returnBook();
+            messageLabel.setText("✅ Book returned successfully!");
+        }
+
         saveAllBooksToFile();
         reloadBooks();
-
-        messageLabel.setText("✅ Book returned successfully!");
     }
 
 }

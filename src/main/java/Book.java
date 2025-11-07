@@ -1,5 +1,7 @@
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 
 public class Book {
     private String title;
@@ -72,20 +74,47 @@ public class Book {
     // ⏰ فحص التأخير
     public boolean isOverdue() {
         if (dueDate == null || dueDate.isEmpty()) return false;
-        LocalDate due = LocalDate.parse(dueDate);
+
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.YEAR, 4)
+            .appendLiteral('-')
+            .appendValue(ChronoField.MONTH_OF_YEAR) 
+            .appendLiteral('-')
+            .appendValue(ChronoField.DAY_OF_MONTH)  
+            .toFormatter();
+
+        LocalDate due = LocalDate.parse(dueDate, formatter);
         return LocalDate.now().isAfter(due);
     }
 
-    // 💰 حساب الغرامة
+ // 💰 حساب الغرامة حسب عدد الأيام المتأخرة
     public void calculateFine() {
         if (!isOverdue()) {
             fineAmount = 0.0;
+            if (status.equals("Overdue")) {
+                status = "Borrowed";
+            }
             return;
         }
-        LocalDate due = LocalDate.parse(dueDate);
-        long daysLate = java.time.temporal.ChronoUnit.DAYS.between(due, LocalDate.now());
-        fineAmount = daysLate * 2.0; // 💲 2 دولار لكل يوم تأخير
+
+        // نفس الـ formatter مثل isOverdue
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.YEAR, 4)
+            .appendLiteral('-')
+            .appendValue(ChronoField.MONTH_OF_YEAR)
+            .appendLiteral('-')
+            .appendValue(ChronoField.DAY_OF_MONTH)
+            .toFormatter();
+
+        LocalDate due = LocalDate.parse(dueDate, formatter);
+        long daysOverdue = java.time.temporal.ChronoUnit.DAYS.between(due, LocalDate.now());
+
+        // زيادة دولار لكل يوم
+        fineAmount = daysOverdue * 1.0;
+
+        status = "Overdue";
     }
+
 
     // 🧾 تنسيق السطر للملف
     public String toFileFormat() {
