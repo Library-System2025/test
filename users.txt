@@ -1,5 +1,5 @@
-m,123,Admin
-z,456,Librarian
-u1,1,User
-u2,2,User
-u3,3,User
+m,123,Admin,Gold
+z,456,Librarian,Silver
+u1,1,User,Silver
+u2,2,User,Gold
+u3,3,User,Silver

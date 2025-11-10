@@ -3,6 +3,44 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
+// 🧩 واجهة الاستراتيجية
+interface FineCalculationStrategy {
+    double calculateFine(long overdueDays);
+}
+
+// 🥈 استراتيجية Silver
+class SilverFineStrategy implements FineCalculationStrategy {
+    @Override
+    public double calculateFine(long overdueDays) {
+        return overdueDays * 1.0; // 1$ per day
+    }
+}
+
+// 🥇 استراتيجية Gold
+class GoldFineStrategy implements FineCalculationStrategy {
+    @Override
+    public double calculateFine(long overdueDays) {
+        return overdueDays * 0.5; // 50% discount
+    }
+}
+
+// ⚙️ كلاس مسؤول عن اختيار الاستراتيجية
+class FineCalculator {
+    private FineCalculationStrategy strategy;
+
+    public void setStrategy(FineCalculationStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public double calculate(long overdueDays) {
+        if (strategy == null) {
+            throw new IllegalStateException("Fine strategy not set!");
+        }
+        return strategy.calculateFine(overdueDays);
+    }
+}
+
+// 📚 الكلاس الرئيسي Book
 public class Book {
     private String title;
     private String author;
@@ -10,7 +48,7 @@ public class Book {
     private String status;
     private String dueDate;
     private double fineAmount;
-    private String borrowedBy; // 👈 اسم المستخدم اللي استعار الكتاب
+    private String borrowedBy;
 
     // ✅ Constructors
     public Book(String title, String author, String isbn) {
@@ -70,25 +108,23 @@ public class Book {
         this.fineAmount = 0.0;
     }
 
-
     // ⏰ فحص التأخير
     public boolean isOverdue() {
         if (dueDate == null || dueDate.isEmpty()) return false;
 
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .appendValue(ChronoField.YEAR, 4)
-            .appendLiteral('-')
-            .appendValue(ChronoField.MONTH_OF_YEAR) 
-            .appendLiteral('-')
-            .appendValue(ChronoField.DAY_OF_MONTH)  
-            .toFormatter();
+                .appendValue(ChronoField.YEAR, 4)
+                .appendLiteral('-')
+                .appendValue(ChronoField.MONTH_OF_YEAR)
+                .appendLiteral('-')
+                .appendValue(ChronoField.DAY_OF_MONTH)
+                .toFormatter();
 
         LocalDate due = LocalDate.parse(dueDate, formatter);
         return LocalDate.now().isAfter(due);
     }
 
- // 💰 حساب الغرامة حسب عدد الأيام المتأخرة
-    public void calculateFine() {
+    public void calculateFine(String membershipType) {
         if (!isOverdue()) {
             fineAmount = 0.0;
             if (status.equals("Overdue")) {
@@ -97,35 +133,46 @@ public class Book {
             return;
         }
 
-        // نفس الـ formatter مثل isOverdue
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .appendValue(ChronoField.YEAR, 4)
-            .appendLiteral('-')
-            .appendValue(ChronoField.MONTH_OF_YEAR)
-            .appendLiteral('-')
-            .appendValue(ChronoField.DAY_OF_MONTH)
-            .toFormatter();
+                .appendValue(ChronoField.YEAR, 4)
+                .appendLiteral('-')
+                .appendValue(ChronoField.MONTH_OF_YEAR)
+                .appendLiteral('-')
+                .appendValue(ChronoField.DAY_OF_MONTH)
+                .toFormatter();
 
         LocalDate due = LocalDate.parse(dueDate, formatter);
         long daysOverdue = java.time.temporal.ChronoUnit.DAYS.between(due, LocalDate.now());
 
-        // زيادة دولار لكل يوم
-        fineAmount = daysOverdue * 1.0;
+        FineCalculator calculator = new FineCalculator();
 
-        status = "Overdue";
+        if (membershipType != null && membershipType.equalsIgnoreCase("Gold")) {
+            calculator.setStrategy(new GoldFineStrategy());
+        } else {
+            calculator.setStrategy(new SilverFineStrategy());
+        }
+
+        this.fineAmount = calculator.calculate(daysOverdue);
+        this.status = "Overdue";
+
+        // Debug
+        System.out.println("🔍 Book: " + title + " | BorrowedBy: " + borrowedBy +
+                " | Membership: " + membershipType +
+                " | DaysOverdue: " + daysOverdue +
+                " | FineCalculated: " + fineAmount);
     }
 
 
     // 🧾 تنسيق السطر للملف
     public String toFileFormat() {
         return String.join(",",
-            title,
-            author,
-            isbn,
-            status,
-            dueDate,
-            String.valueOf(fineAmount),
-            borrowedBy
+                title,
+                author,
+                isbn,
+                status,
+                dueDate,
+                String.valueOf(fineAmount),
+                borrowedBy
         );
     }
 }

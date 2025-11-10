@@ -56,6 +56,35 @@ public class homepageController {
         searchByCombo.getSelectionModel().select("All");
 
         loadBooksFromFile();
+     // 🎨 تلوين الصفوف حسب حالة الكتاب
+        searchResultsTable.setRowFactory(tv -> new TableRow<Book>() {
+            @Override
+            protected void updateItem(Book book, boolean empty) {
+                super.updateItem(book, empty);
+
+                if (empty || book == null) {
+                    setStyle(""); // بدون لون
+                } else {
+                    // 💚 متاح
+                    if ("Available".equalsIgnoreCase(book.getStatus())) {
+                        setStyle("-fx-background-color: #d0f0c0;"); // أخضر فاتح
+                    }
+                    // 💛 مستعار
+                    else if ("Borrowed".equalsIgnoreCase(book.getStatus())) {
+                        setStyle("-fx-background-color: #fff9c4;"); // أصفر فاتح
+                    }
+                    // ❤️ متأخر
+                    else if ("Overdue".equalsIgnoreCase(book.getStatus())) {
+                        setStyle("-fx-background-color: #ffcdd2;"); // أحمر فاتح
+                    }
+                    // 🔘 أي حالة أخرى (افتراضي)
+                    else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
     }
 
     // 👋 استقبال اسم المستخدم من شاشة الدخول

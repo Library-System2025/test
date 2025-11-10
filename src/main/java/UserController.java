@@ -28,8 +28,48 @@ public class UserController {
     private ObservableList<Book> booksList = FXCollections.observableArrayList();
     private static final String FILE_PATH = "books.txt";
     private String accountUsername;
+    private String membershipType;
 
-    // ✅ عند فتح الصفحة
+    // 👤 يأتي من LoginController
+    public void setMembershipType(String membershipType) {
+        this.membershipType = membershipType;
+        System.out.println("✅ Membership Type received: " + membershipType);
+        updateWelcomeLabel();
+        tryLoadBooks(); // تحميل بعد وصول العضوية
+    }
+
+    public void setCurrentUsername(String username) {
+        this.accountUsername = username;
+        System.out.println("✅ Username received: " + username);
+        updateWelcomeLabel();
+        tryLoadBooks(); // تحميل بعد وصول اسم المستخدم
+    }
+
+    // ⚙️ تحميل الكتب بعد التأكد أن المعلومات كاملة
+    private void tryLoadBooks() {
+        if (accountUsername != null && membershipType != null) {
+            System.out.println("📘 Loading books for user " + accountUsername +
+                    " (" + membershipType + ")");
+            loadBooksFromFile();
+            bookTable.refresh();
+        }
+    }
+
+    // 🟢 تحديث رسالة الترحيب
+    private void updateWelcomeLabel() {
+        if (welcomeLabel != null && accountUsername != null && membershipType != null) {
+            welcomeLabel.setText("Welcome, " + accountUsername + " (" + membershipType + ") 👋");
+
+            if (membershipType.equalsIgnoreCase("Gold")) {
+                welcomeLabel.setStyle("-fx-text-fill: gold; -fx-font-weight: bold;");
+            } else {
+                welcomeLabel.setStyle("-fx-text-fill: silver; -fx-font-weight: bold;");
+            }
+
+            System.out.println("🟢 Label updated → " + membershipType);
+        }
+    }
+
     @FXML
     public void initialize() {
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
@@ -38,44 +78,60 @@ public class UserController {
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
         fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
-    
-
         bookTable.setItems(booksList);
-        loadBooksFromFile();
-        
+
+        // ✅ تلوين الصفوف
         bookTable.setRowFactory(tv -> new TableRow<Book>() {
             @Override
             protected void updateItem(Book book, boolean empty) {
                 super.updateItem(book, empty);
-
                 if (empty || book == null) {
                     setStyle("");
+                } else if (book.getBorrowedBy() != null && book.getBorrowedBy().equals(accountUsername)) {
+                    setStyle("-fx-background-color: #d0f0c0;"); // 💚
+                } else if (book.getStatus().equals("Borrowed") || book.getStatus().equals("Overdue")) {
+                    setStyle("-fx-background-color: #ffd6d6;"); // ❤️
                 } else {
-                    // إذا المستخدم الحالي هو اللي مستعير الكتاب
+                    setStyle("");
+                }
+            }
+        });
+
+        // ✅ إظهار التاريخ فقط للمستخدم
+        dueDateColumn.setCellFactory(column -> new TableCell<Book, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setText(null);
+                } else {
+                    Book book = getTableRow().getItem();
                     if (book.getBorrowedBy() != null && book.getBorrowedBy().equals(accountUsername)) {
-                        setStyle("-fx-background-color: #d0f0c0;"); // 💚 أخضر فاتح
-                    }
-                    // إذا الكتاب مستعار من شخص آخر
-                    else if (book.getStatus().equals("Borrowed") || book.getStatus().equals("Overdue")) {
-                        setStyle("-fx-background-color: #ffd6d6;"); // ❤️ أحمر فاتح
-                    }
-                    // الكتب المتاحة
-                    else {
-                        setStyle("");
+                        setText(book.getDueDate());
+                    } else {
+                        setText("");
                     }
                 }
             }
         });
 
-        
-    }
-
-    // 👋 ضبط اسم المستخدم الحالي بعد تسجيل الدخول
-    public void setCurrentUsername(String username) {
-        this.accountUsername = username;
-        System.out.println("✅ Logged in as: " + username);
-        if (welcomeLabel != null)
-            welcomeLabel.setText("Welcome, " + username + " 👋");
+        // ✅ إظهار الغرامة فقط للمستخدم
+        fineColumn.setCellFactory(column -> new TableCell<Book, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setText(null);
+                } else {
+                    Book book = getTableRow().getItem();
+                    if (book.getBorrowedBy() != null && book.getBorrowedBy().equals(accountUsername)) {
+                        setText(String.format("$%.2f", book.getFineAmount()));
+                    } else {
+                        setText("");
+                    }
+                }
+            }
+        });
     }
 
     // 🚪 تسجيل الخروج
@@ -93,75 +149,44 @@ public class UserController {
     // 📚 استعارة كتاب
     @FXML
     private void handleBorrowBook() {
-    	
-    	// 🚫 تحقق أولاً هل المستخدم عليه أي غرامة
         for (Book b : booksList) {
             if (b.getBorrowedBy().equals(accountUsername) && b.getFineAmount() > 0) {
                 messageLabel.setText("❌ You have unpaid fines. Please pay them before borrowing.");
                 return;
             }
         }
-    	
-    	 // 🔁 حفظ الكتاب المحدد قبل التحديث
-        Book selectedBeforeReload = bookTable.getSelectionModel().getSelectedItem();
 
-        // 🔁 تحديث البيانات من الملف
-        reloadBooks();
-
-        // ✅ إعادة اختيار الكتاب في الجدول بعد التحديث
-        if (selectedBeforeReload != null) {
-            for (Book b : booksList) {
-                if (b.getIsbn().equals(selectedBeforeReload.getIsbn())) {
-                    bookTable.getSelectionModel().select(b);
-                    selectedBeforeReload = b;
-                    break;
-                }
-            }
-        }
-
-        // ⚠️ التحقق بعد التحديث
-        if (selectedBeforeReload == null) {
+        Book selected = bookTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
             messageLabel.setText("⚠️ Please select a book first.");
             return;
         }
 
-        if (!selectedBeforeReload.getStatus().equals("Available")) {
+        if (!selected.getStatus().equals("Available")) {
             messageLabel.setText("❌ This book is not available.");
             return;
         }
 
-        // ✅ تحديث حالة الكتاب
-        selectedBeforeReload.setStatus("Borrowed");
-        selectedBeforeReload.setDueDate(LocalDate.now().plusDays(28).toString());
-        selectedBeforeReload.setFineAmount(0.0);
-        selectedBeforeReload.setBorrowedBy(accountUsername);
+        selected.setStatus("Borrowed");
+        selected.setDueDate(LocalDate.now().plusDays(28).toString());
+        selected.setFineAmount(0.0);
+        selected.setBorrowedBy(accountUsername);
 
-        // ✅ حفظ و إعادة تحميل الملف بعد التعديل
         saveAllBooksToFile();
         reloadBooks();
 
-        messageLabel.setText("✅ Book borrowed successfully! Due date: " + selectedBeforeReload.getDueDate());
+        messageLabel.setText("✅ Book borrowed successfully! Due date: " + selected.getDueDate());
     }
 
-    // 🔁 دالة لإعادة تحميل الكتب بعد أي تعديل
-    private void reloadBooks() {
-        booksList.clear();
-        loadBooksFromFile();
-        bookTable.setItems(booksList); // ✅ أعد ربط الجدول بالقائمة
-        bookTable.refresh();
-    }
-
-    
     // 💰 دفع الغرامة
     @FXML
     private void handlePayFine() {
-    	Book selected = bookTable.getSelectionModel().getSelectedItem();
+        Book selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             infoLabel.setText("⚠️ Select a book first.");
             return;
         }
-        
-        // 🚫 تحقق هل الكتاب مستعار من المستخدم الحالي فقط
+
         if (!selected.getBorrowedBy().equals(accountUsername)) {
             infoLabel.setText("❌ You can only pay fines for books you borrowed.");
             return;
@@ -185,7 +210,6 @@ public class UserController {
             return;
         }
 
-        // 🧮 احسب المبلغ المتبقي
         double currentFine = selected.getFineAmount();
         double remaining = currentFine - amountToPay;
 
@@ -194,58 +218,35 @@ public class UserController {
             return;
         }
 
-     // 🟢 البحث عن فهرس الكتاب في القائمة لتحديثه بشكل صريح
-        int selectedIndex = booksList.indexOf(selected);
-        if (selectedIndex != -1) {
+        int index = booksList.indexOf(selected);
+        if (index != -1) {
             selected.setFineAmount(remaining);
-
-            if (remaining <= 0) {
-                selected.returnBook();
-            } else {
-                selected.setStatus("Overdue");
-            }
-            // 🟢 إبلاغ الـ ObservableList بالتغيير
-            booksList.set(selectedIndex, selected);
+            if (remaining <= 0) selected.returnBook();
+            else selected.setStatus("Overdue");
+            booksList.set(index, selected);
         }
 
-        // 💾 احفظ الملف فورًا بعد التعديل
         saveAllBooksToFile();
-        
-        System.out.println("DEBUG: Books saved. Current fine for selected book: " + selected.getFineAmount());
-        
-        // ✅ حدّث الجدول فورًا
         bookTable.refresh();
 
-        // ✅ رسالة الحالة
-        if (remaining <= 0) {
-            infoLabel.setText("✅ Fine fully paid for '" + selected.getTitle() + "'. Book is now available!");
-        } else {
+        if (remaining <= 0)
+            infoLabel.setText("✅ Fine fully paid for '" + selected.getTitle() + "'.");
+        else
             infoLabel.setText("💰 Partial payment recorded. Remaining fine: $" + String.format("%.2f", remaining));
-        }
 
-        // 🔄 تنظيف الحقل
         paymentField.clear();
     }
-    
-    
-    // 🔄 تحديث حالة الغرامات / التأخير
-    @FXML
-    private void handleReload() {
-    	booksList.clear();          // احذف البيانات القديمة
-        loadBooksFromFile();        // أعد تحميلها من الملف
-        bookTable.refresh();        // حدّث الجدول في الواجهة
-        infoLabel.setText("🔄 Data reloaded from file successfully!");
-    }
 
-    // 📂 تحميل الكتب من الملف
+    // 📂 تحميل الكتب
     private void loadBooksFromFile() {
+        booksList.clear();
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", 7); // ✅ نقرأ 7 أعمدة
+                String[] parts = line.split(",", 7);
                 if (parts.length >= 3) {
                     String title = parts[0];
                     String author = parts[1];
@@ -256,16 +257,25 @@ public class UserController {
                     String borrowedBy = (parts.length == 7) ? parts[6] : "";
 
                     Book book = new Book(title, author, isbn, status, dueDate, fine, borrowedBy);
-                    book.calculateFine();
+
+                    if (book.isOverdue()) {
+                        if (borrowedBy.equals(accountUsername))
+                            book.calculateFine(membershipType);
+                        else
+                            book.calculateFine("Silver");
+                    }
+
                     booksList.add(book);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        bookTable.setItems(booksList);
+        bookTable.refresh();
     }
 
-    // 💾 حفظ جميع الكتب في الملف
     private void saveAllBooksToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Book b : booksList) {
@@ -277,17 +287,30 @@ public class UserController {
         }
     }
 
+    private void reloadBooks() {
+        booksList.clear();
+        loadBooksFromFile();
+        bookTable.refresh();
+    }
+    @FXML
+    private void handleReload() {
+        booksList.clear();
+        loadBooksFromFile();
+        bookTable.refresh();
+        infoLabel.setText("🔄 Data reloaded from file successfully!");
+    }
+
+    // 📦 إرجاع الكتاب
     @FXML
     private void handleReturnBook() {
-    	Book selected = bookTable.getSelectionModel().getSelectedItem();
-
+        Book selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             messageLabel.setText("⚠️ Please select a book to return.");
             return;
         }
 
         if (!selected.getStatus().equals("Borrowed") && !selected.getStatus().equals("Overdue")) {
-            messageLabel.setText("ℹ️ This book is not borrowed.");
+            messageLabel.setText("This book is not borrowed.");
             return;
         }
 
@@ -296,11 +319,10 @@ public class UserController {
             return;
         }
 
-        selected.calculateFine();
+        selected.calculateFine(membershipType);
 
-        // ❗ إذا عليه غرامة لا يرجع كمتاح
         if (selected.getFineAmount() > 0) {
-            messageLabel.setText("⚠️ Book returned but fine must be paid before it's available.");
+            messageLabel.setText("⚠️ Book returned but fine must be paid.");
             selected.setStatus("Overdue");
         } else {
             selected.returnBook();
@@ -310,5 +332,4 @@ public class UserController {
         saveAllBooksToFile();
         reloadBooks();
     }
-
 }

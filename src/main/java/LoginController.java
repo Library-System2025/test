@@ -8,12 +8,24 @@ import javafx.stage.Stage;
 import java.io.*;
 
 public class LoginController {
+
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Label errorMessage;
 
-    // 🔹 ملف المستخدمين (username,password,role)
+    // 🔹 ملف المستخدمين (username,password,role,membershipType)
     private static final String USERS_FILE = "users.txt";
+
+    // ✅ كلاس داخلي لتجميع بيانات المستخدم (الدور + العضوية)
+    private static class UserInfo {
+        String role;
+        String membership;
+
+        UserInfo(String role, String membership) {
+            this.role = role;
+            this.membership = membership;
+        }
+    }
 
     @FXML
     private void handleLogin(ActionEvent event) {
@@ -27,13 +39,16 @@ public class LoginController {
         }
 
         // ✅ تحقق من صحة البيانات
-        String role = validateCredentials(username, password);
+        UserInfo userInfo = validateCredentials(username, password);
 
-        if (role == null) {
+        if (userInfo == null) {
             errorMessage.setText("❌ Invalid username or password.");
             passwordField.clear();
             return;
         }
+
+        String role = userInfo.role;
+        String membership = userInfo.membership;
 
         // ✅ تحديد واجهة المستخدم حسب الدور
         String fxmlToLoad;
@@ -53,10 +68,13 @@ public class LoginController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlToLoad));
             Parent dashboard = loader.load();
 
-            // ✅ تمرير اسم المستخدم إلى الكنترولر المناسب
+            // ✅ تمرير اسم المستخدم والعضوية للكنترولر المناسب
             if (role.equals("User")) {
                 UserController controller = loader.getController();
                 controller.setCurrentUsername(username);
+                controller.setMembershipType(membership); 
+                System.out.println("✅ Logged in as: " + username + " | Role: " + role + " | Membership: " + membership);
+
             } else if (role.equals("Admin")) {
                 homepageController controller = loader.getController();
                 controller.setCurrentUsername(username);
@@ -65,31 +83,28 @@ public class LoginController {
                 controller.setCurrentUsername(username);
             }
 
-            // ✅ افتح نافذة جديدة بدل ما تسكر شاشة اللوج إن
+            // ✅ فتح النافذة
             Stage newStage = new Stage();
             newStage.setTitle(role + " Dashboard");
             newStage.setScene(new Scene(dashboard));
             newStage.show();
 
-            // 🧹 تفريغ الحقول بعد فتح النافذة
             usernameField.clear();
             passwordField.clear();
-
-            // ✅ عرض رسالة نجاح
             errorMessage.setText("✅ " + role + " window opened successfully!");
 
         } catch (IOException e) {
             e.printStackTrace();
             errorMessage.setText("⚠️ Error loading page.");
-        } // ← 🔹 هذا القوس الناقص في كودك
+        }
     }
 
     /**
      * 🔍 التحقق من صحة بيانات الدخول
-     * الملف users.txt يكون بالشكل:
-     * username,password,role
+     * الملف users.txt بالشكل:
+     * username,password,role,membershipType
      */
-    private String validateCredentials(String username, String password) {
+    private UserInfo validateCredentials(String username, String password) {
         File file = new File(USERS_FILE);
         if (!file.exists()) {
             errorMessage.setText("⚠️ Users file not found!");
@@ -99,14 +114,15 @@ public class LoginController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", 3);
-                if (parts.length == 3) {
+                String[] parts = line.split(",", 4); // 🔸 الآن نقرأ 4 أعمدة
+                if (parts.length >= 3) {
                     String fileUser = parts[0].trim();
                     String filePass = parts[1].trim();
                     String fileRole = parts[2].trim();
+                    String membership = (parts.length == 4) ? parts[3].trim() : "Silver"; // الافتراضي
 
                     if (username.equals(fileUser) && password.equals(filePass)) {
-                        return fileRole;
+                        return new UserInfo(fileRole, membership);
                     }
                 }
             }
