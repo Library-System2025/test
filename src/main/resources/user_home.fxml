@@ -30,16 +30,18 @@
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
 
-            <!-- 📚 جدول الكتب -->
+            <!-- 📚 جدول الكتب والوسائط -->
             <TableView fx:id="bookTable" prefHeight="330">
                 <columns>
+                    <!-- ✅ التعديل: إضافة عمود النوع -->
+                    <TableColumn fx:id="typeColumn" text="Type" prefWidth="70"/>
+                    
                     <TableColumn fx:id="titleColumn" text="Title" prefWidth="180"/>
                     <TableColumn fx:id="authorColumn" text="Author" prefWidth="130"/>
                     <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="120"/>
                     <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
                     <TableColumn fx:id="dueDateColumn" text="Due Date" prefWidth="120"/>
                     <TableColumn fx:id="fineColumn" text="Fine ($)" prefWidth="90"/>
-             
                 </columns>
             </TableView>
 
@@ -50,10 +52,10 @@
                 <Button text="Pay Fine" onAction="#handlePayFine"
                         style="-fx-background-color:#5cb85c; -fx-text-fill:white; -fx-font-weight:bold;"/>
 
-                <Button text="Borrow Book" onAction="#handleBorrowBook"
+                <Button text="Borrow Item" onAction="#handleBorrowBook"
                         style="-fx-background-color:#0275d8; -fx-text-fill:white; -fx-font-weight:bold;"/>
 
-                <Button text="Return Book" onAction="#handleReturnBook"
+                <Button text="Return Item" onAction="#handleReturnBook"
                         style="-fx-background-color:#f0ad4e; -fx-text-fill:white; -fx-font-weight:bold;"/>
 
                 <Button text="Refresh" onAction="#handleReload"

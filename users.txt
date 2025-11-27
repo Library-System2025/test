@@ -2,4 +2,3 @@ m,123,Admin,Gold
 z,456,Librarian,Silver
 u1,1,User,Silver
 u2,2,User,Gold
-u3,3,User,Silver
