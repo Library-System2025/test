@@ -187,7 +187,7 @@ public class UserController {
     // ====================== أزرار الواجهة =======================
 
     @FXML
-    private void handleLogout() {
+     void handleLogout() {
         try {
             Parent login = FXMLLoader.load(getClass().getResource("login.fxml"));
             Stage stage = (Stage) bookTable.getScene().getWindow();
@@ -198,7 +198,7 @@ public class UserController {
     }
 
     @FXML
-    private void handleBorrowBook() {
+     void handleBorrowBook() {
         for (Media m : mediaList) {
             if (m.getBorrowedBy() != null &&
                 m.getBorrowedBy().equals(accountUsername) &&
@@ -228,7 +228,7 @@ public class UserController {
     }
 
     @FXML
-    private void handlePayFine() {
+     void handlePayFine() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             infoLabel.setText("⚠️ Select an item.");
@@ -275,7 +275,7 @@ public class UserController {
     }
 
     @FXML
-    private void handleReturnBook() {
+     void handleReturnBook() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             messageLabel.setText("⚠️ Select an item to return.");
@@ -315,14 +315,14 @@ public class UserController {
     }
 
     @FXML
-    private void handleReload() {
+     void handleReload() {
         reloadBooks();
         infoLabel.setText("🔄 Data reloaded.");
     }
 
     // ====================== قراءة / حفظ الكتب =======================
 
-    private void loadMediaFromFile() {
+     void loadMediaFromFile() {
         mediaList.clear();
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
@@ -379,7 +379,7 @@ public class UserController {
         bookTable.refresh();
     }
 
-    private void saveAllMediaToFile() {
+     void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Media m : mediaList) {
                 writer.write(m.toFileFormat());
@@ -390,7 +390,7 @@ public class UserController {
         }
     }
 
-    private void reloadBooks() {
+     void reloadBooks() {
         loadMediaFromFile();
         bookTable.refresh();
         checkOverdueAndNotify();
@@ -398,7 +398,7 @@ public class UserController {
 
     // ====================== فحص الأوفر ديو + إرسال إيميل =======================
 
-    private void checkOverdueAndNotify() {
+     void checkOverdueAndNotify() {
         if (accountUsername == null || membershipType == null) return;
         if (accountEmail == null || accountEmail.isEmpty()) return;
 

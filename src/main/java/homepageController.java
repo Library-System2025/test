@@ -139,7 +139,7 @@ public class homepageController {
 
     // ✅ إضافة Book/CD
     @FXML
-    private void handleAddBook() {
+    void handleAddBook() {
         String type = typeCombo.getValue();
         String title = titleField.getText().trim();
         String author = authorField.getText().trim();
@@ -173,7 +173,7 @@ public class homepageController {
     }
 
     @FXML
-    private void handleSearch() {
+     void handleSearch() {
         String keyword = searchField.getText().toLowerCase().trim();
         String mode = (searchByCombo.getValue() == null) ? "All" : searchByCombo.getValue();
 
@@ -201,7 +201,7 @@ public class homepageController {
     }
 
     @FXML
-    private void handleReload() {
+     void handleReload() {
         loadMediaFromFile();
         searchResultsTable.refresh();
         addBookMessage.setText("🔄 Reloaded.");
@@ -318,7 +318,7 @@ public class homepageController {
     }
 
     @FXML
-    private void handleDeleteUser() {
+     void handleDeleteUser() {
         User selected = usersTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Select a user.");
@@ -366,7 +366,7 @@ public class homepageController {
 
     // 🔔 زر Send Reminder (Observer)
     @FXML
-    private void handleSendReminder() {
+     void handleSendReminder() {
         User selected = usersTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Select a user to send reminder.");

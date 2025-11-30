@@ -117,7 +117,7 @@ public class LibrarianController {
     }
 
     @FXML
-    private void handleSearch() {
+     void handleSearch() {
         String keyword = searchField.getText().toLowerCase().trim();
         if (keyword.isEmpty()) { 
             bookTable.setItems(mediaList); 
@@ -134,7 +134,7 @@ public class LibrarianController {
     }
 
     @FXML
-    private void handleReload() { 
+     void handleReload() { 
         reloadBooks(); 
         infoLabel.setText("🔄 Data reloaded."); 
     }

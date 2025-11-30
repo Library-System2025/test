@@ -15,8 +15,14 @@ public abstract class Media {
     protected String borrowedBy;
     protected double amountPaid;
 
+    // 🔹 نقطة واحدة مركزية للوقت (عشان الموك)
+    protected static LocalDate now() {
+        return LocalDate.now();
+    }
+
     // الكونستركتور
-    public Media(String title, String author, String isbn, String status, String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
+    public Media(String title, String author, String isbn, String status,
+                 String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
@@ -28,34 +34,35 @@ public abstract class Media {
     }
 
     // 🔥 دوال مجردة: كل ابن لازم يجاوب عليها بطريقته
-    public abstract int getLoanPeriod();      // كم يوم مسموح؟
+    public abstract int getLoanPeriod();       // كم يوم مسموح؟
     public abstract double getBaseDailyFine(); // كم سعر الغرامة؟
-    public abstract String getMediaType();    // شو نوعك؟ (Book ولا CD)
+    public abstract String getMediaType();     // شو نوعك؟ (Book ولا CD)
 
     // ✅ دوال جاهزة مشتركة (Getters)
-    public String getTitle() { return title; }
-    public String getAuthor() { return author; }
-    public String getIsbn() { return isbn; }
-    public String getStatus() { return status; }
-    public String getDueDate() { return dueDate; }
+    public String getTitle()      { return title; }
+    public String getAuthor()     { return author; }
+    public String getIsbn()       { return isbn; }
+    public String getStatus()     { return status; }
+    public String getDueDate()    { return dueDate; }
     public double getFineAmount() { return fineAmount; }
     public String getBorrowedBy() { return borrowedBy; }
+    public double getAmountPaid() { return amountPaid; }
 
-    public void setStatus(String status) { this.status = status; }
-    public void setDueDate(String dueDate) { this.dueDate = dueDate; }
+    public void setStatus(String status)       { this.status = status; }
+    public void setDueDate(String dueDate)     { this.dueDate = dueDate; }
     public void setFineAmount(double fineAmount) { this.fineAmount = fineAmount; }
     public void setBorrowedBy(String borrowedBy) { this.borrowedBy = borrowedBy; }
-    public void addPayment(double amount) { this.amountPaid += amount; }
+    public void addPayment(double amount)      { this.amountPaid += amount; }
 
     // 📚 دالة الاستعارة (ذكية: بتسأل الابن عن المدة المسموحة)
     public void borrow(String username) {
         this.status = "Borrowed";
         this.borrowedBy = username;
-        
+
         // هون السر: بنجيب عدد الأيام من الابن (getLoanPeriod)
-        LocalDate due = LocalDate.now().plusDays(getLoanPeriod());
+        LocalDate due = Media.now().plusDays(getLoanPeriod());
         this.dueDate = due.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        
+
         this.fineAmount = 0.0;
         this.amountPaid = 0.0;
     }
@@ -72,12 +79,14 @@ public abstract class Media {
     // ⏰ دالة فحص التأخير
     public boolean isOverdue() {
         if (dueDate == null || dueDate.isEmpty()) return false;
+
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendValue(ChronoField.YEAR, 4).appendLiteral('-')
                 .appendValue(ChronoField.MONTH_OF_YEAR).appendLiteral('-')
                 .appendValue(ChronoField.DAY_OF_MONTH).toFormatter();
+
         LocalDate due = LocalDate.parse(dueDate, formatter);
-        return LocalDate.now().isAfter(due);
+        return Media.now().isAfter(due);
     }
 
     // 💰 دالة حساب الغرامة (ذكية: بتسأل الابن عن سعره)
@@ -92,8 +101,9 @@ public abstract class Media {
                 .appendValue(ChronoField.YEAR, 4).appendLiteral('-')
                 .appendValue(ChronoField.MONTH_OF_YEAR).appendLiteral('-')
                 .appendValue(ChronoField.DAY_OF_MONTH).toFormatter();
+
         LocalDate due = LocalDate.parse(dueDate, formatter);
-        long daysOverdue = ChronoUnit.DAYS.between(due, LocalDate.now());
+        long daysOverdue = ChronoUnit.DAYS.between(due, Media.now());
 
         FineCalculator calculator = new FineCalculator();
         if (membershipType != null && membershipType.equalsIgnoreCase("Gold")) {
@@ -114,8 +124,14 @@ public abstract class Media {
     public String toFileFormat() {
         return String.join(",",
                 getMediaType(), // Book أو CD
-                title, author, isbn, status, dueDate,
-                String.valueOf(fineAmount), borrowedBy, String.valueOf(amountPaid)
+                title,
+                author,
+                isbn,
+                status,
+                dueDate,
+                String.valueOf(fineAmount),
+                borrowedBy,
+                String.valueOf(amountPaid)
         );
     }
 }
