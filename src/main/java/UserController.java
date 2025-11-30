@@ -1,14 +1,27 @@
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
+
+import io.github.cdimascio.dotenv.Dotenv;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Scene;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.stage.Stage;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import java.io.*;
-import java.time.LocalDate;
+import javafx.stage.Stage;
 
 public class UserController {
 
@@ -17,7 +30,6 @@ public class UserController {
     @FXML private Label infoLabel;
     @FXML private Label messageLabel;
 
-    // ✅ الجدول يتعامل مع Media (كتب + CDs)
     @FXML private TableView<Media> bookTable;
     @FXML private TableColumn<Media, String> typeColumn;
     @FXML private TableColumn<Media, String> titleColumn;
@@ -29,27 +41,69 @@ public class UserController {
 
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
     private static final String FILE_PATH = "books.txt";
+
+    // بيانات اليوزر الحالي
     private String accountUsername;
     private String membershipType;
+    private String accountEmail;
 
-    // استقبال نوع العضوية عند تسجيل الدخول
+    // Publisher + EmailService للـ Observer pattern
+    private static final OverduePublisher overduePublisher = new OverduePublisher();
+    private static EmailService emailService;
+
+    // تهيئة EmailService والـ Subscriber مرة واحدة
+    static {
+        try {
+            Dotenv dotenv = Dotenv.load();
+            String username = dotenv.get("EMAIL_USERNAME");
+            String password = dotenv.get("EMAIL_PASSWORD");
+
+            emailService = new EmailService(username, password);
+
+            EmailOverdueSubscriber emailSubscriber =
+                    new EmailOverdueSubscriber(emailService, username);
+
+            overduePublisher.subscribe(emailSubscriber);
+        } catch (Exception e) {
+            System.err.println("Failed to initialize email service / subscribers: " + e.getMessage());
+        }
+    }
+
+    // ====================== إعداد بيانات اليوزر =======================
+
+    // الطريقة الأساسية: نمرر كل شيء (ممكن تستدعيها من LoginController)
+    public void setCurrentUser(String username, String membershipType, String email) {
+        this.accountUsername = username;
+        this.membershipType  = membershipType;
+        this.accountEmail    = email;
+        updateWelcomeLabel();
+        tryLoadBooks();
+    }
+
+    // لو في أماكن قديمة بتستخدمهم خَلّيناهم
     public void setMembershipType(String membershipType) {
         this.membershipType = membershipType;
         updateWelcomeLabel();
         tryLoadBooks();
     }
 
-    // استقبال اسم المستخدم عند تسجيل الدخول
     public void setCurrentUsername(String username) {
         this.accountUsername = username;
         updateWelcomeLabel();
         tryLoadBooks();
     }
 
+    // نسخة قديمة (username + email بس)
+    public void setCurrentUser(String username, String email) {
+        this.accountUsername = username;
+        this.accountEmail = email;
+        updateWelcomeLabel();
+        tryLoadBooks();
+    }
+
     private void tryLoadBooks() {
         if (accountUsername != null && membershipType != null) {
-            loadMediaFromFile();
-            bookTable.refresh();
+            reloadBooks();
         }
     }
 
@@ -64,9 +118,10 @@ public class UserController {
         }
     }
 
+    // ====================== واجهة الجدول =======================
+
     @FXML
     public void initialize() {
-        // ربط الأعمدة ببيانات الكلاس Media
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
@@ -74,10 +129,10 @@ public class UserController {
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
         fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
-        
+
         bookTable.setItems(mediaList);
 
-        // تلوين الصفوف حسب الحالة
+        // تلوين الصفوف
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
@@ -85,16 +140,16 @@ public class UserController {
                 if (empty || item == null) {
                     setStyle("");
                 } else if (item.getBorrowedBy() != null && item.getBorrowedBy().equals(accountUsername)) {
-                    setStyle("-fx-background-color: #d0f0c0;"); // أخضر (كتبي)
+                    setStyle("-fx-background-color: #d0f0c0;");
                 } else if (item.getStatus().equals("Borrowed") || item.getStatus().equals("Overdue")) {
-                    setStyle("-fx-background-color: #ffd6d6;"); // أحمر (مشغول)
+                    setStyle("-fx-background-color: #ffd6d6;");
                 } else {
                     setStyle("");
                 }
             }
         });
 
-        // إخفاء تاريخ الإرجاع للكتب التي لا يملكها المستخدم
+        // إخفاء تاريخ الإرجاع للكتب التي لا يملكها اليوزر
         dueDateColumn.setCellFactory(col -> new TableCell<Media, String>() {
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -111,7 +166,7 @@ public class UserController {
             }
         });
 
-        // إخفاء الغرامة للكتب التي لا يملكها المستخدم
+        // إخفاء الغرامة للكتب التي لا يملكها اليوزر
         fineColumn.setCellFactory(col -> new TableCell<Media, Double>() {
             @Override protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -129,6 +184,8 @@ public class UserController {
         });
     }
 
+    // ====================== أزرار الواجهة =======================
+
     @FXML
     private void handleLogout() {
         try {
@@ -142,9 +199,11 @@ public class UserController {
 
     @FXML
     private void handleBorrowBook() {
-        // منع الاستعارة إذا كان هناك غرامات غير مدفوعة
         for (Media m : mediaList) {
-            if (m.getBorrowedBy() != null && m.getBorrowedBy().equals(accountUsername) && m.getFineAmount() > 0) {
+            if (m.getBorrowedBy() != null &&
+                m.getBorrowedBy().equals(accountUsername) &&
+                m.getFineAmount() > 0) {
+
                 messageLabel.setText("❌ You have unpaid fines! Pay them first.");
                 return;
             }
@@ -161,9 +220,8 @@ public class UserController {
             return;
         }
 
-        // عملية الاستعارة (Polymorphism يحدد المدة تلقائياً)
         selected.borrow(accountUsername);
-        
+
         saveAllMediaToFile();
         reloadBooks();
         messageLabel.setText("✅ Borrowed successfully! Due date: " + selected.getDueDate());
@@ -176,7 +234,7 @@ public class UserController {
             infoLabel.setText("⚠️ Select an item.");
             return;
         }
-        
+
         if (!selected.getBorrowedBy().equals(accountUsername)) {
             infoLabel.setText("❌ Select one of YOUR borrowed items.");
             return;
@@ -186,27 +244,29 @@ public class UserController {
         try {
             amountToPay = Double.parseDouble(paymentField.getText());
         } catch (NumberFormatException e) {
-            infoLabel.setText("❌ Invalid number."); return;
+            infoLabel.setText("❌ Invalid number.");
+            return;
         }
 
         if (amountToPay <= 0) {
-            infoLabel.setText("❌ Amount must be positive."); return;
+            infoLabel.setText("❌ Amount must be positive.");
+            return;
         }
 
         if (amountToPay > selected.getFineAmount()) {
-            infoLabel.setText("❌ Payment exceeds fine amount!"); return;
+            infoLabel.setText("❌ Payment exceeds fine amount!");
+            return;
         }
 
-        // دفع جزء من الغرامة
         selected.addPayment(amountToPay);
-        selected.calculateFine(membershipType); // إعادة الحساب بناءً على العضوية
+        selected.calculateFine(membershipType);
 
         if (selected.getFineAmount() <= 0) {
-            // ✅ تم الدفع بالكامل -> إرجاع الكتاب تلقائياً
-            selected.returnMedia(); 
+            selected.returnMedia();
             infoLabel.setText("✅ Fine fully paid. Item returned.");
         } else {
-            infoLabel.setText("💰 Partial payment accepted. Remaining: $" + String.format("%.2f", selected.getFineAmount()));
+            infoLabel.setText("💰 Partial payment accepted. Remaining: $" +
+                    String.format("%.2f", selected.getFineAmount()));
         }
 
         saveAllMediaToFile();
@@ -227,14 +287,26 @@ public class UserController {
             return;
         }
 
-        // حساب الغرامة قبل الإرجاع
         selected.calculateFine(membershipType);
 
         if (selected.getFineAmount() > 0) {
-            messageLabel.setText("⚠️ Cannot return. Pay the fine first.");
             selected.setStatus("Overdue");
+            messageLabel.setText("⚠️ Cannot return. Pay the fine first.");
+
+            if (accountEmail != null && !accountEmail.isEmpty()) {
+                // نلف الكتاب في List واحدة عشان تناسب الـ Observer الجديد
+                List<Media> singleList = new ArrayList<>();
+                singleList.add(selected);
+
+                overduePublisher.notifySubscribers(
+                        accountUsername,
+                        accountEmail,
+                        singleList
+                );
+            }
+
         } else {
-            selected.returnMedia(); // ✅ استخدام الدالة الصحيحة
+            selected.returnMedia();
             messageLabel.setText("✅ Returned successfully!");
         }
 
@@ -248,6 +320,8 @@ public class UserController {
         infoLabel.setText("🔄 Data reloaded.");
     }
 
+    // ====================== قراءة / حفظ الكتب =======================
+
     private void loadMediaFromFile() {
         mediaList.clear();
         File file = new File(FILE_PATH);
@@ -256,7 +330,6 @@ public class UserController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // قراءة 9 أعمدة (النوع في البداية)
                 String[] parts = line.split(",", 9);
                 if (parts.length >= 4) {
                     String type = parts[0].trim();
@@ -265,9 +338,10 @@ public class UserController {
                     String isbn = parts[3].trim();
                     String status = (parts.length >= 5) ? parts[4].trim() : "Available";
                     String dueDate = (parts.length >= 6) ? parts[5].trim() : "";
-                    
+
                     double fine = 0.0;
-                    try { if (parts.length >= 7) fine = Double.parseDouble(parts[6]); } catch (Exception e) {}
+                    try { if (parts.length >= 7) fine = Double.parseDouble(parts[6]); }
+                    catch (Exception e) {}
 
                     String borrowedBy = "";
                     if (parts.length >= 8) {
@@ -277,10 +351,10 @@ public class UserController {
 
                     double amountPaid = 0.0;
                     if (parts.length == 9) {
-                        try { amountPaid = Double.parseDouble(parts[8]); } catch (Exception e) {}
+                        try { amountPaid = Double.parseDouble(parts[8]); }
+                        catch (Exception e) {}
                     }
 
-                    // إنشاء الكائن (Polymorphism)
                     Media item;
                     if (type.equalsIgnoreCase("CD")) {
                         item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
@@ -288,12 +362,11 @@ public class UserController {
                         item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
                     }
 
-                    // حساب الغرامة للعرض
                     if (item.isOverdue()) {
                         if (borrowedBy.equals(accountUsername)) {
                             item.calculateFine(membershipType);
                         } else {
-                            item.calculateFine("Silver"); // افتراضي للآخرين
+                            item.calculateFine("Silver");
                         }
                     }
 
@@ -320,5 +393,29 @@ public class UserController {
     private void reloadBooks() {
         loadMediaFromFile();
         bookTable.refresh();
+        checkOverdueAndNotify();
+    }
+
+    // ====================== فحص الأوفر ديو + إرسال إيميل =======================
+
+    private void checkOverdueAndNotify() {
+        if (accountUsername == null || membershipType == null) return;
+        if (accountEmail == null || accountEmail.isEmpty()) return;
+
+        // لو حابة من هون كمان يروح إيميل لما تعملي Reload بعد ما تعدلي التاريخ في الملف:
+        for (Media m : mediaList) {
+            if (accountUsername.equals(m.getBorrowedBy()) && m.isOverdue()) {
+                m.calculateFine(membershipType);
+
+                List<Media> singleList = new ArrayList<>();
+                singleList.add(m);
+
+                overduePublisher.notifySubscribers(
+                        accountUsername,
+                        accountEmail,
+                        singleList
+                );
+            }
+        }
     }
 }

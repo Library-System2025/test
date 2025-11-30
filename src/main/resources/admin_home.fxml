@@ -113,10 +113,20 @@
                         </TableView>
 
                         <HBox spacing="10" alignment="CENTER_RIGHT">
-                             <Label text="* Select a user to remove their account permanently." textFill="gray"/>
-                             <Button text="🗑 Unregister User" onAction="#handleDeleteUser"
-                                style="-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; cursor: hand;"/>
-                        </HBox>
+    <Label text="* Select a user to manage their account or send reminders."
+           textFill="gray"/>
+
+    <!-- زر إرسال التذكير -->
+    <Button text="📧 Send Reminder"
+            onAction="#handleSendReminder"
+            style="-fx-background-color: #5cb85c; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; cursor: hand;"/>
+
+    <!-- زر حذف اليوزر -->
+    <Button text="🗑 Unregister User"
+            onAction="#handleDeleteUser"
+            style="-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; cursor: hand;"/>
+</HBox>
+
                     </VBox>
                 </Tab>
 

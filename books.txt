@@ -1,12 +1,12 @@
 Book,Java Programming,James Gosling,101,Available,,0.0,,0.0
 CD,Beethoven Symphony No.9,Beethoven,800,Available,,0.0,,0.0
-Book,Clean Code,Robert Martin,102,Borrowed,2025-11-30,0.0,u1,0.0
-CD,The Best of Jazz,Louis Armstrong,801,Borrowed,2025-11-25,0.0,u2,0.0
-Book,The Alchemist,Paulo Coelho,103,Overdue,2025-11-13,10.0,u1,0.0
+Book,Clean Code,Robert Martin,102,Available,,0.0,,0.0
+CD,The Best of Jazz,Louis Armstrong,801,Overdue,2025-11-25,8.0,u2,0.0
+Book,The Alchemist,Paulo Coelho,103,Borrowed,2025-11-28,0.0,u1,0.0
 Book,Harry Potter,J.K. Rowling,104,Available,,0.0,,0.0
-CD,Learning Spanish Audio,LanguagePro,802,Overdue,2025-11-20,6.0,u1,0.0
-CD,Mozart Greatest Hits,Mozart,803,Overdue,2025-11-13,10.0,u2,0.0
-Book,Lord of the Rings,Tolkien,105,Overdue,2025-11-03,15.0,u1,5.0
-CD,Python Course,Tech Academy,804,Overdue,2025-10-24,25.0,u2,5.0
+CD,Learning Spanish Audio,LanguagePro,802,Available,,0.0,,0.0
+CD,Mozart Greatest Hits,Mozart,803,Overdue,2025-11-13,32.0,u2,0.0
+Book,Lord of the Rings,Tolkien,105,Available,,0.0,,0.0
+CD,Python Course,Tech Academy,804,Overdue,2025-10-24,67.0,u2,5.0
 Book,life,zainab,1,Available,,0.0,,0.0
 CD,happy,manar,2,Available,,0.0,,0.0
