@@ -12,31 +12,41 @@ import jakarta.mail.internet.MimeMessage;
 
 /**
  * Service class responsible for sending emails.
+ * <p>
+ * This class configures the SMTP server (Gmail) and handles the actual transmission of emails.
+ * It is used by the system to send overdue notifications and reminders.
+ * </p>
  *
  * @author Zainab
  * @version 1.0
  */
+
 public class EmailService {
 
-    private final String username;   // email account
-    private final String password;   // email password / app password
+    private final String username;   
+    private final String password;   
 
     /**
-     * @param username The email account username.
-     * @param password The email account password.
+     * Constructs a new EmailService with the given credentials.
+     * 
+     * @param username The email account username (sender).
+     * @param password The email account password (app password).
      */
+    
     public EmailService(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
     /**
-     * Generic method to send any email.
+     * Sends an email with the specified subject and body to the recipient.
      *
      * @param to      The recipient's email address.
-     * @param subject The subject of the email.
+     * @param subject The subject line of the email.
      * @param body    The body content of the email.
+     * @throws RuntimeException If the email sending fails.
      */
+    
     public void sendEmail(String to, String subject, String body) {
 
         Properties props = new Properties();
@@ -69,11 +79,16 @@ public class EmailService {
     }
 
     /**
-     * Convenience method used by homepageController for reminders.
-     * الآن الـ controller يقدر يستدعي sendReminder بدون ما نغيّر test.
+     * Convenience method to send a reminder email.
+     * Delegates to the {@link #sendEmail(String, String, String)} method.
+     * 
+     * @param to      The recipient's email address.
+     * @param subject The subject line.
+     * @param body    The body content.
      */
+    
     public void sendReminder(String to, String subject, String body) {
-        // ببساطة نعيد استخدام sendEmail
+       
         sendEmail(to, subject, body);
     }
 }

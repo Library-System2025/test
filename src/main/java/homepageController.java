@@ -24,7 +24,14 @@ import io.github.cdimascio.dotenv.Dotenv;
 
 /**
  * Controller class for the main dashboard (Home Page).
- * Handles adding books, searching, user management, and email notifications.
+ * 
+ * This class handles the core administrative functionalities of the library system, including:
+ * <ul>
+ *   <li>Adding new Books and CDs.</li>
+ *   <li>Searching for media items.</li>
+ *   <li>Managing registered users (listing, deleting).</li>
+ *   <li>Sending overdue email notifications.</li>
+ * </ul>
  * 
  * @author Zainab
  * @version 1.0
@@ -72,8 +79,8 @@ public class homepageController {
     private static EmailService emailService;
 
     /**
-     * Static block to initialize the Email Service.
-     * Loads credentials from the .env file.
+     * Static initialization block to setup the Email Service.
+     * Loads credentials from the .env file and subscribes the email service to overdue notifications.
      */
     
     static {
@@ -95,7 +102,8 @@ public class homepageController {
     
     /**
      * Initializes the controller class.
-     * Sets up table columns, loads data, and configures UI factories.
+     * This method is automatically called after the FXML file has been loaded.
+     * It sets up table columns, loads data, and configures UI behavior.
      */
 
     @FXML
@@ -160,7 +168,7 @@ public class homepageController {
     
     /**
      * Handles the logout action.
-     * Redirects to the login screen.
+     * Loads the login screen and closes the current dashboard.
      */
 
     @FXML
@@ -173,8 +181,8 @@ public class homepageController {
     }
     
     /**
-     * Handles adding a new Book or CD.
-     * Validates inputs and saves to file.
+     * Handles adding a new Book or CD to the library.
+     * Validates input fields, checks for duplicate ISBNs, and saves the new item to the file.
      */
     
     @FXML
@@ -212,8 +220,8 @@ public class homepageController {
     }
 
     /**
-     * Handles searching for media items.
-     * Filters the list based on the search keyword.
+     * Handles searching for media items based on criteria.
+     * Filters the table view based on Title, Author, or ISBN.
      */
     
     @FXML
@@ -245,7 +253,8 @@ public class homepageController {
     }
 
     /**
-     * Reloads data from the file and refreshes the view.
+     * Reloads data from the file and refreshes the table view.
+     * Useful for updating the view after external changes.
      */
     
     @FXML
@@ -257,6 +266,7 @@ public class homepageController {
 
     /**
      * Loads media items from 'books.txt'.
+     * Parses the file and populates the media list. Also calculates fines for overdue items.
      */
      
     private void loadMediaFromFile() {
@@ -314,7 +324,7 @@ public class homepageController {
     }
 
     /**
-     * Saves all media items to 'books.txt'.
+     * Saves all current media items to the 'books.txt' file.
      */
     
     private void saveAllMediaToFile() {
@@ -327,9 +337,10 @@ public class homepageController {
     }
     
     /**
-     * Gets the membership type for a user.
-     * @param username The username.
-     * @return The membership (Silver/Gold).
+     * Retrieves the membership type for a specific user.
+     * 
+     * @param username The username to check.
+     * @return The membership type (Gold/Silver), defaults to Silver if not found.
      */
     
     private String getUserMembership(String username) {
@@ -347,9 +358,10 @@ public class homepageController {
     }
 
     /**
-     * Gets the email for a user.
-     * @param username The username.
-     * @return The email address.
+     * Retrieves the email address for a specific user.
+     * 
+     * @param username The username to check.
+     * @return The email address, or an empty string if not found.
      */
     
     private String getUserEmail(String username) {
@@ -368,7 +380,8 @@ public class homepageController {
     }
     
     /**
-     * Loads users from 'users.txt'.
+     * Loads registered users from 'users.txt' into the table view.
+     * Excludes Admin accounts from the view.
      */
 
     private void loadUsersFromFile() {
@@ -388,6 +401,7 @@ public class homepageController {
     
     /**
      * Deletes a selected user.
+     * Ensures the user has no active loans before deletion.
      */
 
     @FXML
@@ -417,7 +431,7 @@ public class homepageController {
     }
     
     /**
-     * Saves user list to file.
+     * Saves the list of users to 'users.txt'.
      */
 
     private void saveUsersToFile() {
@@ -432,15 +446,17 @@ public class homepageController {
     }
     
     /**
-     * Shows an alert dialog.
-     * @param title Title of the alert.
-     * @param content Message content.
+     * Shows an information alert dialog.
+     * <p>
+     * Includes a check for the JavaFX Application Thread to support unit testing.
+     * </p>
+     * 
+     * @param title The title of the alert.
+     * @param content The content message.
      */
 
- // ميثود مساعدة لعرض رسائل الـ Alert
+ 
     private void showAlert(String title, String content) {
-        // لو إحنا مش على FX Application Thread (زي وقت الـ tests)،
-        // لا تنشئ Alert حقيقي عشان ما يرمي IllegalStateException.
         if (!Platform.isFxApplicationThread()) {
             System.out.println("ALERT (test mode): " + title + " | " + content);
             return;
@@ -448,13 +464,14 @@ public class homepageController {
 
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
-        alert.setHeaderText(null);      // ما بدنا هيدر منفصل
+        alert.setHeaderText(null);      
         alert.setContentText(content);
         alert.showAndWait();
     }
 
     /**
-     * Sends email reminder to a user with overdue books.
+     * Sends an email reminder to a selected user regarding overdue books.
+     * Uses the Observer pattern to trigger the notification.
      */
     
     @FXML

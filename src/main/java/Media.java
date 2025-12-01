@@ -6,11 +6,16 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * Abstract class representing a generic media item in the library.
- * Serves as the base class for Book and CD.
+ * <p>
+ * This class serves as the base for specific media types like {@link Book} and {@link CD}.
+ * It encapsulates common properties such as title, author, ISBN, and borrowing status,
+ * as well as business logic for borrowing, returning, and fine calculation.
+ * </p>
  *
  * @author Zainab
  * @version 1.0
  */
+
 public abstract class Media {
 
     protected String title;
@@ -18,30 +23,34 @@ public abstract class Media {
     protected String isbn;
     protected String status;
     protected String dueDate;
-    protected double fineAmount;   // إجمالي الغرامة المستحقة حالياً
+    protected double fineAmount;   
     protected String borrowedBy;
-    protected double amountPaid;   // المبلغ المدفوع من الغرامة
+    protected double amountPaid;   
 
     /**
-     * Gets the current date. Used for mocking and consistency.
-     * @return The current LocalDate.
+     * Gets the current date. 
+     * This method is used to allow mocking of the current date during testing.
+     * 
+     * @return The current {@link LocalDate}.
      */
+    
     protected static LocalDate now() {
         return LocalDate.now();
     }
 
     /**
-     * Constructor to initialize a Media object.
+     * Constructor to initialize a Media object with full details.
      *
      * @param title The title of the item.
      * @param author The author of the item.
-     * @param isbn The ISBN or ID.
-     * @param status The current status (Available, Borrowed, etc.).
-     * @param dueDate The due date string.
+     * @param isbn The ISBN or unique ID of the item.
+     * @param status The current status (e.g., Available, Borrowed).
+     * @param dueDate The due date if borrowed.
      * @param fineAmount The current fine amount.
      * @param borrowedBy The username of the borrower.
-     * @param amountPaid The amount paid towards fines.
+     * @param amountPaid The amount already paid towards the fine.
      */
+    
     public Media(String title, String author, String isbn, String status,
                  String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
         this.title = title;
@@ -55,21 +64,24 @@ public abstract class Media {
     }
 
     /**
-     * @return The loan period in days.
+     * Returns the loan period for this specific media type.
+     * @return The number of days the item can be borrowed.
      */
     public abstract int getLoanPeriod();
 
     /**
-     * @return The daily fine rate.
+     * Returns the daily fine rate for this specific media type.
+     * @return The fine amount per day.
      */
     public abstract double getBaseDailyFine();
 
     /**
-     * @return The type of media (e.g., "Book", "CD").
+     * Returns the type of media as a string (e.g., "Book", "CD").
+     * @return The media type identifier.
      */
     public abstract String getMediaType();
 
-    // ========= getters / setters الأساسية =========
+    
 
     public String getTitle()      { return title; }
     public String getAuthor()     { return author; }
@@ -86,36 +98,49 @@ public abstract class Media {
     public void setBorrowedBy(String borrowedBy)   { this.borrowedBy = borrowedBy; }
     public void addPayment(double amount)          { this.amountPaid += amount; }
 
-    // ========= adapter methods للتوافق مع الكود/التستات =========
-    // تستخدم نفس الحقول الموجودة بدون تغيير المنطق
-
-    /** اختصار لـ fineAmount */
+    /**
+     * Gets the current fine amount.
+     * @return The fine amount.
+     */
+    
     public double getFine() {
         return fineAmount;
     }
 
-    /** اختصار لـ fineAmount */
+    /**
+     * Sets the fine amount.
+     * @param fine The new fine amount.
+     */
+    
     public void setFine(double fine) {
         this.fineAmount = fine;
     }
 
-    /** نستخدم amountPaid كـ "overdueFine" في الكود القديم (آخر حقل في الملف) */
+    /**
+     * Gets the amount paid towards overdue fines.
+     * @return The paid amount.
+     */
+    
     public double getOverdueFine() {
         return amountPaid;
     }
+    
+    /**
+     * Sets the amount paid towards overdue fines.
+     * @param overdueFine The paid amount.
+     */
 
     public void setOverdueFine(double overdueFine) {
         this.amountPaid = overdueFine;
     }
 
-    // ========= منطق الاستعارة والارجاع =========
-
     /**
      * Borrows the item for a specific user.
-     * Calculates the due date based on the specific media type loan period.
+     * Sets the status to "Borrowed", records the borrower, and calculates the due date.
      *
-     * @param username The user borrowing the item.
-     */
+     * @param username The username of the borrower.
+     */    
+
     public void borrow(String username) {
         this.status = "Borrowed";
         this.borrowedBy = username;
@@ -129,8 +154,9 @@ public abstract class Media {
 
     /**
      * Returns the item to the library.
-     * Resets status, borrower, and fine details.
+     * Resets status to "Available" and clears borrower and fine information.
      */
+    
     public void returnMedia() {
         this.status = "Available";
         this.borrowedBy = "";
@@ -140,10 +166,11 @@ public abstract class Media {
     }
 
     /**
-     * Checks if the item is overdue.
+     * Checks if the item is currently overdue.
      *
      * @return true if the current date is after the due date, false otherwise.
      */
+    
     public boolean isOverdue() {
         if (dueDate == null || dueDate.isEmpty()) return false;
 
@@ -157,11 +184,12 @@ public abstract class Media {
     }
 
     /**
-     * Calculates the fine based on the user's membership type.
-     * Uses the Strategy Pattern via FineCalculator.
+     * Calculates the fine based on overdue days and user membership.
+     * Uses the {@link FineCalculator} strategy pattern.
      *
-     * @param membershipType The membership type (Gold/Silver).
+     * @param membershipType The user's membership type (e.g., "Gold", "Silver").
      */
+    
     public void calculateFine(String membershipType) {
         if (!isOverdue()) {
             fineAmount = 0.0;
@@ -192,10 +220,11 @@ public abstract class Media {
     }
 
     /**
-     * Formats the media object as a CSV string for file storage.
+     * Converts the media object to a CSV-formatted string for file storage.
      *
-     * @return Comma-separated string representing the object.
+     * @return A comma-separated string containing media details.
      */
+    
     public String toFileFormat() {
         return String.join(",",
                 getMediaType(),
