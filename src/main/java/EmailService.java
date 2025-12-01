@@ -12,32 +12,31 @@ import jakarta.mail.internet.MimeMessage;
 
 /**
  * Service class responsible for sending emails.
- * 
+ *
  * @author Zainab
  * @version 1.0
  */
-
 public class EmailService {
 
-    private final String username;  
-    private final String password;  
-    
+    private final String username;   // email account
+    private final String password;   // email password / app password
+
     /**
      * @param username The email account username.
      * @param password The email account password.
      */
-
     public EmailService(String username, String password) {
         this.username = username;
         this.password = password;
     }
-    
-    /**
-     * @param to The recipient's email address.
-     * @param subject The subject of the email.
-     * @param body The body content of the email.
-     */
 
+    /**
+     * Generic method to send any email.
+     *
+     * @param to      The recipient's email address.
+     * @param subject The subject of the email.
+     * @param body    The body content of the email.
+     */
     public void sendEmail(String to, String subject, String body) {
 
         Properties props = new Properties();
@@ -46,7 +45,6 @@ public class EmailService {
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
 
-        
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -68,5 +66,14 @@ public class EmailService {
             e.printStackTrace();
             throw new RuntimeException("Failed to send email", e);
         }
+    }
+
+    /**
+     * Convenience method used by homepageController for reminders.
+     * الآن الـ controller يقدر يستدعي sendReminder بدون ما نغيّر test.
+     */
+    public void sendReminder(String to, String subject, String body) {
+        // ببساطة نعيد استخدام sendEmail
+        sendEmail(to, subject, body);
     }
 }

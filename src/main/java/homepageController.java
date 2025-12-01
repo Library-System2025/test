@@ -15,6 +15,11 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
+import javafx.application.Platform;   
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+
+
 import io.github.cdimascio.dotenv.Dotenv;
 
 /**
@@ -432,13 +437,19 @@ public class homepageController {
      * @param content Message content.
      */
 
+ // ميثود مساعدة لعرض رسائل الـ Alert
     private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        // لو إحنا مش على FX Application Thread (زي وقت الـ tests)،
+        // لا تنشئ Alert حقيقي عشان ما يرمي IllegalStateException.
+        if (!Platform.isFxApplicationThread()) {
+            System.out.println("ALERT (test mode): " + title + " | " + content);
+            return;
+        }
+
+        Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
-        alert.setHeaderText(null);
+        alert.setHeaderText(null);      // ما بدنا هيدر منفصل
         alert.setContentText(content);
-        if (title.equals("Error") || title.equals("Warning"))
-            alert.setAlertType(Alert.AlertType.ERROR);
         alert.showAndWait();
     }
 

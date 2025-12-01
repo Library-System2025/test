@@ -7,34 +7,32 @@ import java.time.temporal.ChronoUnit;
 /**
  * Abstract class representing a generic media item in the library.
  * Serves as the base class for Book and CD.
- * 
+ *
  * @author Zainab
  * @version 1.0
  */
-
 public abstract class Media {
-    
+
     protected String title;
     protected String author;
     protected String isbn;
     protected String status;
     protected String dueDate;
-    protected double fineAmount;
+    protected double fineAmount;   // إجمالي الغرامة المستحقة حالياً
     protected String borrowedBy;
-    protected double amountPaid;
+    protected double amountPaid;   // المبلغ المدفوع من الغرامة
 
     /**
      * Gets the current date. Used for mocking and consistency.
      * @return The current LocalDate.
      */
-    
     protected static LocalDate now() {
         return LocalDate.now();
     }
 
     /**
      * Constructor to initialize a Media object.
-     * 
+     *
      * @param title The title of the item.
      * @param author The author of the item.
      * @param isbn The ISBN or ID.
@@ -44,7 +42,6 @@ public abstract class Media {
      * @param borrowedBy The username of the borrower.
      * @param amountPaid The amount paid towards fines.
      */
-    
     public Media(String title, String author, String isbn, String status,
                  String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
         this.title = title;
@@ -60,22 +57,20 @@ public abstract class Media {
     /**
      * @return The loan period in days.
      */
-    
-    public abstract int getLoanPeriod();  
-    
+    public abstract int getLoanPeriod();
+
     /**
      * @return The daily fine rate.
      */
-    
-    public abstract double getBaseDailyFine(); 
-    
+    public abstract double getBaseDailyFine();
+
     /**
      * @return The type of media (e.g., "Book", "CD").
      */
-    
-    public abstract String getMediaType();     
+    public abstract String getMediaType();
 
-    
+    // ========= getters / setters الأساسية =========
+
     public String getTitle()      { return title; }
     public String getAuthor()     { return author; }
     public String getIsbn()       { return isbn; }
@@ -85,25 +80,46 @@ public abstract class Media {
     public String getBorrowedBy() { return borrowedBy; }
     public double getAmountPaid() { return amountPaid; }
 
-    public void setStatus(String status)       { this.status = status; }
-    public void setDueDate(String dueDate)     { this.dueDate = dueDate; }
-    public void setFineAmount(double fineAmount) { this.fineAmount = fineAmount; }
-    public void setBorrowedBy(String borrowedBy) { this.borrowedBy = borrowedBy; }
-    public void addPayment(double amount)      { this.amountPaid += amount; }
+    public void setStatus(String status)           { this.status = status; }
+    public void setDueDate(String dueDate)         { this.dueDate = dueDate; }
+    public void setFineAmount(double fineAmount)   { this.fineAmount = fineAmount; }
+    public void setBorrowedBy(String borrowedBy)   { this.borrowedBy = borrowedBy; }
+    public void addPayment(double amount)          { this.amountPaid += amount; }
 
-   
+    // ========= adapter methods للتوافق مع الكود/التستات =========
+    // تستخدم نفس الحقول الموجودة بدون تغيير المنطق
+
+    /** اختصار لـ fineAmount */
+    public double getFine() {
+        return fineAmount;
+    }
+
+    /** اختصار لـ fineAmount */
+    public void setFine(double fine) {
+        this.fineAmount = fine;
+    }
+
+    /** نستخدم amountPaid كـ "overdueFine" في الكود القديم (آخر حقل في الملف) */
+    public double getOverdueFine() {
+        return amountPaid;
+    }
+
+    public void setOverdueFine(double overdueFine) {
+        this.amountPaid = overdueFine;
+    }
+
+    // ========= منطق الاستعارة والارجاع =========
+
     /**
      * Borrows the item for a specific user.
      * Calculates the due date based on the specific media type loan period.
-     * 
+     *
      * @param username The user borrowing the item.
      */
-    
     public void borrow(String username) {
         this.status = "Borrowed";
         this.borrowedBy = username;
 
-        
         LocalDate due = Media.now().plusDays(getLoanPeriod());
         this.dueDate = due.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
@@ -115,7 +131,6 @@ public abstract class Media {
      * Returns the item to the library.
      * Resets status, borrower, and fine details.
      */
-    
     public void returnMedia() {
         this.status = "Available";
         this.borrowedBy = "";
@@ -126,10 +141,9 @@ public abstract class Media {
 
     /**
      * Checks if the item is overdue.
-     * 
+     *
      * @return true if the current date is after the due date, false otherwise.
      */
-    
     public boolean isOverdue() {
         if (dueDate == null || dueDate.isEmpty()) return false;
 
@@ -145,14 +159,13 @@ public abstract class Media {
     /**
      * Calculates the fine based on the user's membership type.
      * Uses the Strategy Pattern via FineCalculator.
-     * 
+     *
      * @param membershipType The membership type (Gold/Silver).
      */
-    
     public void calculateFine(String membershipType) {
         if (!isOverdue()) {
             fineAmount = 0.0;
-            if (status.equals("Overdue")) status = "Borrowed";
+            if ("Overdue".equals(status)) status = "Borrowed";
             return;
         }
 
@@ -171,7 +184,6 @@ public abstract class Media {
             calculator.setStrategy(new SilverFineStrategy());
         }
 
-        
         double totalDebt = calculator.calculate(daysOverdue, getBaseDailyFine());
 
         this.fineAmount = totalDebt - this.amountPaid;
@@ -181,13 +193,12 @@ public abstract class Media {
 
     /**
      * Formats the media object as a CSV string for file storage.
-     * 
+     *
      * @return Comma-separated string representing the object.
      */
-    
     public String toFileFormat() {
         return String.join(",",
-                getMediaType(), 
+                getMediaType(),
                 title,
                 author,
                 isbn,
