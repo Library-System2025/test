@@ -1,6 +1,13 @@
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit tests for the User POJO class.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class UserTest {
 
     @Test

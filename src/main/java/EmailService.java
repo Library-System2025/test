@@ -10,15 +10,33 @@ import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
+/**
+ * Service class responsible for sending emails.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class EmailService {
 
-    private final String username;  // EMAIL USERNAME
-    private final String password;  // EMAIL PASSWORD
+    private final String username;  
+    private final String password;  
+    
+    /**
+     * @param username The email account username.
+     * @param password The email account password.
+     */
 
     public EmailService(String username, String password) {
         this.username = username;
         this.password = password;
     }
+    
+    /**
+     * @param to The recipient's email address.
+     * @param subject The subject of the email.
+     * @param body The body content of the email.
+     */
 
     public void sendEmail(String to, String subject, String body) {
 
@@ -28,7 +46,7 @@ public class EmailService {
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
 
-        // Create session with authentication
+        
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {

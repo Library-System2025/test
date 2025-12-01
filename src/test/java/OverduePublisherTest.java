@@ -2,8 +2,20 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.Test;
 import java.util.*;
 
+/**
+ * Unit tests for the OverduePublisher class.
+ * Verifies the Observer Pattern implementation.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class OverduePublisherTest {
 
+	/**
+     * Verifies that notifySubscribers triggers the update method on all subscribers.
+     */
+	
     @Test
     void testNotifySubscribers_callsUpdateOnAllSubscribers() {
 

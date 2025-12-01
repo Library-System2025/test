@@ -7,6 +7,14 @@ import org.mockito.MockedStatic;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Unit tests for the abstract Media class logic.
+ * Covers borrow, return, overdue checks, and fine calculations using MockedStatic for time.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class MediaTest {
 
     private static final DateTimeFormatter FMT =
@@ -17,7 +25,7 @@ public class MediaTest {
     @Test
     void testBorrow_setsBorrowedFieldsAndDueDate_withMockedTime() {
 
-        // نثبت التاريخ إلى 2025-01-10
+        
         LocalDate fixedDate = LocalDate.of(2025, 1, 10);
 
         try (MockedStatic<Media> mocked = mockStatic(Media.class)) {
@@ -30,7 +38,7 @@ public class MediaTest {
             assertEquals("Borrowed", b.getStatus());
             assertEquals("u1", b.getBorrowedBy());
 
-            // كتاب → 28 يوم
+            
             String expectedDue = fixedDate.plusDays(b.getLoanPeriod()).format(FMT);
             assertEquals(expectedDue, b.getDueDate());
             assertEquals(0.0, b.getFineAmount());
@@ -61,7 +69,7 @@ public class MediaTest {
     @Test
     void testIsOverdue_withMockedTime() {
 
-        // نثبت اليوم ليكون 2025-01-20
+        
         LocalDate fixedNow = LocalDate.of(2025, 1, 20);
 
         try (MockedStatic<Media> mocked = mockStatic(Media.class)) {
@@ -69,11 +77,11 @@ public class MediaTest {
 
             Book b = new Book("Clean Code", "Robert Martin", "111");
 
-            // تاريخ بالمستقبل → مش متأخر
+            
             b.setDueDate("2025-01-25");
             assertFalse(b.isOverdue());
 
-            // تاريخ بالماضي → متأخر
+            
             b.setDueDate("2025-01-10");
             assertTrue(b.isOverdue());
         }
@@ -91,10 +99,10 @@ public class MediaTest {
 
             Book b = new Book("Clean Code", "Robert Martin", "111");
 
-            // نفترض انه كان Overdue بالغلط وتاريخه بالمستقبل
+            
             b.setStatus("Overdue");
             b.setFineAmount(15.0);
-            b.setDueDate("2025-01-20"); // future
+            b.setDueDate("2025-01-20"); 
 
             b.calculateFine("Silver");
 
@@ -115,7 +123,7 @@ public class MediaTest {
 
             Book b = new Book("Clean Code", "Robert Martin", "111");
             b.setStatus("Borrowed");
-            b.setDueDate("2025-01-10"); // past
+            b.setDueDate("2025-01-10"); 
 
             b.calculateFine("Silver");
 
@@ -129,7 +137,7 @@ public class MediaTest {
     @Test
     void testCalculateFine_goldMembership_usesDiscountAndAmountPaid() {
 
-        // اليوم 2025-01-20 و due 2025-01-16 → 4 أيام تأخير
+        
         LocalDate fixedNow = LocalDate.of(2025, 1, 20);
 
         try (MockedStatic<Media> mocked = mockStatic(Media.class)) {
@@ -143,15 +151,12 @@ public class MediaTest {
                     "2025-01-16",
                     0.0,
                     "u1",
-                    1.0   // دفع سابقاً 1$
+                    1.0   
             );
 
             b.calculateFine("Gold");
 
-            // Book: baseDailyFine = 1.0
-            // Gold: خصم 50% → 0.5 لليوم
-            // 4 أيام * 0.5 = 2.0
-            // totalDebt = 2.0 - amountPaid(1.0) = 1.0
+            
             assertEquals("Overdue", b.getStatus());
             assertEquals(1.0, b.getFineAmount(), 0.0001);
         }

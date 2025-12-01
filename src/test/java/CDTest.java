@@ -1,8 +1,20 @@
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit tests for the CD class.
+ * Ensures constructors and overridden methods behave correctly.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class CDTest {
 
+	/**
+     * Verifies that the short constructor initializes fields with default values.
+     */
+	
     @Test
     void testShortConstructor_initialValuesCorrect() {
         CD cd = new CD("Greatest Hits", "Artist X", "CD001");
@@ -18,6 +30,10 @@ public class CDTest {
         assertEquals(0.0, cd.getAmountPaid());
     }
 
+    /**
+     * Verifies that the full constructor correctly sets all fields.
+     */
+    
     @Test
     void testFullConstructor_setsAllValuesCorrectly() {
         CD cd = new CD(
@@ -41,18 +57,30 @@ public class CDTest {
         assertEquals(0.0, cd.getAmountPaid());
     }
 
+    /**
+     * Verifies that the loan period for a CD is 7 days.
+     */
+    
     @Test
     void testGetLoanPeriod_returns7Days() {
         CD cd = new CD("Test", "A", "1");
         assertEquals(7, cd.getLoanPeriod());
     }
 
+    /**
+     * Verifies that the daily fine rate for a CD is $2.0.
+     */
+    
     @Test
     void testGetBaseDailyFine_returns2Dollars() {
         CD cd = new CD("Test", "A", "1");
         assertEquals(2.0, cd.getBaseDailyFine());
     }
 
+    /**
+     * Verifies that the media type is correctly identified as "CD".
+     */
+    
     @Test
     void testGetMediaType_returnsCD() {
         CD cd = new CD("Test", "A", "1");

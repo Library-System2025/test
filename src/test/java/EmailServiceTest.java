@@ -11,31 +11,48 @@ import org.mockito.MockedStatic;
 
 import java.util.Properties;
 
+/**
+ * Unit tests for the EmailService class.
+ * Verifies interaction with JavaMail Transport.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class EmailServiceTest {
 
+	/**
+     * Tests if sendEmail actually calls Transport.send().
+     * Uses MockedStatic for the static method Transport.send().
+     */
+	
     @Test
     void testSendEmail_invokesTransportSend() throws Exception {
 
-        // Arrange
+        
         EmailService emailService = new EmailService("sender@gmail.com", "pass123");
 
-        // Mock Transport.send()
+        
         try (MockedStatic<Transport> mockedTransport = mockStatic(Transport.class)) {
 
-            // Act
+            
             emailService.sendEmail(
                     "target@mail.com",
                     "Test Subject",
                     "Hello world!"
             );
 
-            // Assert -> verify static Transport.send was called exactly once
+            
             mockedTransport.verify(
                     () -> Transport.send(any(Message.class)),
                     times(1)
             );
         }
     }
+    
+    /**
+     * Tests exception handling when email sending fails.
+     */
     
     @Test
     void testSendEmail_whenTransportThrows_wrapsInRuntimeException() throws Exception {

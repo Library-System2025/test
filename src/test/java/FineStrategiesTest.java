@@ -1,13 +1,25 @@
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit tests for Fine Calculation Strategies.
+ * Verifies Silver and Gold strategies logic.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class FineStrategiesTest {
 
+	/**
+     * Tests standard fine calculation for Silver members.
+     */
+	
     @Test
     void testSilverFineStrategy_normalCase() {
         FineCalculationStrategy strategy = new SilverFineStrategy();
 
-        double fine = strategy.calculateFine(5, 2.0); // 5 أيام * 2$ = 10$
+        double fine = strategy.calculateFine(5, 2.0); 
         assertEquals(10.0, fine);
     }
 
@@ -15,15 +27,19 @@ public class FineStrategiesTest {
     void testSilverFineStrategy_zeroDaysOrZeroRate() {
         FineCalculationStrategy strategy = new SilverFineStrategy();
 
-        assertEquals(0.0, strategy.calculateFine(0, 2.0)); // 0 يوم
-        assertEquals(0.0, strategy.calculateFine(5, 0.0)); // 0 سعر
+        assertEquals(0.0, strategy.calculateFine(0, 2.0)); 
+        assertEquals(0.0, strategy.calculateFine(5, 0.0)); 
     }
 
+    /**
+     * Tests 50% discount calculation for Gold members.
+     */
+    
     @Test
     void testGoldFineStrategy_halfPrice() {
         FineCalculationStrategy strategy = new GoldFineStrategy();
 
-        double fine = strategy.calculateFine(4, 3.0); // 4 أيام * (3 * 0.5) = 6
+        double fine = strategy.calculateFine(4, 3.0); 
         assertEquals(6.0, fine);
     }
 
@@ -48,7 +64,7 @@ public class FineStrategiesTest {
         FineCalculator calculator = new FineCalculator();
         calculator.setStrategy(new SilverFineStrategy());
 
-        double fine = calculator.calculate(3, 2.0); // 3 * 2 = 6
+        double fine = calculator.calculate(3, 2.0); 
         assertEquals(6.0, fine);
     }
 
@@ -57,22 +73,26 @@ public class FineStrategiesTest {
         FineCalculator calculator = new FineCalculator();
         calculator.setStrategy(new GoldFineStrategy());
 
-        double fine = calculator.calculate(3, 2.0); // 3 * (2 * 0.5) = 3
+        double fine = calculator.calculate(3, 2.0); 
         assertEquals(3.0, fine);
     }
 
+    /**
+     * Verifies that strategy can be switched at runtime.
+     */
+    
     @Test
     void testFineCalculator_switchStrategyAtRuntime() {
         FineCalculator calculator = new FineCalculator();
 
-        // أول اشي Silver
+        
         calculator.setStrategy(new SilverFineStrategy());
-        double silverFine = calculator.calculate(2, 5.0); // 2 * 5 = 10
+        double silverFine = calculator.calculate(2, 5.0); 
         assertEquals(10.0, silverFine);
 
-        // بعدين نبدّل لـ Gold
+       
         calculator.setStrategy(new GoldFineStrategy());
-        double goldFine = calculator.calculate(2, 5.0); // 2 * (5 * 0.5) = 5
+        double goldFine = calculator.calculate(2, 5.0); 
         assertEquals(5.0, goldFine);
     }
 }

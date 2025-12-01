@@ -11,15 +11,23 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/**
+ * Unit tests for LoginController.
+ * Verifies authentication logic and file reading.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class LoginControllerTest {
 
-    // نشغّل JavaFX Toolkit مرة وحدة قبل كل التستات
+    
     @BeforeAll
     static void initToolkit() {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // لو شغّال من قبل، ولا يهمنا
+            
         }
     }
 
@@ -28,14 +36,14 @@ public class LoginControllerTest {
     private PasswordField passwordField;
     private Label errorMessageLabel;
 
-    // helper: نحقن قيم في الحقول @FXML الخاصة باستخدام reflection
+    
     private void setPrivateField(String fieldName, Object value) throws Exception {
         Field f = LoginController.class.getDeclaredField(fieldName);
         f.setAccessible(true);
         f.set(controller, value);
     }
 
-    // helper: نستدعي الدالة private validateCredentials باستخدام reflection
+    
     private Object invokeValidateCredentials(String username, String password) throws Exception {
         Method m = LoginController.class.getDeclaredMethod(
                 "validateCredentials",
@@ -50,32 +58,32 @@ public class LoginControllerTest {
     void setUp() throws Exception {
         controller = new LoginController();
 
-        // نجهز "UI" وهمي للاختبار
+        
         usernameField = new TextField();
         passwordField = new PasswordField();
         errorMessageLabel = new Label();
 
-        // نحقنها في الكلاس (لأنها private و @FXML)
+        
         setPrivateField("usernameField", usernameField);
         setPrivateField("passwordField", passwordField);
         setPrivateField("errorMessage", errorMessageLabel);
 
-        // نتأكد انه ما في users.txt قديم (للاختبارات اللي تحتاج هذا الشرط)
+        
         File f = new File("users.txt");
         if (f.exists()) {
             f.delete();
         }
     }
 
-    // --------------- اختبارات handleLogin ---------------
+    // ---------------  handleLogin ---------------
 
     @Test
     void testHandleLogin_emptyFields_showsErrorMessage() throws Exception {
-        // نخلي الحقول فاضية
+        
         usernameField.setText("");
         passwordField.setText("");
 
-        // نستدعي handleLogin (الـ ActionEvent مش مهم هون)
+        
         controller.handleLogin(null);
 
         assertEquals("⚠️ Please fill in all fields.", errorMessageLabel.getText());
@@ -83,13 +91,13 @@ public class LoginControllerTest {
 
     @Test
     void testHandleLogin_invalidCredentials_showsErrorMessage() throws Exception {
-        // نجهز users.txt فيه يوزر واحد
+        
         File f = new File("users.txt");
         try (PrintWriter out = new PrintWriter(new FileWriter(f))) {
             out.println("m,123,Admin");
         }
 
-        // ندخل يوزر غلط
+        
         usernameField.setText("wrongUser");
         passwordField.setText("wrongPass");
 
@@ -99,11 +107,11 @@ public class LoginControllerTest {
         assertEquals("", passwordField.getText(), "Password field should be cleared");
     }
 
-    // --------------- اختبارات validateCredentials (بالـ reflection) ---------------
+    // ---------------  validateCredentials (بالـ reflection) ---------------
 
     @Test
     void testValidateCredentials_usersFileNotFound_returnsNullAndSetsError() throws Exception {
-        // نتأكد انه الملف مش موجود
+        
         File f = new File("users.txt");
         if (f.exists()) {
             f.delete();
@@ -116,7 +124,7 @@ public class LoginControllerTest {
 
     @Test
     void testValidateCredentials_validAdminLine_parsedCorrectly() throws Exception {
-        // m,123,Admin
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("m,123,Admin");
         }
@@ -124,7 +132,7 @@ public class LoginControllerTest {
         Object result = invokeValidateCredentials("m", "123");
         assertNotNull(result, "UserInfo should not be null for valid credentials");
 
-        // نقرأ الحقول من الـ inner class LoginController.UserInfo باستخدام reflection
+        
         Class<?> userInfoClass = result.getClass();
 
         Field roleField = userInfoClass.getDeclaredField("role");
@@ -140,14 +148,14 @@ public class LoginControllerTest {
         String email = (String) emailField.get(result);
 
         assertEquals("Admin", role);
-        // لأنه ما في حقل membership بالملف، الكود يحط "Silver" كـ default
+        
         assertEquals("Silver", membership);
         assertEquals("", email);
     }
 
     @Test
     void testValidateCredentials_validUserLine_parsedWithMembershipAndEmail() throws Exception {
-        // u1,1,User,Gold,manar@gmail.com
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("u1,1,User,Gold,manar@gmail.com");
         }
@@ -187,9 +195,9 @@ public class LoginControllerTest {
     @Test
     void testValidateCredentials_skipsEmptyAndMalformedLines() throws Exception {
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("");                      // سطر فاضي
-            out.println("invalidLineWithoutComma"); // سطر ناقص
-            out.println("x,111");                 // أقل من 3 حقول
+            out.println("");                      
+            out.println("invalidLineWithoutComma"); 
+            out.println("x,111");                 
             out.println("user1,pass1,User,Silver,user1@mail.com");
         }
 

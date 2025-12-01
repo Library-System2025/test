@@ -10,6 +10,14 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/**
+ * Integration tests for HomepageController (Admin Dashboard).
+ * Uses Reflection to access private fields and methods for testing.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class HomepageControllerTest {
 
     @BeforeAll
@@ -20,7 +28,7 @@ public class HomepageControllerTest {
 
     private homepageController controller;
 
-    // ====== helpers لسهولة التعامل مع الحقول private والـ methods private ======
+    
 
     private void injectField(String name, Object value) throws Exception {
         Field f = homepageController.class.getDeclaredField(name);
@@ -44,7 +52,7 @@ public class HomepageControllerTest {
     void setUp() throws Exception {
         controller = new homepageController();
 
-        // ننظّف الملفات عشان كل test يبدأ من الصفر
+        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
         File users = new File("users.txt");
@@ -59,7 +67,7 @@ public class HomepageControllerTest {
         typeCombo.setItems(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().select("Book");
 
-        TextField titleField = new TextField(""); // فاضي
+        TextField titleField = new TextField(""); 
         TextField authorField = new TextField("Author");
         TextField isbnField = new TextField("111");
         Label addBookMessage = new Label();
@@ -92,7 +100,7 @@ public class HomepageControllerTest {
         injectField("isbnField", isbnField);
         injectField("addBookMessage", addBookMessage);
 
-        // أول مرة: المفروض يضيف الكتاب
+        
         controller.handleAddBook();
 
         @SuppressWarnings("unchecked")
@@ -104,7 +112,7 @@ public class HomepageControllerTest {
         assertEquals("Clean Code", mediaList.get(0).getTitle());
         assertEquals("✅ Book added successfully.", addBookMessage.getText());
 
-        // ثاني مرة بنفس الـ ISBN → رسالة "exists"
+        
         titleField.setText("Another");
         authorField.setText("Someone");
         isbnField.setText("111");
@@ -126,7 +134,7 @@ public class HomepageControllerTest {
         mediaList.add(new Book("Effective Java", "Joshua Bloch", "222"));
 
         TableView<Media> table = new TableView<>();
-        TextField searchField = new TextField(""); // فاضي
+        TextField searchField = new TextField(""); 
         ComboBox<String> searchByCombo = new ComboBox<>();
         searchByCombo.setItems(FXCollections.observableArrayList("All", "Title", "Author", "ISBN"));
         searchByCombo.getSelectionModel().select("All");
@@ -262,7 +270,7 @@ public class HomepageControllerTest {
 
     @Test
     void testHandleReload_loadsFromFileAndUpdatesMessage() throws Exception {
-        // نكتب كتاب للملف
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("books.txt"))) {
             out.println("Book,Clean Code,Robert Martin,111,Borrowed,2025-12-20,0.0,u1,0.0");
         }
@@ -273,7 +281,7 @@ public class HomepageControllerTest {
         injectField("searchResultsTable", table);
         injectField("addBookMessage", addBookMessage);
 
-        // نربط الجدول مع mediaList الداخلي
+        
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList =
                 (ObservableList<Media>) getPrivateField("mediaList");
@@ -296,13 +304,13 @@ public class HomepageControllerTest {
         usersList.add(new User("u1", "1", "User", "Gold"));
 
         TableView<User> usersTable = new TableView<>();
-        usersTable.setItems(usersList); // بدون selection
+        usersTable.setItems(usersList); 
 
         injectField("usersTable", usersTable);
 
         controller.handleDeleteUser();
 
-        // لسه فيه يوزر لأن مافي selection
+        
         assertEquals(1, usersList.size());
     }
 
@@ -330,7 +338,7 @@ public class HomepageControllerTest {
 
         controller.handleDeleteUser();
 
-        // ما انمسح لأنه عنده كتب
+        
         assertEquals(1, usersList.size());
     }
 
@@ -353,7 +361,7 @@ public class HomepageControllerTest {
 
         assertTrue(usersList.isEmpty(), "User list should be empty after delete");
 
-        // نتأكد من ملف users.txt
+        
         try (BufferedReader reader = new BufferedReader(new FileReader("users.txt"))) {
             String firstLine = reader.readLine();
             assertEquals("m,123,Admin,Gold", firstLine);
@@ -368,7 +376,7 @@ public class HomepageControllerTest {
         TableView<User> usersTable = new TableView<>();
         injectField("usersTable", usersTable);
 
-        // بس نتأكد إنه ما يكرّش
+        
         controller.handleSendReminder();
     }
 
@@ -381,7 +389,7 @@ public class HomepageControllerTest {
         User u1 = new User("u1", "1", "User", "Gold");
         usersList.add(u1);
 
-        // users.txt بدون إيميل
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("u1,1,User,Gold");
         }
@@ -392,10 +400,10 @@ public class HomepageControllerTest {
 
         injectField("usersTable", usersTable);
 
-        // المفروض يوقف بعد ما يكتشف إنه ما في إيميل
+        
         controller.handleSendReminder();
 
-        // لا تغيير على القائمة
+        
         assertEquals(1, usersList.size());
     }
 
@@ -411,16 +419,16 @@ public class HomepageControllerTest {
         User u1 = new User("u1", "1", "User", "Gold");
         usersList.add(u1);
 
-        // users.txt مع إيميل
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("u1,1,User,Gold,u1@mail.com");
         }
 
-        // كتاب مش متأخر (due بالمستقبل)
+        
         Media m = new Book("Clean Code", "Robert", "111");
         m.setBorrowedBy("u1");
         m.setStatus("Borrowed");
-        m.setDueDate("2999-12-31"); // مستقبل → مش Overdue
+        m.setDueDate("2999-12-31"); 
         mediaList.add(m);
 
         TableView<User> usersTable = new TableView<>();
@@ -431,7 +439,7 @@ public class HomepageControllerTest {
 
         controller.handleSendReminder();
 
-        // لسه ما في أي تعديل، بس المهم إنه الكود مشى على فرع
+        
         assertEquals(1, usersList.size());
         assertEquals(1, mediaList.size());
     }

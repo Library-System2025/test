@@ -4,8 +4,16 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Abstract class representing a generic media item in the library.
+ * Serves as the base class for Book and CD.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public abstract class Media {
-    // المتغيرات المشتركة (موجودة عند الكتاب وعند الـ CD)
+    
     protected String title;
     protected String author;
     protected String isbn;
@@ -15,12 +23,28 @@ public abstract class Media {
     protected String borrowedBy;
     protected double amountPaid;
 
-    // 🔹 نقطة واحدة مركزية للوقت (عشان الموك)
+    /**
+     * Gets the current date. Used for mocking and consistency.
+     * @return The current LocalDate.
+     */
+    
     protected static LocalDate now() {
         return LocalDate.now();
     }
 
-    // الكونستركتور
+    /**
+     * Constructor to initialize a Media object.
+     * 
+     * @param title The title of the item.
+     * @param author The author of the item.
+     * @param isbn The ISBN or ID.
+     * @param status The current status (Available, Borrowed, etc.).
+     * @param dueDate The due date string.
+     * @param fineAmount The current fine amount.
+     * @param borrowedBy The username of the borrower.
+     * @param amountPaid The amount paid towards fines.
+     */
+    
     public Media(String title, String author, String isbn, String status,
                  String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
         this.title = title;
@@ -33,12 +57,25 @@ public abstract class Media {
         this.amountPaid = amountPaid;
     }
 
-    // 🔥 دوال مجردة: كل ابن لازم يجاوب عليها بطريقته
-    public abstract int getLoanPeriod();       // كم يوم مسموح؟
-    public abstract double getBaseDailyFine(); // كم سعر الغرامة؟
-    public abstract String getMediaType();     // شو نوعك؟ (Book ولا CD)
+    /**
+     * @return The loan period in days.
+     */
+    
+    public abstract int getLoanPeriod();  
+    
+    /**
+     * @return The daily fine rate.
+     */
+    
+    public abstract double getBaseDailyFine(); 
+    
+    /**
+     * @return The type of media (e.g., "Book", "CD").
+     */
+    
+    public abstract String getMediaType();     
 
-    // ✅ دوال جاهزة مشتركة (Getters)
+    
     public String getTitle()      { return title; }
     public String getAuthor()     { return author; }
     public String getIsbn()       { return isbn; }
@@ -54,12 +91,19 @@ public abstract class Media {
     public void setBorrowedBy(String borrowedBy) { this.borrowedBy = borrowedBy; }
     public void addPayment(double amount)      { this.amountPaid += amount; }
 
-    // 📚 دالة الاستعارة (ذكية: بتسأل الابن عن المدة المسموحة)
+   
+    /**
+     * Borrows the item for a specific user.
+     * Calculates the due date based on the specific media type loan period.
+     * 
+     * @param username The user borrowing the item.
+     */
+    
     public void borrow(String username) {
         this.status = "Borrowed";
         this.borrowedBy = username;
 
-        // هون السر: بنجيب عدد الأيام من الابن (getLoanPeriod)
+        
         LocalDate due = Media.now().plusDays(getLoanPeriod());
         this.dueDate = due.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
@@ -67,7 +111,11 @@ public abstract class Media {
         this.amountPaid = 0.0;
     }
 
-    // 🔁 دالة الإرجاع
+    /**
+     * Returns the item to the library.
+     * Resets status, borrower, and fine details.
+     */
+    
     public void returnMedia() {
         this.status = "Available";
         this.borrowedBy = "";
@@ -76,7 +124,12 @@ public abstract class Media {
         this.amountPaid = 0.0;
     }
 
-    // ⏰ دالة فحص التأخير
+    /**
+     * Checks if the item is overdue.
+     * 
+     * @return true if the current date is after the due date, false otherwise.
+     */
+    
     public boolean isOverdue() {
         if (dueDate == null || dueDate.isEmpty()) return false;
 
@@ -89,7 +142,13 @@ public abstract class Media {
         return Media.now().isAfter(due);
     }
 
-    // 💰 دالة حساب الغرامة (ذكية: بتسأل الابن عن سعره)
+    /**
+     * Calculates the fine based on the user's membership type.
+     * Uses the Strategy Pattern via FineCalculator.
+     * 
+     * @param membershipType The membership type (Gold/Silver).
+     */
+    
     public void calculateFine(String membershipType) {
         if (!isOverdue()) {
             fineAmount = 0.0;
@@ -112,7 +171,7 @@ public abstract class Media {
             calculator.setStrategy(new SilverFineStrategy());
         }
 
-        // هون السر الثاني: بنبعث سعر اليوم الخاص بالابن (getBaseDailyFine)
+        
         double totalDebt = calculator.calculate(daysOverdue, getBaseDailyFine());
 
         this.fineAmount = totalDebt - this.amountPaid;
@@ -120,10 +179,15 @@ public abstract class Media {
         this.status = "Overdue";
     }
 
-    // 🧾 تنسيق الملف: لازم نحط النوع أول اشي
+    /**
+     * Formats the media object as a CSV string for file storage.
+     * 
+     * @return Comma-separated string representing the object.
+     */
+    
     public String toFileFormat() {
         return String.join(",",
-                getMediaType(), // Book أو CD
+                getMediaType(), 
                 title,
                 author,
                 isbn,

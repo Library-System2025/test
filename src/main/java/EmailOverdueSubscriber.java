@@ -1,12 +1,31 @@
+
+/**
+ * Subscriber implementation that sends email notifications.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class EmailOverdueSubscriber implements OverdueSubscriber {
 
     private final EmailService emailService;
     private final String fromEmail;
+    
+    /**
+     * @param emailService The service used to send emails.
+     * @param fromEmail The sender's email address.
+     */
 
     public EmailOverdueSubscriber(EmailService emailService, String fromEmail) {
         this.emailService = emailService;
         this.fromEmail = fromEmail;
     }
+    
+    /**
+     * @param username The name of the user with overdue items.
+     * @param email The email address of the user.
+     * @param overdueItems The list of overdue media items.
+     */
 
     @Override
     public void update(String username, String email, java.util.List<Media> overdueItems) {

@@ -10,6 +10,14 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/**
+ * Integration tests for the LibrarianController.
+ * Uses Reflection to access private FXML fields and methods.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class LibrarianControllerTest {
 
     @BeforeAll
@@ -20,7 +28,7 @@ public class LibrarianControllerTest {
 
     private LibrarianController controller;
 
-    // ===== Helpers عامة =====
+   
 
     private void injectField(String name, Object value) throws Exception {
         Field f = LibrarianController.class.getDeclaredField(name);
@@ -44,7 +52,7 @@ public class LibrarianControllerTest {
     void setUp() throws Exception {
         controller = new LibrarianController();
 
-        // ننضف الملفات اللي الكلاس بستخدمها
+        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
         File users = new File("users.txt");
@@ -53,6 +61,10 @@ public class LibrarianControllerTest {
 
     // ================== handleBorrowBook ==================
 
+    /**
+     * Verifies that attempting to borrow without selection shows a warning.
+     */
+    
     @Test
     void testHandleBorrowBook_noSelection_showsWarning() throws Exception {
         TableView<Media> table = new TableView<>();
@@ -61,12 +73,16 @@ public class LibrarianControllerTest {
         injectField("bookTable", table);
         injectField("infoLabel", infoLabel);
 
-        // مافي selection
-        invokePrivate("handleBorrowBook", new Class<?>[]{});   // يعادل controller.handleBorrowBook()
+        
+        invokePrivate("handleBorrowBook", new Class<?>[]{});   
 
         assertEquals("⚠️ Select an item to borrow.", infoLabel.getText());
     }
 
+    /**
+     * Verifies that attempting to borrow an already borrowed item shows an error.
+     */
+    
     @Test
     void testHandleBorrowBook_alreadyBorrowed_showsError() throws Exception {
         @SuppressWarnings("unchecked")
@@ -91,6 +107,10 @@ public class LibrarianControllerTest {
         assertEquals("❌ Item already borrowed.", infoLabel.getText());
     }
 
+    /**
+     * Verifies successful borrowing logic.
+     */
+    
     @Test
     void testHandleBorrowBook_success_setsStatusAndBorrower() throws Exception {
         @SuppressWarnings("unchecked")
@@ -108,7 +128,7 @@ public class LibrarianControllerTest {
         injectField("bookTable", table);
         injectField("infoLabel", infoLabel);
 
-        // نعين اسم المستخدم الحالي
+        
         controller.setCurrentUsername("lib1");
 
         invokePrivate("handleBorrowBook", new Class<?>[]{});
@@ -194,8 +214,8 @@ public class LibrarianControllerTest {
         mediaList.add(new Book("Effective Java", "Joshua Bloch", "222"));
 
         TableView<Media> table = new TableView<>();
-        table.setItems(FXCollections.observableArrayList()); // مؤقتاً
-        TextField searchField = new TextField(""); // فاضي
+        table.setItems(FXCollections.observableArrayList()); 
+        TextField searchField = new TextField(""); 
 
         injectField("bookTable", table);
         injectField("searchField", searchField);
@@ -263,7 +283,7 @@ public class LibrarianControllerTest {
     
     @Test
     void testInitialize_setsUpTableAndRowFactory() throws Exception {
-        // نحضّر العناصر اللي عادة بتيجي من FXML
+        
         TableView<Media> table = new TableView<>();
         TableColumn<Media, String> typeCol = new TableColumn<>("Type");
         TableColumn<Media, String> titleCol = new TableColumn<>("Title");
@@ -282,21 +302,21 @@ public class LibrarianControllerTest {
         injectField("dueDateColumn", dueDateCol);
         injectField("borrowedByColumn", borrowedCol);
 
-        // act
+        
         controller.initialize();
 
-        // assert بسيط: اتربط items
+        
         assertNotNull(table.getItems());
     }
 
     @Test
     void testHandleReload_loadsFromFileAndUpdatesLabel() throws Exception {
-        // نكتب كتاب للملف
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("books.txt"))) {
             out.println("Book,Clean Code,Robert Martin,111,Borrowed,2025-12-20,0.0,lib1,0.0");
         }
 
-        // نجهّز الجدول والأعمدة زي ما بيصير من الـ FXML
+        
         TableView<Media> table = new TableView<>();
         TableColumn<Media, String> typeCol     = new TableColumn<>("Type");
         TableColumn<Media, String> titleCol    = new TableColumn<>("Title");
@@ -308,7 +328,7 @@ public class LibrarianControllerTest {
 
         Label infoLabel = new Label();
 
-        // inject للحقول اللي عادة بتيجي من الـ FXML
+        
         injectField("bookTable", table);
         injectField("typeColumn", typeCol);
         injectField("titleColumn", titleCol);
@@ -319,18 +339,18 @@ public class LibrarianControllerTest {
         injectField("borrowedByColumn", borrowedCol);
         injectField("infoLabel", infoLabel);
 
-        // أولاً: نستدعي initialize عشان يربط الأعمدة والـ mediaList بالجدول
+        
         controller.initialize();
 
-        // act
+        
         controller.handleReload();
 
-        // نقرأ mediaList الداخلي للتأكد أنه انقرأ من الملف
+        
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList =
                 (ObservableList<Media>) getPrivateField("mediaList");
 
-        // assert
+        
         assertFalse(mediaList.isEmpty(), "mediaList should be loaded from file");
         assertEquals(mediaList, table.getItems(), "table items should be same list");
         assertEquals("🔄 Data reloaded.", infoLabel.getText());
@@ -339,17 +359,17 @@ public class LibrarianControllerTest {
     
     @Test
     void testLoadMediaFromFile_overdueBook_calculatesFine() throws Exception {
-        // نكتب user عنده عضوية Gold عشان نشغّل getUserMembership + calculateFine
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("lib1,123,User,Gold,lib1@mail.com");
         }
 
-        // كتاب متأخر: dueDate قديم و status Borrowed و borrowedBy = lib1
+        
         try (PrintWriter out = new PrintWriter(new FileWriter("books.txt"))) {
             out.println("Book,Clean Code,Robert Martin,111,Borrowed,2024-01-01,0.0,lib1,0.0");
         }
 
-        // نجهّز الجدول والأعمدة زي ما بنعمل في التستات الثانية
+        
         TableView<Media> table = new TableView<>();
         TableColumn<Media, String> typeCol     = new TableColumn<>("Type");
         TableColumn<Media, String> titleCol    = new TableColumn<>("Title");
@@ -368,10 +388,10 @@ public class LibrarianControllerTest {
         injectField("dueDateColumn", dueDateCol);
         injectField("borrowedByColumn", borrowedCol);
 
-        // نستدعي initialize → جواته loadMediaFromFile
+        
         controller.initialize();
 
-        // نقرأ mediaList من داخل الكلاس
+        
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList =
                 (ObservableList<Media>) getPrivateField("mediaList");
@@ -379,9 +399,9 @@ public class LibrarianControllerTest {
         assertEquals(1, mediaList.size());
         Media m = mediaList.get(0);
 
-        // لازم يكون الكتاب متأخر و عليه غرامة > 0 بعد الحساب
+        
         assertEquals("111", m.getIsbn());
-        assertEquals("Overdue", m.getStatus());        // من calculateFine
+        assertEquals("Overdue", m.getStatus());        
         assertTrue(m.getFineAmount() > 0.0, "fineAmount should be > 0 for overdue item");
     }
 

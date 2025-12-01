@@ -23,6 +23,14 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
+/**
+ * Controller class for the User Dashboard.
+ * Handles borrowing, returning, paying fines, and viewing borrowed items.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class UserController {
 
     @FXML private Label welcomeLabel;
@@ -42,16 +50,19 @@ public class UserController {
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
     private static final String FILE_PATH = "books.txt";
 
-    // بيانات اليوزر الحالي
+    
     private String accountUsername;
     private String membershipType;
     private String accountEmail;
 
-    // Publisher + EmailService للـ Observer pattern
+    
     private static final OverduePublisher overduePublisher = new OverduePublisher();
     private static EmailService emailService;
 
-    // تهيئة EmailService والـ Subscriber مرة واحدة
+    /**
+     * Static block to initialize the email service and subscribers.
+     */
+    
     static {
         try {
             Dotenv dotenv = Dotenv.load();
@@ -69,9 +80,14 @@ public class UserController {
         }
     }
 
-    // ====================== إعداد بيانات اليوزر =======================
-
-    // الطريقة الأساسية: نمرر كل شيء (ممكن تستدعيها من LoginController)
+    /**
+     * Sets the current user details and loads their specific data.
+     * 
+     * @param username The username.
+     * @param membershipType The membership type (Gold/Silver).
+     * @param email The user's email address.
+     */
+    
     public void setCurrentUser(String username, String membershipType, String email) {
         this.accountUsername = username;
         this.membershipType  = membershipType;
@@ -80,12 +96,21 @@ public class UserController {
         tryLoadBooks();
     }
 
-    // لو في أماكن قديمة بتستخدمهم خَلّيناهم
+    /**
+     * Sets the membership type.
+     * @param membershipType The membership type.
+     */
+    
     public void setMembershipType(String membershipType) {
         this.membershipType = membershipType;
         updateWelcomeLabel();
         tryLoadBooks();
     }
+    
+    /**
+     * Sets the username.
+     * @param username The username.
+     */
 
     public void setCurrentUsername(String username) {
         this.accountUsername = username;
@@ -93,7 +118,12 @@ public class UserController {
         tryLoadBooks();
     }
 
-    // نسخة قديمة (username + email بس)
+    /**
+     * Sets user credentials (legacy method).
+     * @param username The username.
+     * @param email The email.
+     */
+    
     public void setCurrentUser(String username, String email) {
         this.accountUsername = username;
         this.accountEmail = email;
@@ -118,7 +148,10 @@ public class UserController {
         }
     }
 
-    // ====================== واجهة الجدول =======================
+    /**
+     * Initializes the controller class.
+     * Configures table columns, row coloring, and privacy logic (hiding other users' data).
+     */
 
     @FXML
     public void initialize() {
@@ -132,7 +165,7 @@ public class UserController {
 
         bookTable.setItems(mediaList);
 
-        // تلوين الصفوف
+        
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
@@ -149,7 +182,7 @@ public class UserController {
             }
         });
 
-        // إخفاء تاريخ الإرجاع للكتب التي لا يملكها اليوزر
+        
         dueDateColumn.setCellFactory(col -> new TableCell<Media, String>() {
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -166,7 +199,7 @@ public class UserController {
             }
         });
 
-        // إخفاء الغرامة للكتب التي لا يملكها اليوزر
+        
         fineColumn.setCellFactory(col -> new TableCell<Media, Double>() {
             @Override protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
@@ -184,8 +217,10 @@ public class UserController {
         });
     }
 
-    // ====================== أزرار الواجهة =======================
-
+    /**
+     * Handles logout action.
+     */
+    
     @FXML
      void handleLogout() {
         try {
@@ -197,6 +232,11 @@ public class UserController {
         }
     }
 
+    /**
+     * Handles borrowing a book.
+     * Checks for existing fines and item availability.
+     */
+    
     @FXML
      void handleBorrowBook() {
         for (Media m : mediaList) {
@@ -227,6 +267,11 @@ public class UserController {
         messageLabel.setText("✅ Borrowed successfully! Due date: " + selected.getDueDate());
     }
 
+    /**
+     * Handles fine payment.
+     * Validates payment amount and updates the fine status.
+     */
+    
     @FXML
      void handlePayFine() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
@@ -273,6 +318,11 @@ public class UserController {
         bookTable.refresh();
         paymentField.clear();
     }
+    
+    /**
+     * Handles returning a book.
+     * Ensures no fines are pending before returning.
+     */
 
     @FXML
      void handleReturnBook() {
@@ -294,7 +344,7 @@ public class UserController {
             messageLabel.setText("⚠️ Cannot return. Pay the fine first.");
 
             if (accountEmail != null && !accountEmail.isEmpty()) {
-                // نلف الكتاب في List واحدة عشان تناسب الـ Observer الجديد
+                
                 List<Media> singleList = new ArrayList<>();
                 singleList.add(selected);
 
@@ -314,13 +364,19 @@ public class UserController {
         reloadBooks();
     }
 
+    /**
+     * Reloads data from the file.
+     */
+    
     @FXML
      void handleReload() {
         reloadBooks();
         infoLabel.setText("🔄 Data reloaded.");
     }
 
-    // ====================== قراءة / حفظ الكتب =======================
+    /**
+     * Loads media data from 'books.txt'.
+     */
 
      void loadMediaFromFile() {
         mediaList.clear();
@@ -379,6 +435,10 @@ public class UserController {
         bookTable.refresh();
     }
 
+     /**
+      * Saves all media data to 'books.txt'.
+      */
+     
      void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Media m : mediaList) {
@@ -389,6 +449,10 @@ public class UserController {
             e.printStackTrace();
         }
     }
+     
+     /**
+      * Reloads books and checks for overdue items.
+      */
 
      void reloadBooks() {
         loadMediaFromFile();
@@ -396,13 +460,15 @@ public class UserController {
         checkOverdueAndNotify();
     }
 
-    // ====================== فحص الأوفر ديو + إرسال إيميل =======================
+     /**
+      * Checks for overdue items belonging to the current user and sends notifications.
+      */
 
      void checkOverdueAndNotify() {
         if (accountUsername == null || membershipType == null) return;
         if (accountEmail == null || accountEmail.isEmpty()) return;
 
-        // لو حابة من هون كمان يروح إيميل لما تعملي Reload بعد ما تعدلي التاريخ في الملف:
+        
         for (Media m : mediaList) {
             if (accountUsername.equals(m.getBorrowedBy()) && m.isOverdue()) {
                 m.calculateFine(membershipType);

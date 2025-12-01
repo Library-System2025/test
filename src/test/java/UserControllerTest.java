@@ -11,6 +11,14 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Integration tests for the UserController.
+ * Verifies borrowing, returning, and fine payment logic.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class UserControllerTest {
 
     @BeforeAll
@@ -33,7 +41,7 @@ public class UserControllerTest {
     private TableColumn<Media, String> dueDateColumn;
     private TableColumn<Media, Double> fineColumn;
 
-    // ==== Helpers عامّة لنعِد الحقول الخاصة ونقرأها ====
+    
 
     private void injectField(String name, Object value) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
@@ -58,7 +66,7 @@ public class UserControllerTest {
     void setUp() throws Exception {
         controller = new UserController();
 
-        // ننضف books.txt عشان ما نتعلّق ببيانات قديمة
+        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
 
@@ -90,14 +98,14 @@ public class UserControllerTest {
         injectField("dueDateColumn", dueDateColumn);
         injectField("fineColumn", fineColumn);
 
-        // نجهز mediaList ونربط الجدول
+        
         ObservableList<Media> mediaList = FXCollections.observableArrayList();
         injectField("mediaList", mediaList);
 
-        // نستدعي initialize() يدويًا عشان يربط الأعمدة والـ cell factories
+        
         controller.initialize();
 
-        // نعيّن اسم المستخدم والمembership مباشرة عبر reflection
+        
         setPrivate("accountUsername", "u1");
         setPrivate("membershipType", "Silver");
         setPrivate("accountEmail", "u1@mail.com");
@@ -147,12 +155,12 @@ public class UserControllerTest {
     void testHandleBorrowBook_blockedWhenUnpaidFinesExist() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
 
-        // عنصر فيه غرامة لم تُدفع لنفس المستخدم
+        
         Media owed = new Book("Old Loan", "A", "X",
                 "Overdue", "2025-11-01", 5.0, "u1", 0.0);
         mediaList.add(owed);
 
-        // عنصر متاح
+        
         Media available = new Book("Clean Code", "Robert Martin", "111",
                 "Available", "", 0.0, "", 0.0);
         mediaList.add(available);
@@ -226,7 +234,7 @@ public class UserControllerTest {
     void testHandlePayFine_fullPayment_returnsItem() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
 
-        // يوم واحد تأخير، غرامة 1.0، دفعة 1.0 → الغرامة تصير 0 ويعمل returnMedia
+        
         String yesterday = LocalDate.now().minusDays(1)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
@@ -274,7 +282,7 @@ public class UserControllerTest {
     void testHandleReturnBook_success_whenNoFine() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
 
-        // dueDate في المستقبل → مش متأخر، calculateFine رح تخلي fine = 0
+        
         String future = LocalDate.now().plusDays(3)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 

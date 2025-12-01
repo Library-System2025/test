@@ -11,16 +11,24 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controller class for the Librarian Dashboard.
+ * Handles borrowing and returning books/CDs and viewing library items.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class LibrarianController {
     
-    // 🧩 عناصر الواجهة
+    
     @FXML private Label welcomeLabel;
     @FXML private TextField searchField;
     @FXML private Label infoLabel;
     
-    // ✅ الجدول يتعامل مع Media
+     
     @FXML private TableView<Media> bookTable; 
-    @FXML private TableColumn<Media, String> typeColumn; // ✅ عمود النوع
+    @FXML private TableColumn<Media, String> typeColumn; 
     @FXML private TableColumn<Media, String> titleColumn;
     @FXML private TableColumn<Media, String> authorColumn;
     @FXML private TableColumn<Media, String> isbnColumn;
@@ -32,9 +40,14 @@ public class LibrarianController {
     private static final String FILE_PATH = "books.txt";
     private String accountUsername;
 
+    /**
+     * Initializes the controller class.
+     * Sets up table columns, loads data, and configures row coloring based on status.
+     */
+    
     @FXML
     public void initialize() {
-        // 1. ربط الأعمدة (لاحظ mediaType)
+        
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
@@ -46,16 +59,16 @@ public class LibrarianController {
         bookTable.setItems(mediaList);
         loadMediaFromFile();
 
-        // 2. تلوين الصفوف حسب الحالة
+        
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
                 super.updateItem(item, empty);
                 if (item != null && !empty) {
                     switch (item.getStatus()) {
-                        case "Available": setStyle("-fx-background-color: #d4edda;"); break; // أخضر
-                        case "Borrowed": setStyle("-fx-background-color: #fff3cd;"); break; // أصفر
-                        case "Overdue": setStyle("-fx-background-color: #f8d7da;"); break; // أحمر
+                        case "Available": setStyle("-fx-background-color: #d4edda;"); break; 
+                        case "Borrowed": setStyle("-fx-background-color: #fff3cd;"); break; 
+                        case "Overdue": setStyle("-fx-background-color: #f8d7da;"); break; 
                         default: setStyle(""); break;
                     }
                 } else { setStyle(""); }
@@ -63,6 +76,11 @@ public class LibrarianController {
         });
     }
 
+    /**
+     * Handles the logout action.
+     * Redirects to the login screen.
+     */
+    
     @FXML
     private void handleLogout() {
         try {
@@ -72,6 +90,11 @@ public class LibrarianController {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
+    /**
+     * Handles the borrowing process for a selected item.
+     * Checks if the item is available and updates its status.
+     */
+    
     @FXML
     private void handleBorrowBook() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
@@ -86,7 +109,7 @@ public class LibrarianController {
             return; 
         }
 
-        // Polymorphism: استدعاء borrow سيحدد المدة تلقائياً (7 للـ CD و 28 للكتاب)
+        
         selected.borrow(accountUsername); 
         
         saveAllMediaToFile();
@@ -94,6 +117,11 @@ public class LibrarianController {
         infoLabel.setText("✅ Borrowed successfully. Due date: " + selected.getDueDate());
     }
 
+    /**
+     * Handles the return process for a selected item.
+     * Updates the status to Available.
+     */
+    
     @FXML
     private void handleReturnBook() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
@@ -108,7 +136,7 @@ public class LibrarianController {
              return; 
         }
 
-        // ✅ التصحيح الأساسي هنا: استخدام returnMedia بدلاً من returnBook
+        
         selected.returnMedia();
         
         saveAllMediaToFile();
@@ -116,6 +144,10 @@ public class LibrarianController {
         infoLabel.setText("✅ Item returned successfully.");
     }
 
+    /**
+     * Filters the table based on the search keyword.
+     */
+    
     @FXML
      void handleSearch() {
         String keyword = searchField.getText().toLowerCase().trim();
@@ -133,13 +165,21 @@ public class LibrarianController {
         bookTable.setItems(filtered);
     }
 
+    /**
+     * Reloads data from the file and refreshes the table.
+     */
+    
     @FXML
      void handleReload() { 
         reloadBooks(); 
         infoLabel.setText("🔄 Data reloaded."); 
     }
 
-    // 📂 دالة التحميل المحدثة (9 أعمدة)
+    /**
+     * Loads media items from 'books.txt'.
+     * Parses lines to create Book or CD objects.
+     */
+    
     private void loadMediaFromFile() {
         mediaList.clear();
         File file = new File(FILE_PATH);
@@ -148,10 +188,10 @@ public class LibrarianController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // التقسيم لـ 9 أجزاء
+                
                 String[] parts = line.split(",", 9);
                 if (parts.length >= 4) {
-                    String type = parts[0].trim(); // النوع
+                    String type = parts[0].trim(); 
                     String title = parts[1].trim();
                     String author = parts[2].trim();
                     String isbn = parts[3].trim();
@@ -172,7 +212,7 @@ public class LibrarianController {
                         try { amountPaid = Double.parseDouble(parts[8]); } catch (Exception e) {}
                     }
 
-                    // إنشاء الكائن المناسب
+                    
                     Media item;
                     if (type.equalsIgnoreCase("CD")) {
                         item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
@@ -180,7 +220,7 @@ public class LibrarianController {
                         item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
                     }
 
-                    // تحديث حالة الغرامة (للعرض فقط)
+                    
                     if (item.isOverdue() && !borrowedBy.isEmpty()) {
                         String membership = getUserMembership(borrowedBy);
                         item.calculateFine(membership);
@@ -194,6 +234,10 @@ public class LibrarianController {
         if (bookTable != null) bookTable.refresh();
     }
 
+    /**
+     * Saves all media items to 'books.txt'.
+     */
+    
     private void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Media m : mediaList) { 
@@ -203,17 +247,31 @@ public class LibrarianController {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
+    /**
+     * Helper method to reload books.
+     */
+    
     private void reloadBooks() { 
         loadMediaFromFile(); 
         bookTable.refresh(); 
     }
+    
+    /**
+     * Sets the current username.
+     * @param username The username of the librarian.
+     */
 
     public void setCurrentUsername(String username) {
         this.accountUsername = username;
         if (welcomeLabel != null) welcomeLabel.setText("Welcome, " + username + " 👋");
     }
     
-    // دالة مساعدة لمعرفة نوع العضوية وحساب الغرامة بشكل دقيق
+    /**
+     * Helper to get user membership for fine calculation.
+     * @param username The username to check.
+     * @return Membership type (Silver/Gold).
+     */
+    
     private String getUserMembership(String username) {
         File file = new File("users.txt");
         if (!file.exists() || username.isEmpty()) return "Silver";

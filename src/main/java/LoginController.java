@@ -8,16 +8,27 @@ import javafx.stage.Stage;
 
 import java.io.*;
 
+/**
+ * Controller class for the Login Screen.
+ * Authenticates users and redirects them to the appropriate dashboard based on their role.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
 public class LoginController {
 
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Label errorMessage;
 
-    // ملف المستخدمين: username,password,role[,membership,email]
+    
     private static final String USERS_FILE = "users.txt";
 
-    // كلاس يساعدنا نخزن بيانات اليوزر بعد التحقق
+    /**
+     * Inner class to hold user information after validation.
+     */
+    
     private static class UserInfo {
         String role;
         String membership;
@@ -29,6 +40,13 @@ public class LoginController {
             this.email = email;
         }
     }
+    
+    /**
+     * Handles the login button click.
+     * Validates credentials and opens the corresponding dashboard.
+     * 
+     * @param event The action event.
+     */
 
     @FXML
      void handleLogin(ActionEvent event) {
@@ -50,9 +68,9 @@ public class LoginController {
 
         String role = userInfo.role;
         String membership = userInfo.membership;
-        String email = userInfo.email;   // قد يكون فارغ مع Admin/Librarian
+        String email = userInfo.email;   
 
-        // اختيار الـ FXML حسب الدور
+        
         String fxmlToLoad;
         switch (role) {
             case "Admin":
@@ -61,7 +79,7 @@ public class LoginController {
             case "Librarian":
                 fxmlToLoad = "librarian_home.fxml";
                 break;
-            default: // User
+            default: 
                 fxmlToLoad = "user_home.fxml";
                 break;
         }
@@ -71,7 +89,7 @@ public class LoginController {
             Parent dashboard = loader.load();
             if ("User".equals(role)) {
                 UserController controller = loader.getController();
-                controller.setCurrentUser(username, membership, email);  // بدل الدالتين القديمات
+                controller.setCurrentUser(username, membership, email);  
             }
  else if ("Admin".equals(role)) {
                 homepageController controller = loader.getController();
@@ -87,7 +105,7 @@ public class LoginController {
             newStage.setScene(new Scene(dashboard));
             newStage.show();
 
-            // تفريغ الحقول
+            
             usernameField.clear();
             passwordField.clear();
             errorMessage.setText("✅ " + role + " window opened successfully!");
@@ -100,11 +118,14 @@ public class LoginController {
     }
 
     /**
-     * التحقق من بيانات الدخول من ملف users.txt
-     * الصيغ المدعومة:
-     * m,123,Admin
-     * u1,1,User,Silver,manar@gmail.com
+     * Validates user credentials against the 'users.txt' file.
+     * Supported format: username,password,role[,membership,email]
+     * 
+     * @param username The entered username.
+     * @param password The entered password.
+     * @return UserInfo object if valid, null otherwise.
      */
+    
     private UserInfo validateCredentials(String username, String password) {
         File file = new File(USERS_FILE);
         if (!file.exists()) {
@@ -116,25 +137,25 @@ public class LoginController {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue;   // سطر فاضي
+                if (line.isEmpty()) continue;   
 
-                // نقسم بحد أقصى 5 أجزاء (username,password,role,membership,email)
+                
                 String[] parts = line.split(",", 5);
-                if (parts.length < 3) continue; // سطر ناقص
+                if (parts.length < 3) continue; 
 
                 String fileUser = parts[0].trim();
                 String filePass = parts[1].trim();
                 String fileRole = parts[2].trim();
 
-                // membership اختياري (لـ Admin/Librarian مش ضروري)
+                
                 String membership = (parts.length >= 4 && !parts[3].trim().isEmpty())
                         ? parts[3].trim()
                         : "Silver";
 
-                // email اختياري (موجود بس لليوزر العادي)
+                
                 String email = (parts.length == 5) ? parts[4].trim() : "";
 
-                // مقارنة اليوزر والباسورد
+                
                 if (username.equals(fileUser) && password.equals(filePass)) {
                     System.out.println("✅ Login matched line: " + line);
                     return new UserInfo(fileRole, membership, email);
@@ -144,6 +165,6 @@ public class LoginController {
             e.printStackTrace();
         }
 
-        return null; // ما لقينا يوزر مطابق
+        return null; 
     }
 }
