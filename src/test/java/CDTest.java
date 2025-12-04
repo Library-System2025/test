@@ -6,15 +6,14 @@ import org.junit.jupiter.api.Test;
  * Ensures constructors and overridden methods behave correctly.
  * 
  * @author Zainab
- * @version 1.0
+ * @version 1.1
  */
-
 public class CDTest {
 
-	/**
-     * Verifies that the short constructor initializes fields with default values.
+    /**
+     * Verifies that the short constructor initializes fields with default values
+     * and copyId = 1.
      */
-	
     @Test
     void testShortConstructor_initialValuesCorrect() {
         CD cd = new CD("Greatest Hits", "Artist X", "CD001");
@@ -28,12 +27,13 @@ public class CDTest {
         assertEquals(0.0, cd.getFineAmount());
         assertEquals("", cd.getBorrowedBy());
         assertEquals(0.0, cd.getAmountPaid());
+
+        assertEquals(1, cd.getCopyId());
     }
 
     /**
-     * Verifies that the full constructor correctly sets all fields.
+     * Verifies that the full constructor correctly sets all fields including copyId.
      */
-    
     @Test
     void testFullConstructor_setsAllValuesCorrectly() {
         CD cd = new CD(
@@ -44,7 +44,8 @@ public class CDTest {
                 "2025-12-25",
                 4.5,
                 "u1",
-                0.0
+                0.0,
+                3      
         );
 
         assertEquals("Top Mix", cd.getTitle());
@@ -55,12 +56,13 @@ public class CDTest {
         assertEquals(4.5, cd.getFineAmount());
         assertEquals("u1", cd.getBorrowedBy());
         assertEquals(0.0, cd.getAmountPaid());
+
+        assertEquals(3, cd.getCopyId());
     }
 
     /**
      * Verifies that the loan period for a CD is 7 days.
      */
-    
     @Test
     void testGetLoanPeriod_returns7Days() {
         CD cd = new CD("Test", "A", "1");
@@ -70,7 +72,6 @@ public class CDTest {
     /**
      * Verifies that the daily fine rate for a CD is $2.0.
      */
-    
     @Test
     void testGetBaseDailyFine_returns2Dollars() {
         CD cd = new CD("Test", "A", "1");
@@ -80,7 +81,6 @@ public class CDTest {
     /**
      * Verifies that the media type is correctly identified as "CD".
      */
-    
     @Test
     void testGetMediaType_returnsCD() {
         CD cd = new CD("Test", "A", "1");

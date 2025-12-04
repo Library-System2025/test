@@ -16,9 +16,8 @@ import java.time.format.DateTimeFormatter;
  * Verifies borrowing, returning, and fine payment logic.
  * 
  * @author Zainab
- * @version 1.0
+ * @version 1.1
  */
-
 public class UserControllerTest {
 
     @BeforeAll
@@ -40,8 +39,6 @@ public class UserControllerTest {
     private TableColumn<Media, String> statusColumn;
     private TableColumn<Media, String> dueDateColumn;
     private TableColumn<Media, Double> fineColumn;
-
-    
 
     private void injectField(String name, Object value) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
@@ -66,7 +63,6 @@ public class UserControllerTest {
     void setUp() throws Exception {
         controller = new UserController();
 
-        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
 
@@ -98,14 +94,11 @@ public class UserControllerTest {
         injectField("dueDateColumn", dueDateColumn);
         injectField("fineColumn", fineColumn);
 
-        
         ObservableList<Media> mediaList = FXCollections.observableArrayList();
         injectField("mediaList", mediaList);
 
-        
         controller.initialize();
 
-        
         setPrivate("accountUsername", "u1");
         setPrivate("membershipType", "Silver");
         setPrivate("accountEmail", "u1@mail.com");
@@ -123,7 +116,7 @@ public class UserControllerTest {
     void testHandleBorrowBook_itemNotAvailable_showsError() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Borrowed", "", 0.0, "other", 0.0);
+                "Borrowed", "", 0.0, "other", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -137,7 +130,7 @@ public class UserControllerTest {
     void testHandleBorrowBook_success_updatesStatusAndDueDate() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Available", "", 0.0, "", 0.0);
+                "Available", "", 0.0, "", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -155,14 +148,12 @@ public class UserControllerTest {
     void testHandleBorrowBook_blockedWhenUnpaidFinesExist() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
 
-        
         Media owed = new Book("Old Loan", "A", "X",
-                "Overdue", "2025-11-01", 5.0, "u1", 0.0);
+                "Overdue", "2025-11-01", 5.0, "u1", 0.0, 1);
         mediaList.add(owed);
 
-        
         Media available = new Book("Clean Code", "Robert Martin", "111",
-                "Available", "", 0.0, "", 0.0);
+                "Available", "", 0.0, "", 0.0, 1);
         mediaList.add(available);
 
         bookTable.setItems(mediaList);
@@ -172,6 +163,34 @@ public class UserControllerTest {
 
         assertEquals("❌ You have unpaid fines! Pay them first.", messageLabel.getText());
         assertEquals("Available", available.getStatus(), "Should not borrow when fines exist");
+    }
+
+    /**
+     * يتأكد إن اليوزر ما بقدر يستعير نسخة ثانية من نفس الكتاب (نفس ISBN)
+     * وهو أصلاً مستعير نسخة منه.
+     */
+    @Test
+    void testHandleBorrowBook_cannotBorrowSecondCopyOfSameBook() throws Exception {
+        ObservableList<Media> mediaList = getMediaList();
+
+        // نسخة أولى مستعارة من نفس اليوزر
+        Media copy1 = new Book("Clean Code", "Robert Martin", "111",
+                "Borrowed", "2025-12-20", 0.0, "u1", 0.0, 1);
+        mediaList.add(copy1);
+
+        // نسخة ثانية Available بنفس الـ ISBN
+        Media copy2 = new Book("Clean Code", "Robert Martin", "111",
+                "Available", "", 0.0, "", 0.0, 2);
+        mediaList.add(copy2);
+
+        bookTable.setItems(mediaList);
+        bookTable.getSelectionModel().select(copy2);
+
+        controller.handleBorrowBook();
+
+        assertEquals("❌ You already borrowed a copy of this item.", messageLabel.getText());
+        assertEquals("Available", copy2.getStatus(), "Second copy should remain available");
+        assertEquals("", copy2.getBorrowedBy());
     }
 
     // ===================== handlePayFine =====================
@@ -186,7 +205,7 @@ public class UserControllerTest {
     void testHandlePayFine_notUserItem_showsError() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Overdue", "2025-11-01", 5.0, "other", 0.0);
+                "Overdue", "2025-11-01", 5.0, "other", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -202,7 +221,7 @@ public class UserControllerTest {
     void testHandlePayFine_invalidNumber_showsError() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Overdue", "2025-11-01", 5.0, "u1", 0.0);
+                "Overdue", "2025-11-01", 5.0, "u1", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -218,7 +237,7 @@ public class UserControllerTest {
     void testHandlePayFine_exceedsFine_showsError() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Overdue", "2025-11-01", 5.0, "u1", 0.0);
+                "Overdue", "2025-11-01", 5.0, "u1", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -234,12 +253,11 @@ public class UserControllerTest {
     void testHandlePayFine_fullPayment_returnsItem() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
 
-        
         String yesterday = LocalDate.now().minusDays(1)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Borrowed", yesterday, 1.0, "u1", 0.0);
+                "Borrowed", yesterday, 1.0, "u1", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -268,7 +286,7 @@ public class UserControllerTest {
     void testHandleReturnBook_notUserItem_showsError() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Borrowed", "", 0.0, "other", 0.0);
+                "Borrowed", "", 0.0, "other", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);
@@ -282,12 +300,11 @@ public class UserControllerTest {
     void testHandleReturnBook_success_whenNoFine() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
 
-        
         String future = LocalDate.now().plusDays(3)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
         Media item = new Book("Clean Code", "Robert Martin", "111",
-                "Borrowed", future, 0.0, "u1", 0.0);
+                "Borrowed", future, 0.0, "u1", 0.0, 1);
         mediaList.add(item);
         bookTable.setItems(mediaList);
         bookTable.getSelectionModel().select(item);

@@ -61,6 +61,8 @@ public class homepageController {
     @FXML private TableColumn<Media, String> dueDateColumn;
     @FXML private TableColumn<Media, Double> fineColumn;
     @FXML private TableColumn<Media, String> borrowedByColumn;
+    @FXML private TableColumn<Media, Integer> copyIdColumn;
+
 
     
     @FXML private TableView<User> usersTable;
@@ -109,14 +111,15 @@ public class homepageController {
     @FXML
     public void initialize() {
         
-        typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
-        titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-        authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
-        isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-        dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
-        fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
-        borrowedByColumn.setCellValueFactory(new PropertyValueFactory<>("borrowedBy"));
+    	typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
+    	titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+    	authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
+    	isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+    	copyIdColumn.setCellValueFactory(new PropertyValueFactory<>("copyId")); 
+    	statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+    	dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
+    	fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
+    	borrowedByColumn.setCellValueFactory(new PropertyValueFactory<>("borrowedBy"));
 
         searchResultsTable.setItems(mediaList);
 
@@ -187,37 +190,86 @@ public class homepageController {
     
     @FXML
     void handleAddBook() {
-        String type = typeCombo.getValue();
-        String title = titleField.getText().trim();
+        String type   = typeCombo.getValue();
+        String title  = titleField.getText().trim();
         String author = authorField.getText().trim();
-        String isbn = isbnField.getText().trim();
+        String isbn   = isbnField.getText().trim();
 
         if (title.isEmpty() || author.isEmpty() || isbn.isEmpty() || type == null) {
             addBookMessage.setText("❗ Please fill all fields.");
             return;
         }
 
-        if (mediaMap.containsKey(isbn)) {
-            addBookMessage.setText("❌ Item with this ISBN exists.");
+        Media firstWithIsbn = null;
+        int sameIsbnCount = 0;
+
+        for (Media m : mediaList) {
+            if (isbn.equals(m.getIsbn())) {
+                sameIsbnCount++;
+                if (firstWithIsbn == null) {
+                    firstWithIsbn = m;
+                }
+            }
+        }
+
+        if (firstWithIsbn != null) {
+            boolean sameTitle  = firstWithIsbn.getTitle()  != null &&
+                                 firstWithIsbn.getTitle().equals(title);
+            boolean sameAuthor = firstWithIsbn.getAuthor() != null &&
+                                 firstWithIsbn.getAuthor().equals(author);
+
+            if (!sameTitle || !sameAuthor) {
+                addBookMessage.setText("❌ ISBN already exists but with different title/author!");
+                return;
+            }
+
+            int newCopyId = sameIsbnCount + 1;
+
+            Media newCopy;
+            if ("CD".equals(type)) {
+                newCopy = new CD(title, author, isbn,
+                        "Available", "", 0.0, "", 0.0, newCopyId);
+            } else {
+                newCopy = new Book(title, author, isbn,
+                        "Available", "", 0.0, "", 0.0, newCopyId);
+            }
+
+            mediaList.add(newCopy);
+            mediaMap.putIfAbsent(isbn, firstWithIsbn);
+            saveAllMediaToFile();
+
+            addBookMessage.setText("📚 Added NEW COPY (Copy #" + newCopyId + ") of this book.");
+
+            // امسحي الفيلدز هون
+            titleField.clear();
+            authorField.clear();
+            isbnField.clear();
             return;
         }
 
+        // أول نسخة
+        int copyId = 1;
         Media newItem;
         if ("CD".equals(type)) {
-            newItem = new CD(title, author, isbn);
+            newItem = new CD(title, author, isbn,
+                    "Available", "", 0.0, "", 0.0, copyId);
         } else {
-            newItem = new Book(title, author, isbn);
+            newItem = new Book(title, author, isbn,
+                    "Available", "", 0.0, "", 0.0, copyId);
         }
 
-        mediaMap.put(isbn, newItem);
         mediaList.add(newItem);
+        mediaMap.put(isbn, newItem);
         saveAllMediaToFile();
 
-        addBookMessage.setText("✅ " + type + " added successfully.");
+        addBookMessage.setText("📗 New Book Added (Copy #1).");
+
+        // وهون كمان
         titleField.clear();
         authorField.clear();
         isbnField.clear();
     }
+
 
     /**
      * Handles searching for media items based on criteria.
@@ -271,57 +323,68 @@ public class homepageController {
      
     private void loadMediaFromFile() {
         mediaList.clear();
-        mediaMap.clear();
+        mediaMap.clear(); 
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", 9);
-                if (parts.length >= 4) {
-                    String type = parts[0].trim();
-                    String title = parts[1].trim();
+
+                
+                String[] parts = line.split(",", 10);
+                if (parts.length >= 5) {
+                    String type   = parts[0].trim();
+                    String title  = parts[1].trim();
                     String author = parts[2].trim();
-                    String isbn = parts[3].trim();
-                    String status = (parts.length >= 5) ? parts[4].trim() : "Available";
-                    String dueDate = (parts.length >= 6) ? parts[5].trim() : "";
+                    String isbn   = parts[3].trim();
+
+                    int copyId = 1;
+                    try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
+
+                    String status  = (parts.length >= 6) ? parts[5].trim() : "Available";
+                    String dueDate = (parts.length >= 7) ? parts[6].trim() : "";
 
                     double fine = 0.0;
-                    try { if (parts.length >= 7) fine = Double.parseDouble(parts[6]); } catch (Exception e) {}
+                    try {
+                        if (parts.length >= 8) fine = Double.parseDouble(parts[7].trim());
+                    } catch (Exception e) {}
 
                     String borrowedBy = "";
-                    if (parts.length >= 8) {
-                        borrowedBy = parts[7].trim();
+                    if (parts.length >= 9) {
+                        borrowedBy = parts[8].trim();
                         if ("0.0".equals(borrowedBy)) borrowedBy = "";
                     }
 
                     double amountPaid = 0.0;
-                    if (parts.length == 9) {
-                        try { amountPaid = Double.parseDouble(parts[8]); } catch (Exception e) {}
+                    if (parts.length >= 10) {
+                        try { amountPaid = Double.parseDouble(parts[9].trim()); } catch (Exception e) {}
                     }
 
                     Media item;
                     if (type.equalsIgnoreCase("CD")) {
-                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
+                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     } else {
-                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
+                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     }
 
-                    
+                 
                     if (item.isOverdue() && !borrowedBy.isEmpty()) {
                         String membership = getUserMembership(borrowedBy);
                         item.calculateFine(membership);
                     }
 
                     mediaList.add(item);
-                    mediaMap.put(isbn, item);
+                    mediaMap.put(isbn, item); 
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         if (searchResultsTable != null) searchResultsTable.refresh();
     }
+
 
     /**
      * Saves all current media items to the 'books.txt' file.

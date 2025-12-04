@@ -35,6 +35,8 @@ public class LibrarianController {
     @FXML private TableColumn<Media, String> statusColumn;
     @FXML private TableColumn<Media, String> dueDateColumn;
     @FXML private TableColumn<Media, String> borrowedByColumn;
+    @FXML private TableColumn<Media, Integer> copyIdColumn;
+
 
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
     private static final String FILE_PATH = "books.txt";
@@ -55,6 +57,8 @@ public class LibrarianController {
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
         borrowedByColumn.setCellValueFactory(new PropertyValueFactory<>("borrowedBy"));
+        copyIdColumn.setCellValueFactory(new PropertyValueFactory<>("copyId"));
+
 
         bookTable.setItems(mediaList);
         loadMediaFromFile();
@@ -188,64 +192,59 @@ public class LibrarianController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                
-                String[] parts = line.split(",", 9);
-                if (parts.length >= 4) {
+
+                // هسه عنا 10 أعمدة
+                String[] parts = line.split(",", 10);
+                if (parts.length >= 5) {
                     String type = parts[0].trim(); 
                     String title = parts[1].trim();
                     String author = parts[2].trim();
                     String isbn = parts[3].trim();
-                    String status = (parts.length >= 5) ? parts[4].trim() : "Available";
-                    String dueDate = (parts.length >= 6) ? parts[5].trim() : "";
-                    
+
+                    int copyId = 1;
+                    try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
+
+                    String status   = (parts.length >= 6) ? parts[5].trim() : "Available";
+                    String dueDate  = (parts.length >= 7) ? parts[6].trim() : "";
+
                     double fine = 0.0;
-                    try { if(parts.length >= 7) fine = Double.parseDouble(parts[6]); } catch (Exception e) {}
-                    
+                    try { 
+                        if (parts.length >= 8) fine = Double.parseDouble(parts[7].trim()); 
+                    } catch (Exception e) {}
+
                     String borrowedBy = "";
-                    if (parts.length >= 8) {
-                        borrowedBy = parts[7].trim();
-                        if(borrowedBy.equals("0.0")) borrowedBy="";
-                    }
-                    
-                    double amountPaid = 0.0;
-                    if (parts.length == 9) {
-                        try { amountPaid = Double.parseDouble(parts[8]); } catch (Exception e) {}
+                    if (parts.length >= 9) {
+                        borrowedBy = parts[8].trim();
+                        if (borrowedBy.equals("0.0")) borrowedBy = "";
                     }
 
-                    
+                    double amountPaid = 0.0;
+                    if (parts.length >= 10) {
+                        try { amountPaid = Double.parseDouble(parts[9].trim()); } catch (Exception e) {}
+                    }
+
                     Media item;
                     if (type.equalsIgnoreCase("CD")) {
-                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
+                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     } else {
-                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
+                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     }
 
-                    
                     if (item.isOverdue() && !borrowedBy.isEmpty()) {
                         String membership = getUserMembership(borrowedBy);
                         item.calculateFine(membership);
                     }
-                    
+
                     mediaList.add(item);
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
-        
+        } catch (IOException e) { 
+            e.printStackTrace(); 
+        }
+
         if (bookTable != null) bookTable.refresh();
     }
 
-    /**
-     * Saves all media items to 'books.txt'.
-     */
-    
-    private void saveAllMediaToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Media m : mediaList) { 
-                writer.write(m.toFileFormat()); 
-                writer.newLine(); 
-            }
-        } catch (IOException e) { e.printStackTrace(); }
-    }
 
     /**
      * Helper method to reload books.
@@ -286,4 +285,16 @@ public class LibrarianController {
         } catch (IOException e) {}
         return "Silver";
     }
+    
+    private void saveAllMediaToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Media m : mediaList) { 
+                writer.write(m.toFileFormat()); 
+                writer.newLine(); 
+            }
+        } catch (IOException e) { 
+            e.printStackTrace(); 
+        }
+    }
+
 }

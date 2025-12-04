@@ -12,20 +12,17 @@ import java.time.format.DateTimeFormatter;
  * Covers borrow, return, overdue checks, and fine calculations using MockedStatic for time.
  * 
  * @author Zainab
- * @version 1.0
+ * @version 1.1
  */
-
 public class MediaTest {
 
     private static final DateTimeFormatter FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    // ---------- borrow() WITH TIME MOCK ----------
 
     @Test
     void testBorrow_setsBorrowedFieldsAndDueDate_withMockedTime() {
 
-        
         LocalDate fixedDate = LocalDate.of(2025, 1, 10);
 
         try (MockedStatic<Media> mocked = mockStatic(Media.class)) {
@@ -38,15 +35,15 @@ public class MediaTest {
             assertEquals("Borrowed", b.getStatus());
             assertEquals("u1", b.getBorrowedBy());
 
-            
             String expectedDue = fixedDate.plusDays(b.getLoanPeriod()).format(FMT);
             assertEquals(expectedDue, b.getDueDate());
             assertEquals(0.0, b.getFineAmount());
             assertEquals(0.0, b.getAmountPaid());
+
+            assertEquals(1, b.getCopyId());
         }
     }
 
-    // ---------- returnMedia() ----------
 
     @Test
     void testReturnMedia_resetsAllState() {
@@ -64,12 +61,10 @@ public class MediaTest {
         assertEquals(0.0, b.getAmountPaid());
     }
 
-    // ---------- isOverdue() WITH TIME MOCK ----------
 
     @Test
     void testIsOverdue_withMockedTime() {
 
-        
         LocalDate fixedNow = LocalDate.of(2025, 1, 20);
 
         try (MockedStatic<Media> mocked = mockStatic(Media.class)) {
@@ -77,17 +72,16 @@ public class MediaTest {
 
             Book b = new Book("Clean Code", "Robert Martin", "111");
 
-            
+            // not overdue
             b.setDueDate("2025-01-25");
             assertFalse(b.isOverdue());
 
-            
+            // overdue
             b.setDueDate("2025-01-10");
             assertTrue(b.isOverdue());
         }
     }
 
-    // ---------- calculateFine() NOT OVERDUE ----------
 
     @Test
     void testCalculateFine_notOverdue_setsZeroAndFixesStatus() {
@@ -99,7 +93,6 @@ public class MediaTest {
 
             Book b = new Book("Clean Code", "Robert Martin", "111");
 
-            
             b.setStatus("Overdue");
             b.setFineAmount(15.0);
             b.setDueDate("2025-01-20"); 
@@ -111,7 +104,6 @@ public class MediaTest {
         }
     }
 
-    // ---------- calculateFine() OVERDUE (Silver) ----------
 
     @Test
     void testCalculateFine_overdue_setsStatusOverdueAndNonNegativeFine() {
@@ -132,12 +124,10 @@ public class MediaTest {
         }
     }
 
-    // ---------- calculateFine() GOLD + amountPaid ----------
 
     @Test
     void testCalculateFine_goldMembership_usesDiscountAndAmountPaid() {
 
-        
         LocalDate fixedNow = LocalDate.of(2025, 1, 20);
 
         try (MockedStatic<Media> mocked = mockStatic(Media.class)) {
@@ -151,18 +141,17 @@ public class MediaTest {
                     "2025-01-16",
                     0.0,
                     "u1",
-                    1.0   
+                    1.0,  
+                    1     
             );
 
             b.calculateFine("Gold");
 
-            
             assertEquals("Overdue", b.getStatus());
             assertEquals(1.0, b.getFineAmount(), 0.0001);
         }
     }
 
-    // ---------- toFileFormat() ----------
 
     @Test
     void testToFileFormat_usesAllFieldsInCorrectOrder() {
@@ -174,19 +163,21 @@ public class MediaTest {
                 "2025-12-20",
                 3.5,
                 "u1",
-                1.0
+                1.0,
+                2     // copyId
         );
 
         String expected = String.join(",",
-                "Book",
-                "Clean Code",
-                "Robert Martin",
-                "111",
-                "Borrowed",
-                "2025-12-20",
-                "3.5",
-                "u1",
-                "1.0"
+                "Book",              // media type
+                "Clean Code",        // title
+                "Robert Martin",     // author
+                "111",               // isbn
+                "2",                 // copyId 
+                "Borrowed",          // status
+                "2025-12-20",        // dueDate
+                "3.5",               // fineAmount
+                "u1",                // borrowedBy
+                "1.0"                // amountPaid
         );
 
         assertEquals(expected, b.toFileFormat());

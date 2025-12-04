@@ -4,13 +4,13 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.*?>
 
-<!-- تأكد أن اسم الكنترولر صحيح كما هو عندك -->
+
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="homepageController"
             prefWidth="800" prefHeight="600">
 
-    <!-- 🔹 الشريط العلوي (ثابت للكل) -->
+  
     <top>
         <HBox spacing="15.0" alignment="CENTER_RIGHT" style="-fx-background-color: #f4f4f4; -fx-border-color: #ccc; -fx-border-width: 0 0 1 0;">
             <padding>
@@ -22,26 +22,26 @@
         </HBox>
     </top>
 
-    <!-- 🔹 المحتوى الرئيسي -->
+  
     <center>
         <TabPane tabClosingPolicy="UNAVAILABLE">
             <tabs>
                 
-                <!-- 📘 التبويب الأول: إدارة الكتب والوسائط -->
+               
                 <Tab text="📚 Media Management">
                     <VBox spacing="20.0">
                         <padding>
                             <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
 
-                        <!-- قسم إضافة كتاب/CD -->
+                       
                         <TitledPane text="Add New Item" expanded="true" collapsible="false">
                             <VBox spacing="10.0">
                                 <padding>
                                     <Insets top="10" right="10" bottom="10" left="10"/>
                                 </padding>
                                 <HBox spacing="10">
-                                    <!-- ✅ التعديل 1: إضافة قائمة اختيار النوع -->
+                                   
                                     <ComboBox fx:id="typeCombo" promptText="Type" prefWidth="90"/>
                                     
                                     <TextField fx:id="titleField" promptText="Title" HBox.hgrow="ALWAYS"/>
@@ -54,7 +54,7 @@
                             </VBox>
                         </TitledPane>
 
-                        <!-- قسم البحث والجدول -->
+                       
                         <TitledPane text="Search &amp; List Media" expanded="true" collapsible="false" VBox.vgrow="ALWAYS">
                             <VBox spacing="10.0">
                                 <padding>
@@ -71,28 +71,28 @@
                                 </HBox>
 
                                 <TableView fx:id="searchResultsTable" VBox.vgrow="ALWAYS">
-                                    <columns>
-                                        <!-- ✅ التعديل 2: إضافة عمود النوع -->
-                                        <TableColumn fx:id="typeColumn" text="Type" prefWidth="70"/>
-                                        
-                                        <TableColumn fx:id="titleColumn" text="Title" prefWidth="150"/>
-                                        <TableColumn fx:id="authorColumn" text="Author" prefWidth="130"/>
-                                        <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="100"/>
-                                        <TableColumn fx:id="statusColumn" text="Status" prefWidth="90"/>
-                                        <TableColumn fx:id="dueDateColumn" text="Due Date" prefWidth="100"/>
-                                        <TableColumn fx:id="fineColumn" text="Fine ($)" prefWidth="70"/>
-                                        <TableColumn fx:id="borrowedByColumn" text="Borrowed By" prefWidth="100"/>
-                                    </columns>
-                                    <columnResizePolicy>
-                                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                                    </columnResizePolicy>
-                                </TableView>
+    <columns>
+        <TableColumn fx:id="typeColumn" text="Type" prefWidth="70"/>
+        <TableColumn fx:id="titleColumn" text="Title" prefWidth="150"/>
+        <TableColumn fx:id="authorColumn" text="Author" prefWidth="130"/>
+        <TableColumn fx:id="isbnColumn" text="ISBN" prefWidth="100"/>
+        <TableColumn fx:id="copyIdColumn" text="Copy ID" prefWidth="80"/>                                        
+        <TableColumn fx:id="statusColumn" text="Status" prefWidth="90"/>
+        <TableColumn fx:id="dueDateColumn" text="Due Date" prefWidth="100"/>
+        <TableColumn fx:id="fineColumn" text="Fine ($)" prefWidth="70"/>
+        <TableColumn fx:id="borrowedByColumn" text="Borrowed By" prefWidth="100"/>
+    </columns>
+    <columnResizePolicy>
+        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+    </columnResizePolicy>
+</TableView>
+
                             </VBox>
                         </TitledPane>
                     </VBox>
                 </Tab>
 
-                <!-- 👤 التبويب الثاني: إدارة المستخدمين -->
+              
                 <Tab text="👤 Users Management">
                     <VBox spacing="15.0">
                         <padding>
@@ -116,12 +116,12 @@
     <Label text="* Select a user to manage their account or send reminders."
            textFill="gray"/>
 
-    <!-- زر إرسال التذكير -->
+   
     <Button text="📧 Send Reminder"
             onAction="#handleSendReminder"
             style="-fx-background-color: #5cb85c; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; cursor: hand;"/>
 
-    <!-- زر حذف اليوزر -->
+  
     <Button text="🗑 Unregister User"
             onAction="#handleDeleteUser"
             style="-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px; cursor: hand;"/>

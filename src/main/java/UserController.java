@@ -170,17 +170,30 @@ public class UserController {
             @Override
             protected void updateItem(Media item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setStyle("");
-                } else if (item.getBorrowedBy() != null && item.getBorrowedBy().equals(accountUsername)) {
-                    setStyle("-fx-background-color: #d0f0c0;");
-                } else if (item.getStatus().equals("Borrowed") || item.getStatus().equals("Overdue")) {
-                    setStyle("-fx-background-color: #ffd6d6;");
-                } else {
-                    setStyle("");
+                setStyle("");
+
+                if (empty || item == null) return;
+
+                String borrower = item.getBorrowedBy();
+                String status = item.getStatus();
+
+                if (borrower != null && borrower.equals(accountUsername)) {
+
+                    if (status.equals("Overdue")) {
+                        setStyle("-fx-background-color: #ffcccc;"); 
+                    } else {
+                        setStyle("-fx-background-color: #c8f7c5;");
+                    }
+                    return;
                 }
+
+                if (status.equals("Borrowed") || status.equals("Overdue")) {
+                    setStyle("-fx-background-color: #fff3cd;"); // أصفر
+                }
+
             }
         });
+
 
         
         dueDateColumn.setCellFactory(col -> new TableCell<Media, String>() {
@@ -238,7 +251,8 @@ public class UserController {
      */
     
     @FXML
-     void handleBorrowBook() {
+    void handleBorrowBook() {
+        // 1) أولاً: هل عنده غرامات غير مدفوعة؟
         for (Media m : mediaList) {
             if (m.getBorrowedBy() != null &&
                 m.getBorrowedBy().equals(accountUsername) &&
@@ -249,23 +263,36 @@ public class UserController {
             }
         }
 
+        // 2) لازم يكون فيه عنصر مختار
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             messageLabel.setText("⚠️ Please select an item to borrow.");
             return;
         }
 
+        // ⭐⭐ الجديد المهم: منع استعار نسخة ثانية من نفس الكتاب ⭐⭐
+        for (Media m : mediaList) {
+            if (m.getIsbn().equals(selected.getIsbn()) &&          // نفس الكتاب (نفس ISBN)
+                accountUsername.equals(m.getBorrowedBy())) {        // واليوزر نفسه مستعيره
+                messageLabel.setText("❌ You already borrowed a copy of this item.");
+                return;
+            }
+        }
+
+        // 3) هل النسخة المختارة متاحة أصلاً؟
         if (!selected.getStatus().equals("Available")) {
             messageLabel.setText("❌ This item is not available.");
             return;
         }
 
+        // 4) نكمّل الاستعارة
         selected.borrow(accountUsername);
 
         saveAllMediaToFile();
         reloadBooks();
         messageLabel.setText("✅ Borrowed successfully! Due date: " + selected.getDueDate());
     }
+
 
     /**
      * Handles fine payment.
@@ -378,7 +405,7 @@ public class UserController {
      * Loads media data from 'books.txt'.
      */
 
-     void loadMediaFromFile() {
+    void loadMediaFromFile() {
         mediaList.clear();
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
@@ -386,40 +413,45 @@ public class UserController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", 9);
-                if (parts.length >= 4) {
-                    String type = parts[0].trim();
-                    String title = parts[1].trim();
+                // type,title,author,isbn,copyId,status,dueDate,fine,borrowedBy,amountPaid
+                String[] parts = line.split(",", 10);
+                if (parts.length >= 5) {
+                    String type   = parts[0].trim();
+                    String title  = parts[1].trim();
                     String author = parts[2].trim();
-                    String isbn = parts[3].trim();
-                    String status = (parts.length >= 5) ? parts[4].trim() : "Available";
-                    String dueDate = (parts.length >= 6) ? parts[5].trim() : "";
+                    String isbn   = parts[3].trim();
+
+                    int copyId = 1;
+                    try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
+
+                    String status  = (parts.length >= 6) ? parts[5].trim() : "Available";
+                    String dueDate = (parts.length >= 7) ? parts[6].trim() : "";
 
                     double fine = 0.0;
-                    try { if (parts.length >= 7) fine = Double.parseDouble(parts[6]); }
-                    catch (Exception e) {}
+                    try {
+                        if (parts.length >= 8) fine = Double.parseDouble(parts[7].trim());
+                    } catch (Exception e) {}
 
                     String borrowedBy = "";
-                    if (parts.length >= 8) {
-                        borrowedBy = parts[7].trim();
+                    if (parts.length >= 9) {
+                        borrowedBy = parts[8].trim();
                         if (borrowedBy.equals("0.0")) borrowedBy = "";
                     }
 
                     double amountPaid = 0.0;
-                    if (parts.length == 9) {
-                        try { amountPaid = Double.parseDouble(parts[8]); }
-                        catch (Exception e) {}
+                    if (parts.length >= 10) {
+                        try { amountPaid = Double.parseDouble(parts[9].trim()); } catch (Exception e) {}
                     }
 
                     Media item;
                     if (type.equalsIgnoreCase("CD")) {
-                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
+                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     } else {
-                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid);
+                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     }
 
                     if (item.isOverdue()) {
-                        if (borrowedBy.equals(accountUsername)) {
+                        if (borrowedBy.equals(accountUsername) && membershipType != null) {
                             item.calculateFine(membershipType);
                         } else {
                             item.calculateFine("Silver");
@@ -434,6 +466,7 @@ public class UserController {
         }
         bookTable.refresh();
     }
+
 
      /**
       * Saves all media data to 'books.txt'.

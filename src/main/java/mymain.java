@@ -13,17 +13,7 @@ import javafx.stage.Stage;
 
 public class mymain extends Application {
 
-	 /**
-     * Adds two integers.
-     * 
-     * @param x The first number.
-     * @param y The second number.
-     * @return The sum of x and y.
-     */
 	
-    public int add(int x, int y) {
-        return x + y;
-    }
     
     /**
      * @param primaryStage 

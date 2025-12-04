@@ -26,6 +26,7 @@ public abstract class Media {
     protected double fineAmount;   
     protected String borrowedBy;
     protected double amountPaid;   
+    protected int copyId; 
 
     /**
      * Gets the current date. 
@@ -52,16 +53,19 @@ public abstract class Media {
      */
     
     public Media(String title, String author, String isbn, String status,
-                 String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
-        this.title = title;
-        this.author = author;
-        this.isbn = isbn;
-        this.status = status;
-        this.dueDate = dueDate;
-        this.fineAmount = fineAmount;
-        this.borrowedBy = borrowedBy;
-        this.amountPaid = amountPaid;
-    }
+            String dueDate, double fineAmount, String borrowedBy, double amountPaid,
+            int copyId) {
+   this.title = title;
+   this.author = author;
+   this.isbn = isbn;
+   this.status = status;
+   this.dueDate = dueDate;
+   this.fineAmount = fineAmount;
+   this.borrowedBy = borrowedBy;
+   this.amountPaid = amountPaid;
+   this.copyId = copyId;
+}
+
 
     /**
      * Returns the loan period for this specific media type.
@@ -91,6 +95,8 @@ public abstract class Media {
     public double getFineAmount() { return fineAmount; }
     public String getBorrowedBy() { return borrowedBy; }
     public double getAmountPaid() { return amountPaid; }
+    public int getCopyId()        { return copyId;}
+
 
     public void setStatus(String status)           { this.status = status; }
     public void setDueDate(String dueDate)         { this.dueDate = dueDate; }
@@ -231,6 +237,7 @@ public abstract class Media {
                 title,
                 author,
                 isbn,
+                String.valueOf(copyId),  
                 status,
                 dueDate,
                 String.valueOf(fineAmount),
@@ -238,4 +245,5 @@ public abstract class Media {
                 String.valueOf(amountPaid)
         );
     }
+
 }

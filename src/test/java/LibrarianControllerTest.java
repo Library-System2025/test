@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
  * Uses Reflection to access private FXML fields and methods.
  * 
  * @author Zainab
- * @version 1.0
+ * @version 1.1
  */
 
 public class LibrarianControllerTest {
@@ -27,8 +27,6 @@ public class LibrarianControllerTest {
     }
 
     private LibrarianController controller;
-
-   
 
     private void injectField(String name, Object value) throws Exception {
         Field f = LibrarianController.class.getDeclaredField(name);
@@ -52,7 +50,6 @@ public class LibrarianControllerTest {
     void setUp() throws Exception {
         controller = new LibrarianController();
 
-        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
         File users = new File("users.txt");
@@ -64,7 +61,6 @@ public class LibrarianControllerTest {
     /**
      * Verifies that attempting to borrow without selection shows a warning.
      */
-    
     @Test
     void testHandleBorrowBook_noSelection_showsWarning() throws Exception {
         TableView<Media> table = new TableView<>();
@@ -73,7 +69,6 @@ public class LibrarianControllerTest {
         injectField("bookTable", table);
         injectField("infoLabel", infoLabel);
 
-        
         invokePrivate("handleBorrowBook", new Class<?>[]{});   
 
         assertEquals("⚠️ Select an item to borrow.", infoLabel.getText());
@@ -82,7 +77,6 @@ public class LibrarianControllerTest {
     /**
      * Verifies that attempting to borrow an already borrowed item shows an error.
      */
-    
     @Test
     void testHandleBorrowBook_alreadyBorrowed_showsError() throws Exception {
         @SuppressWarnings("unchecked")
@@ -110,7 +104,6 @@ public class LibrarianControllerTest {
     /**
      * Verifies successful borrowing logic.
      */
-    
     @Test
     void testHandleBorrowBook_success_setsStatusAndBorrower() throws Exception {
         @SuppressWarnings("unchecked")
@@ -128,7 +121,6 @@ public class LibrarianControllerTest {
         injectField("bookTable", table);
         injectField("infoLabel", infoLabel);
 
-        
         controller.setCurrentUsername("lib1");
 
         invokePrivate("handleBorrowBook", new Class<?>[]{});
@@ -214,8 +206,8 @@ public class LibrarianControllerTest {
         mediaList.add(new Book("Effective Java", "Joshua Bloch", "222"));
 
         TableView<Media> table = new TableView<>();
-        table.setItems(FXCollections.observableArrayList()); 
-        TextField searchField = new TextField(""); 
+        table.setItems(FXCollections.observableArrayList());
+        TextField searchField = new TextField("");
 
         injectField("bookTable", table);
         injectField("searchField", searchField);
@@ -280,18 +272,18 @@ public class LibrarianControllerTest {
         assertEquals("Gold", membership1);
         assertEquals("Platinum", membership2);
     }
-    
+
     @Test
     void testInitialize_setsUpTableAndRowFactory() throws Exception {
-        
         TableView<Media> table = new TableView<>();
-        TableColumn<Media, String> typeCol = new TableColumn<>("Type");
-        TableColumn<Media, String> titleCol = new TableColumn<>("Title");
-        TableColumn<Media, String> authorCol = new TableColumn<>("Author");
-        TableColumn<Media, String> isbnCol = new TableColumn<>("ISBN");
-        TableColumn<Media, String> statusCol = new TableColumn<>("Status");
-        TableColumn<Media, String> dueDateCol = new TableColumn<>("Due");
+        TableColumn<Media, String> typeCol     = new TableColumn<>("Type");
+        TableColumn<Media, String> titleCol    = new TableColumn<>("Title");
+        TableColumn<Media, String> authorCol   = new TableColumn<>("Author");
+        TableColumn<Media, String> isbnCol     = new TableColumn<>("ISBN");
+        TableColumn<Media, String> statusCol   = new TableColumn<>("Status");
+        TableColumn<Media, String> dueDateCol  = new TableColumn<>("Due");
         TableColumn<Media, String> borrowedCol = new TableColumn<>("By");
+        TableColumn<Media, Integer> copyIdCol  = new TableColumn<>("CopyId");
 
         injectField("bookTable", table);
         injectField("typeColumn", typeCol);
@@ -301,22 +293,20 @@ public class LibrarianControllerTest {
         injectField("statusColumn", statusCol);
         injectField("dueDateColumn", dueDateCol);
         injectField("borrowedByColumn", borrowedCol);
+        injectField("copyIdColumn", copyIdCol);
 
-        
         controller.initialize();
 
-        
         assertNotNull(table.getItems());
     }
 
     @Test
     void testHandleReload_loadsFromFileAndUpdatesLabel() throws Exception {
-        
+        // فورمات جديد: type,title,author,isbn,copyId,status,dueDate,fine,borrowedBy,amountPaid
         try (PrintWriter out = new PrintWriter(new FileWriter("books.txt"))) {
-            out.println("Book,Clean Code,Robert Martin,111,Borrowed,2025-12-20,0.0,lib1,0.0");
+            out.println("Book,Clean Code,Robert Martin,111,1,Borrowed,2025-12-20,0.0,lib1,0.0");
         }
 
-        
         TableView<Media> table = new TableView<>();
         TableColumn<Media, String> typeCol     = new TableColumn<>("Type");
         TableColumn<Media, String> titleCol    = new TableColumn<>("Title");
@@ -325,10 +315,10 @@ public class LibrarianControllerTest {
         TableColumn<Media, String> statusCol   = new TableColumn<>("Status");
         TableColumn<Media, String> dueDateCol  = new TableColumn<>("Due");
         TableColumn<Media, String> borrowedCol = new TableColumn<>("By");
+        TableColumn<Media, Integer> copyIdCol  = new TableColumn<>("CopyId");
 
         Label infoLabel = new Label();
 
-        
         injectField("bookTable", table);
         injectField("typeColumn", typeCol);
         injectField("titleColumn", titleCol);
@@ -337,39 +327,33 @@ public class LibrarianControllerTest {
         injectField("statusColumn", statusCol);
         injectField("dueDateColumn", dueDateCol);
         injectField("borrowedByColumn", borrowedCol);
+        injectField("copyIdColumn", copyIdCol);
         injectField("infoLabel", infoLabel);
 
-        
         controller.initialize();
-
-        
         controller.handleReload();
 
-        
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList =
                 (ObservableList<Media>) getPrivateField("mediaList");
 
-        
         assertFalse(mediaList.isEmpty(), "mediaList should be loaded from file");
         assertEquals(mediaList, table.getItems(), "table items should be same list");
         assertEquals("🔄 Data reloaded.", infoLabel.getText());
+        assertEquals(1, ((Book) mediaList.get(0)).getCopyId());
     }
 
-    
     @Test
     void testLoadMediaFromFile_overdueBook_calculatesFine() throws Exception {
-        
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("lib1,123,User,Gold,lib1@mail.com");
         }
 
-        
+        // overdue + format الجديد
         try (PrintWriter out = new PrintWriter(new FileWriter("books.txt"))) {
-            out.println("Book,Clean Code,Robert Martin,111,Borrowed,2024-01-01,0.0,lib1,0.0");
+            out.println("Book,Clean Code,Robert Martin,111,1,Borrowed,2024-01-01,0.0,lib1,0.0");
         }
 
-        
         TableView<Media> table = new TableView<>();
         TableColumn<Media, String> typeCol     = new TableColumn<>("Type");
         TableColumn<Media, String> titleCol    = new TableColumn<>("Title");
@@ -378,6 +362,7 @@ public class LibrarianControllerTest {
         TableColumn<Media, String> statusCol   = new TableColumn<>("Status");
         TableColumn<Media, String> dueDateCol  = new TableColumn<>("Due");
         TableColumn<Media, String> borrowedCol = new TableColumn<>("By");
+        TableColumn<Media, Integer> copyIdCol  = new TableColumn<>("CopyId");
 
         injectField("bookTable", table);
         injectField("typeColumn", typeCol);
@@ -387,11 +372,10 @@ public class LibrarianControllerTest {
         injectField("statusColumn", statusCol);
         injectField("dueDateColumn", dueDateCol);
         injectField("borrowedByColumn", borrowedCol);
+        injectField("copyIdColumn", copyIdCol);
 
-        
         controller.initialize();
 
-        
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList =
                 (ObservableList<Media>) getPrivateField("mediaList");
@@ -399,10 +383,9 @@ public class LibrarianControllerTest {
         assertEquals(1, mediaList.size());
         Media m = mediaList.get(0);
 
-        
         assertEquals("111", m.getIsbn());
-        assertEquals("Overdue", m.getStatus());        
+        assertEquals("Overdue", m.getStatus());
         assertTrue(m.getFineAmount() > 0.0, "fineAmount should be > 0 for overdue item");
+        assertEquals(1, ((Book) m).getCopyId());
     }
-
 }

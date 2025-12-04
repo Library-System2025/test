@@ -23,10 +23,10 @@ public class CD extends Media {
      * @param amountPaid The amount paid for fines.
      */
 	
-    public CD(String title, String author, String isbn, String status, String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
-        super(title, author, isbn, status, dueDate, fineAmount, borrowedBy, amountPaid);
-    }
-    
+	public CD(String title, String author, String isbn, String status, String dueDate,
+            double fineAmount, String borrowedBy, double amountPaid, int copyId) {
+      super(title, author, isbn, status, dueDate, fineAmount, borrowedBy, amountPaid, copyId);
+  }
     /**
      * Constructor to create a new CD with basic details.
      * Used when adding a new CD to the library.
@@ -36,8 +36,12 @@ public class CD extends Media {
      * @param isbn The ISBN/ID of the CD.
      */
 
-    public CD(String title, String author, String isbn) {
-         super(title, author, isbn, "Available", "", 0.0, "", 0.0);
+	public CD(String title, String author, String isbn) {
+        super(title, author, isbn, "Available", "", 0.0, "", 0.0, 1);
+    }
+
+	public CD(String title, String author, String isbn, int copyId) {
+        super(title, author, isbn, "Available", "", 0.0, "", 0.0, copyId);
     }
 
     /**

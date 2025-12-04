@@ -22,9 +22,11 @@ public class Book extends Media {
      * @param borrowedBy The user who borrowed the book.
      * @param amountPaid The amount paid for fines.
      */
-    public Book(String title, String author, String isbn, String status, String dueDate, double fineAmount, String borrowedBy, double amountPaid) {
-        super(title, author, isbn, status, dueDate, fineAmount, borrowedBy, amountPaid);
-    }
+	public Book(String title, String author, String isbn, String status, String dueDate,
+            double fineAmount, String borrowedBy, double amountPaid, int copyId) {
+    super(title, author, isbn, status, dueDate, fineAmount, borrowedBy, amountPaid, copyId);
+}
+
     
     /**
      * Constructor to create a new Book with basic details.
@@ -36,8 +38,13 @@ public class Book extends Media {
      */
     
     public Book(String title, String author, String isbn) {
-         super(title, author, isbn, "Available", "", 0.0, "", 0.0);
+        super(title, author, isbn, "Available", "", 0.0, "", 0.0, 1);
     }
+    
+    public Book(String title, String author, String isbn, int copyId) {
+        super(title, author, isbn, "Available", "", 0.0, "", 0.0, copyId);
+    }
+
 
     /** 
      * Gets the loan period for a book.
