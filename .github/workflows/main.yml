@@ -38,16 +38,8 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build with tests (JaCoCo)
-        run: mvn -B clean verify
-
-      - name: Run SonarCloud analysis
+      - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=Library-System2025_test \
-            -Dsonar.organization=library-system2025 \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+        run: mvn -B jacoco:prepare-agent verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar jacoco:report -Dsonar.projectKey=Library-System2025_test -Dsonar.organization=library-system2025 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }}
