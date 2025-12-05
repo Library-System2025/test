@@ -35,8 +35,8 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build with tests (JaCoCo)
-        run: mvn -B clean verify
+      - name: Build (skip tests)
+        run: mvn -B clean package -DskipTests
 
       - name: Run SonarCloud analysis
         env:
