@@ -13,10 +13,10 @@ import java.lang.reflect.Method;
 
 /**
  * Integration tests for the HomepageController.
- * Includes reflection-based tests for UI styling logic.
+ * Utilizes reflection to test UI logic, file operations, and data management.
  * 
  * @author Zainab
- * @version 1.4
+ * @version 1.6
  */
 public class HomepageControllerTest {
 
@@ -29,7 +29,7 @@ public class HomepageControllerTest {
     private homepageController controller;
 
     /**
-     * Helper method to inject values into private fields.
+     * Helper method to inject values into private fields using Reflection.
      */
     private void injectField(String name, Object value) throws Exception {
         Field f = homepageController.class.getDeclaredField(name);
@@ -38,7 +38,7 @@ public class HomepageControllerTest {
     }
 
     /**
-     * Helper method to get private fields.
+     * Helper method to get values from private fields using Reflection.
      */
     private Object getPrivateField(String name) throws Exception {
         Field f = homepageController.class.getDeclaredField(name);
@@ -47,18 +47,22 @@ public class HomepageControllerTest {
     }
 
     /**
-     * Sets up the test environment and initializes UI components.
+     * Sets up the test environment, injects all necessary UI components,
+     * and initializes the controller before each test.
      */
     @BeforeEach
     void setUp() throws Exception {
         controller = new homepageController();
+
         injectField("mediaList", FXCollections.observableArrayList());
         injectField("usersList", FXCollections.observableArrayList());
+        
         injectField("addBookMessage", new Label());
         injectField("welcomeLabel", new Label());
         injectField("titleField", new TextField());
         injectField("authorField", new TextField());
         injectField("isbnField", new TextField());
+        injectField("searchField", new TextField());
         
         ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().select("Book");
@@ -80,6 +84,12 @@ public class HomepageControllerTest {
         injectField("dueDateColumn", new TableColumn<>("Due"));
         injectField("fineColumn", new TableColumn<>("Fine"));
         injectField("borrowedByColumn", new TableColumn<>("By"));
+
+        TableView<User> usersTable = new TableView<>();
+        injectField("usersTable", usersTable);
+        injectField("colUsername", new TableColumn<>("Username"));
+        injectField("colRole", new TableColumn<>("Role"));
+        injectField("colMembership", new TableColumn<>("Membership"));
         
         controller.initialize();
 
@@ -96,7 +106,8 @@ public class HomepageControllerTest {
     }
 
     /**
-     * Verifies the RowFactory logic for row coloring in the admin dashboard.
+     * Verifies the RowFactory logic for row coloring in the table view.
+     * Uses reflection to invoke the protected updateItem method.
      */
     @Test
     void testRowFactory_Coloring() throws Exception {
@@ -116,7 +127,7 @@ public class HomepageControllerTest {
     }
 
     /**
-     * Verifies adding a valid book.
+     * Verifies that a valid book is added successfully to the list.
      */
     @Test
     void testHandleAddBook_ValidBook() throws Exception {
@@ -132,7 +143,7 @@ public class HomepageControllerTest {
     }
 
     /**
-     * Verifies search functionality filtering.
+     * Verifies that the search functionality correctly filters the media list.
      */
     @Test
     void testHandleSearch_Filter() throws Exception {
@@ -151,12 +162,31 @@ public class HomepageControllerTest {
     }
     
     /**
-     * Verifies reloading data functionality.
+     * Verifies that the reload method refreshes data from the file.
      */
     @Test
     void testHandleReload() throws Exception {
         controller.handleReload();
         Label msg = (Label) getPrivateField("addBookMessage");
         assertEquals("🔄 Reloaded.", msg.getText());
+    }
+    
+    /**
+     * Verifies successful deletion of a user from the list.
+     */
+    @Test
+    void testHandleDeleteUser_Success() throws Exception {
+        @SuppressWarnings("unchecked")
+        ObservableList<User> usersList = (ObservableList<User>) getPrivateField("usersList");
+        User u = new User("u1", "1", "User", "Gold");
+        usersList.add(u);
+        
+        TableView<User> table = (TableView<User>) getPrivateField("usersTable");
+        table.setItems(usersList);
+        table.getSelectionModel().select(u);
+        
+        controller.handleDeleteUser();
+        
+        assertTrue(usersList.isEmpty());
     }
 }

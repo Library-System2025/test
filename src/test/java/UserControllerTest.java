@@ -17,7 +17,7 @@ import java.time.LocalDate;
  * Includes reflection-based tests for UI styling logic to maximize coverage.
  * 
  * @author Zainab
- * @version 1.7
+ * @version 1.8
  */
 public class UserControllerTest {
 
@@ -30,7 +30,7 @@ public class UserControllerTest {
     private UserController controller;
 
     /**
-     * Helper method to inject values into private fields.
+     * Helper method to inject values into private fields using Reflection.
      */
     private void injectField(String name, Object value) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
@@ -39,7 +39,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Helper method to retrieve the media list.
+     * Helper method to retrieve the media list from the controller.
      */
     @SuppressWarnings("unchecked")
     private ObservableList<Media> getMediaList() throws Exception {
@@ -49,7 +49,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Helper method to set private fields.
+     * Helper method to set private fields using Reflection.
      */
     private void setPrivate(String name, Object value) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
@@ -58,7 +58,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Helper method to get private fields.
+     * Helper method to get values from private fields using Reflection.
      */
     private Object getPrivateField(String name) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
@@ -67,7 +67,8 @@ public class UserControllerTest {
     }
 
     /**
-     * Sets up the test environment and initializes UI components.
+     * Sets up the test environment, initializes UI components,
+     * and sets default user context before each test.
      */
     @BeforeEach
     void setUp() throws Exception {
@@ -102,7 +103,7 @@ public class UserControllerTest {
 
     /**
      * Verifies the RowFactory logic for row coloring based on item status.
-     * Uses Cell.class to find the protected updateItem method.
+     * Uses reflection on Cell class to invoke updateItem.
      */
     @Test
     void testRowFactory_ColoringLogic() throws Exception {
@@ -140,7 +141,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies that borrowing is blocked by unpaid fines.
+     * Verifies that borrowing is blocked when the user has unpaid fines.
      */
     @Test
     void testHandleBorrowBook_BlockedByFines() throws Exception {
@@ -160,7 +161,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies full fine payment logic.
+     * Verifies that paying the full fine returns the item to available status.
      */
     @Test
     void testHandlePayFine_FullPayment() throws Exception {
@@ -181,7 +182,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies successful book return.
+     * Verifies successful return of a borrowed item.
      */
     @Test
     void testHandleReturnBook_Success() throws Exception {
@@ -198,7 +199,8 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies logic when returning an overdue book (email cleared).
+     * Verifies that returning an overdue item is blocked.
+     * Clears email to prevent runtime errors during notification attempt.
      */
     @Test
     void testHandleReturnBook_OverdueBlocked() throws Exception {
@@ -218,7 +220,7 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies setting current user updates UI.
+     * Verifies that setting the current user updates the welcome label.
      */
     @Test
     void testSetCurrentUser() throws Exception {
