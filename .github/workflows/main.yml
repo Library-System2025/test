@@ -43,7 +43,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -B clean verify jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum mvn -B clean verify jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
           -Dsonar.projectKey=Library-System2025_test \
           -Dsonar.organization=library-system2025 \
           -Dsonar.host.url=https://sonarcloud.io \
