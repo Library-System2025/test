@@ -17,7 +17,7 @@ import java.time.LocalDate;
  * Includes reflection-based tests for UI styling logic to maximize coverage.
  * 
  * @author Zainab
- * @version 1.6
+ * @version 1.7
  */
 public class UserControllerTest {
 
@@ -102,6 +102,7 @@ public class UserControllerTest {
 
     /**
      * Verifies the RowFactory logic for row coloring based on item status.
+     * Uses Cell.class to find the protected updateItem method.
      */
     @Test
     void testRowFactory_ColoringLogic() throws Exception {
@@ -112,7 +113,7 @@ public class UserControllerTest {
         
         TableRow<Media> row = factory.call(table);
         
-        Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
+        Method updateItem = javafx.scene.control.Cell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
         updateItem.setAccessible(true);
         
         Media overdueItem = new Book("A", "B", "1", "Overdue", "", 0.0, "u1", 0.0, 1);

@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
  * Includes reflection-based tests for UI styling logic.
  * 
  * @author Zainab
- * @version 1.3
+ * @version 1.4
  */
 public class HomepageControllerTest {
 
@@ -64,6 +64,10 @@ public class HomepageControllerTest {
         typeCombo.getSelectionModel().select("Book");
         injectField("typeCombo", typeCombo);
         
+        ComboBox<String> searchByCombo = new ComboBox<>(FXCollections.observableArrayList("All", "Title"));
+        searchByCombo.getSelectionModel().select("All");
+        injectField("searchByCombo", searchByCombo);
+        
         TableView<Media> searchResultsTable = new TableView<>();
         injectField("searchResultsTable", searchResultsTable);
         
@@ -102,7 +106,7 @@ public class HomepageControllerTest {
         assertNotNull(factory);
         
         TableRow<Media> row = factory.call(table);
-        Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
+        Method updateItem = javafx.scene.control.Cell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
         updateItem.setAccessible(true);
         
         updateItem.invoke(row, new Book("A","B","1","Available","",0.0,"",0.0,1), false);
@@ -137,9 +141,8 @@ public class HomepageControllerTest {
         mediaList.add(new Book("Java", "Author A", "111"));
         
         injectField("searchField", new TextField("Java"));
-        ComboBox<String> searchBy = new ComboBox<>(FXCollections.observableArrayList("Title"));
+        ComboBox<String> searchBy = (ComboBox<String>) getPrivateField("searchByCombo");
         searchBy.getSelectionModel().select("Title");
-        injectField("searchByCombo", searchBy);
 
         controller.handleSearch();
         
