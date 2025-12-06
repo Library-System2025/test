@@ -10,51 +10,55 @@ import org.junit.jupiter.api.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
 
 /**
- * Integration tests for the HomepageController.
- * Utilizes reflection to test UI logic, file operations, and data management.
- * 
+ * Integration tests for the {@link homepageController} class.
+ * <p>
+ * This class utilizes Java Reflection to access private fields and methods
+ * within the controller, allowing for comprehensive white-box testing of
+ * UI logic, data persistence, and validation rules without relying on the
+ * full JavaFX application lifecycle.
+ * </p>
+ *
  * @author Zainab
- * @version 1.6
+ * @version 2.0
  */
 public class HomepageControllerTest {
-
-    @BeforeAll
-    static void initToolkit() {
-        try { Platform.startup(() -> {}); }
-        catch (IllegalStateException e) { }
-    }
 
     private homepageController controller;
 
     /**
-     * Helper method to inject values into private fields using Reflection.
+     * Initializes the JavaFX toolkit environment.
+     * This is required to instantiate JavaFX controls like Labels and TableViews
+     * outside of a standard Application start method.
      */
-    private void injectField(String name, Object value) throws Exception {
-        Field f = homepageController.class.getDeclaredField(name);
-        f.setAccessible(true);
-        f.set(controller, value);
+    @BeforeAll
+    static void initToolkit() {
+        try {
+            Platform.startup(() -> {});
+        } catch (IllegalStateException e) {
+            // Toolkit is already initialized
+        }
     }
 
     /**
-     * Helper method to get values from private fields using Reflection.
-     */
-    private Object getPrivateField(String name) throws Exception {
-        Field f = homepageController.class.getDeclaredField(name);
-        f.setAccessible(true);
-        return f.get(controller);
-    }
-
-    /**
-     * Sets up the test environment, injects all necessary UI components,
-     * and initializes the controller before each test.
+     * Sets up the test environment before each test execution.
+     * <p>
+     * This method initializes the controller, injects mock UI components using reflection,
+     * and clears any existing data files to ensure test isolation.
+     * </p>
+     *
+     * @throws Exception if reflection access fails.
      */
     @BeforeEach
     void setUp() throws Exception {
         controller = new homepageController();
 
         injectField("mediaList", FXCollections.observableArrayList());
+        injectField("mediaMap", new java.util.HashMap<String, Media>());
         injectField("usersList", FXCollections.observableArrayList());
         
         injectField("addBookMessage", new Label());
@@ -68,7 +72,7 @@ public class HomepageControllerTest {
         typeCombo.getSelectionModel().select("Book");
         injectField("typeCombo", typeCombo);
         
-        ComboBox<String> searchByCombo = new ComboBox<>(FXCollections.observableArrayList("All", "Title"));
+        ComboBox<String> searchByCombo = new ComboBox<>(FXCollections.observableArrayList("All", "Title", "Author", "ISBN"));
         searchByCombo.getSelectionModel().select("All");
         injectField("searchByCombo", searchByCombo);
         
@@ -91,28 +95,60 @@ public class HomepageControllerTest {
         injectField("colRole", new TableColumn<>("Role"));
         injectField("colMembership", new TableColumn<>("Membership"));
         
+        Files.deleteIfExists(Paths.get("books.txt"));
+        Files.deleteIfExists(Paths.get("users.txt"));
+
         controller.initialize();
-
-        File books = new File("books.txt");
-        if (books.exists()) books.delete();
-        File users = new File("users.txt");
-        if (users.exists()) users.delete();
-    }
-
-    @AfterEach
-    void tearDown() {
-        new File("books.txt").delete();
-        new File("users.txt").delete();
     }
 
     /**
-     * Verifies the RowFactory logic for row coloring in the table view.
-     * Uses reflection to invoke the protected updateItem method.
+     * Cleans up resources after each test execution.
+     * Deletes temporary files created during testing.
+     *
+     * @throws IOException if file deletion fails.
+     */
+    @AfterEach
+    void tearDown() throws IOException {
+        Files.deleteIfExists(Paths.get("books.txt"));
+        Files.deleteIfExists(Paths.get("users.txt"));
+    }
+
+    /**
+     * Injects a value into a private field of the controller using reflection.
+     *
+     * @param name  the name of the field.
+     * @param value the value to inject.
+     * @throws Exception if the field cannot be accessed.
+     */
+    private void injectField(String name, Object value) throws Exception {
+        Field f = homepageController.class.getDeclaredField(name);
+        f.setAccessible(true);
+        f.set(controller, value);
+    }
+
+    /**
+     * Retrieves the value of a private field from the controller using reflection.
+     *
+     * @param name the name of the field.
+     * @return the value of the field.
+     * @throws Exception if the field cannot be accessed.
+     */
+    private Object getPrivateField(String name) throws Exception {
+        Field f = homepageController.class.getDeclaredField(name);
+        f.setAccessible(true);
+        return f.get(controller);
+    }
+
+    /**
+     * Verifies that the TableView RowFactory correctly styles rows based on media status.
+     * Checks logic for 'Available', 'Borrowed', and 'Overdue' statuses.
+     *
+     * @throws Exception if reflection or method invocation fails.
      */
     @Test
+    @SuppressWarnings("unchecked")
     void testRowFactory_Coloring() throws Exception {
         TableView<Media> table = (TableView<Media>) getPrivateField("searchResultsTable");
-        
         Callback<TableView<Media>, TableRow<Media>> factory = table.getRowFactory();
         assertNotNull(factory);
         
@@ -121,72 +157,278 @@ public class HomepageControllerTest {
         updateItem.setAccessible(true);
         
         updateItem.invoke(row, new Book("A","B","1","Available","",0.0,"",0.0,1), false);
+        assertEquals("-fx-background-color: #d0f0c0;", row.getStyle());
+
         updateItem.invoke(row, new Book("A","B","1","Borrowed","",0.0,"",0.0,1), false);
+        assertEquals("-fx-background-color: #fff9c4;", row.getStyle());
+
         updateItem.invoke(row, new Book("A","B","1","Overdue","",0.0,"",0.0,1), false);
+        assertEquals("-fx-background-color: #ffcdd2;", row.getStyle());
+
         updateItem.invoke(row, null, true);
+        assertEquals("", row.getStyle());
     }
 
     /**
-     * Verifies that a valid book is added successfully to the list.
+     * Tests that attempting to add a book with empty fields triggers an error message.
+     *
+     * @throws Exception if field access fails.
      */
     @Test
-    void testHandleAddBook_ValidBook() throws Exception {
-        ((TextField) getPrivateField("titleField")).setText("Clean Code");
-        ((TextField) getPrivateField("authorField")).setText("Robert Martin");
-        ((TextField) getPrivateField("isbnField")).setText("111");
+    void testHandleAddBook_EmptyFields() throws Exception {
+        ((TextField) getPrivateField("titleField")).setText("");
+        controller.handleAddBook();
+        Label msg = (Label) getPrivateField("addBookMessage");
+        assertEquals("❗ Please fill all fields.", msg.getText());
+    }
+
+    /**
+     * Tests the successful addition of a new book and the creation of a new copy
+     * when a book with the same ISBN is added.
+     *
+     * @throws Exception if field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleAddBook_Success_And_NewCopy() throws Exception {
+        TextField t = (TextField) getPrivateField("titleField");
+        TextField a = (TextField) getPrivateField("authorField");
+        TextField i = (TextField) getPrivateField("isbnField");
+        ComboBox<String> type = (ComboBox<String>) getPrivateField("typeCombo");
+
+        t.setText("Java 101"); a.setText("Gosling"); i.setText("999"); type.setValue("Book");
+        controller.handleAddBook();
+        
+        ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
+        assertEquals(1, list.size());
+        assertEquals(1, list.get(0).getCopyId());
+
+        t.setText("Java 101"); a.setText("Gosling"); i.setText("999");
+        controller.handleAddBook();
+        
+        assertEquals(2, list.size());
+        assertEquals(2, list.get(1).getCopyId());
+        Label msg = (Label) getPrivateField("addBookMessage");
+        assertTrue(msg.getText().contains("NEW COPY"));
+    }
+
+    /**
+     * Tests that adding a book with an existing ISBN but different author/title
+     * is rejected to prevent data conflicts.
+     *
+     * @throws Exception if field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleAddBook_Conflict_ISBN() throws Exception {
+        ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
+        Map<String, Media> map = (Map<String, Media>) getPrivateField("mediaMap");
+        Media m1 = new Book("Original", "Author", "123", "Available", "", 0.0, "", 0.0, 1);
+        list.add(m1);
+        map.put("123", m1);
+
+        ((TextField) getPrivateField("titleField")).setText("Fake Book");
+        ((TextField) getPrivateField("authorField")).setText("Other Guy");
+        ((TextField) getPrivateField("isbnField")).setText("123");
+        
+        controller.handleAddBook();
+        
+        Label msg = (Label) getPrivateField("addBookMessage");
+        assertTrue(msg.getText().contains("ISBN already exists but with different title"));
+        assertEquals(1, list.size());
+    }
+
+    /**
+     * Verifies that selecting 'CD' from the combo box correctly creates a CD object instance.
+     *
+     * @throws Exception if field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleAddBook_CD_Logic() throws Exception {
+        ComboBox<String> type = (ComboBox<String>) getPrivateField("typeCombo");
+        type.setValue("CD");
+        
+        ((TextField) getPrivateField("titleField")).setText("Best Hits");
+        ((TextField) getPrivateField("authorField")).setText("Singer");
+        ((TextField) getPrivateField("isbnField")).setText("CD-001");
 
         controller.handleAddBook();
-
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        assertEquals(1, mediaList.size());
+        
+        ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
+        assertTrue(list.get(0) instanceof CD);
     }
 
     /**
-     * Verifies that the search functionality correctly filters the media list.
+     * Tests the search functionality across all modes (Title, Author, ISBN) and ensures
+     * filtering logic works as expected.
+     *
+     * @throws Exception if field access fails.
      */
     @Test
-    void testHandleSearch_Filter() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        mediaList.add(new Book("Java", "Author A", "111"));
-        
-        injectField("searchField", new TextField("Java"));
-        ComboBox<String> searchBy = (ComboBox<String>) getPrivateField("searchByCombo");
-        searchBy.getSelectionModel().select("Title");
+    @SuppressWarnings("unchecked")
+    void testHandleSearch_AllModes() throws Exception {
+        ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
+        list.add(new Book("Java", "James", "111", "Available", "", 0.0, "", 0.0, 1));
+        list.add(new Book("Python", "Guido", "222", "Available", "", 0.0, "", 0.0, 1));
 
-        controller.handleSearch();
-        
+        TextField searchField = (TextField) getPrivateField("searchField");
+        ComboBox<String> combo = (ComboBox<String>) getPrivateField("searchByCombo");
         TableView<Media> table = (TableView<Media>) getPrivateField("searchResultsTable");
+
+        searchField.setText("Java");
+        combo.setValue("Title");
+        controller.handleSearch();
         assertEquals(1, table.getItems().size());
-    }
-    
-    /**
-     * Verifies that the reload method refreshes data from the file.
-     */
-    @Test
-    void testHandleReload() throws Exception {
-        controller.handleReload();
-        Label msg = (Label) getPrivateField("addBookMessage");
-        assertEquals("🔄 Reloaded.", msg.getText());
-    }
-    
-    /**
-     * Verifies successful deletion of a user from the list.
-     */
-    @Test
-    void testHandleDeleteUser_Success() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<User> usersList = (ObservableList<User>) getPrivateField("usersList");
-        User u = new User("u1", "1", "User", "Gold");
-        usersList.add(u);
+
+        searchField.setText("Guido");
+        combo.setValue("Author");
+        controller.handleSearch();
+        assertEquals(1, table.getItems().size());
+
+        searchField.setText("111");
+        combo.setValue("ISBN");
+        controller.handleSearch();
+        assertEquals(1, table.getItems().size());
         
+        searchField.setText("");
+        controller.handleSearch();
+        assertEquals(2, table.getItems().size());
+    }
+
+    /**
+     * Tests the persistence loading mechanism by writing dummy data to a file
+     * and triggering a reload to verify data parsing.
+     *
+     * @throws Exception if file I/O or field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleReload_And_LoadFromFile() throws Exception {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("books.txt"))) {
+            writer.write("Book,Clean Code,Uncle Bob,555,1,Available,,0.0,,0.0");
+            writer.newLine();
+            writer.write("CD,Music,Artist,666,1,Borrowed,2025-01-01,0.0,ali,0.0");
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+            writer.write("ali,123,User,Gold");
+        }
+
+        controller.handleReload();
+        
+        ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
+        assertEquals(2, list.size());
+        assertEquals("Clean Code", list.get(0).getTitle());
+        assertEquals("Music", list.get(1).getTitle());
+    }
+
+    /**
+     * Tests the delete user functionality when no user is selected.
+     *
+     * @throws Exception if field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleDeleteUser_NoSelection() throws Exception {
         TableView<User> table = (TableView<User>) getPrivateField("usersTable");
-        table.setItems(usersList);
-        table.getSelectionModel().select(u);
+        table.getSelectionModel().clearSelection();
         
         controller.handleDeleteUser();
+        // Implicit assertion: no exception thrown
+    }
+
+    /**
+     * Verifies that a user cannot be deleted if they have active loans.
+     *
+     * @throws Exception if field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleDeleteUser_WithLoans() throws Exception {
+        ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
+        User u = new User("loaner", "1", "User", "Silver");
+        users.add(u);
         
-        assertTrue(usersList.isEmpty());
+        ObservableList<Media> media = (ObservableList<Media>) getPrivateField("mediaList");
+        media.add(new Book("B", "A", "I", "Borrowed", "", 0.0, "loaner", 0.0, 1));
+
+        TableView<User> table = (TableView<User>) getPrivateField("usersTable");
+        table.setItems(users);
+        table.getSelectionModel().select(u);
+
+        controller.handleDeleteUser();
+        
+        assertEquals(1, users.size()); 
+    }
+
+    /**
+     * Verifies the successful deletion of a user who has no active loans.
+     *
+     * @throws Exception if field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleDeleteUser_Success() throws Exception {
+        ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
+        User u = new User("free", "1", "User", "Silver");
+        users.add(u);
+        
+        TableView<User> table = (TableView<User>) getPrivateField("usersTable");
+        table.setItems(users);
+        table.getSelectionModel().select(u);
+
+        controller.handleDeleteUser();
+        
+        assertTrue(users.isEmpty());
+    }
+
+    /**
+     * Tests the validation logic for sending overdue reminders, covering cases like
+     * missing emails or users with no overdue items.
+     *
+     * @throws Exception if file I/O or field access fails.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testSendReminder_Validation() throws Exception {
+        controller.handleSendReminder(); 
+        
+        ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
+        User noEmailUser = new User("noemail", "1", "User", "Silver");
+        users.add(noEmailUser);
+        
+        TableView<User> table = (TableView<User>) getPrivateField("usersTable");
+        table.setItems(users);
+        table.getSelectionModel().select(noEmailUser);
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+            writer.write("noemail,1,User,Silver,"); 
+        }
+        controller.handleSendReminder();
+
+        User goodUser = new User("good", "1", "User", "Gold");
+        users.add(goodUser);
+        table.getSelectionModel().select(goodUser);
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+            writer.write("good,1,User,Gold,test@test.com"); 
+        }
+        
+        controller.handleSendReminder();
+    }
+
+    /**
+     * Verifies that the welcome label correctly updates with the provided username.
+     */
+    @Test
+    void testSetCurrentUsername() {
+        controller.setCurrentUsername("Zainab");
+        try {
+            Label l = (Label) getPrivateField("welcomeLabel");
+            assertEquals("Welcome, Zainab 👋", l.getText());
+        } catch (Exception e) {
+            fail("Failed to access welcomeLabel");
+        }
     }
 }
