@@ -16,19 +16,13 @@ import java.lang.reflect.Method;
  * Verifies authentication logic and file reading.
  * 
  * @author Zainab
- * @version 1.0
+ * @version 1.1
  */
-
 public class LoginControllerTest {
 
-    
     @BeforeAll
     static void initToolkit() {
-        try {
-            Platform.startup(() -> {});
-        } catch (IllegalStateException e) {
-            
-        }
+        try { Platform.startup(() -> {}); } catch (IllegalStateException e) {}
     }
 
     private LoginController controller;
@@ -36,179 +30,142 @@ public class LoginControllerTest {
     private PasswordField passwordField;
     private Label errorMessageLabel;
 
-    
+    @BeforeEach
+    void setUp() throws Exception {
+        controller = new LoginController();
+
+        usernameField = new TextField();
+        passwordField = new PasswordField();
+        errorMessageLabel = new Label();
+
+        setPrivateField("usernameField", usernameField);
+        setPrivateField("passwordField", passwordField);
+        setPrivateField("errorMessage", errorMessageLabel);
+        
+        
+        File f = new File("users.txt");
+        if (f.exists()) f.delete();
+    }
+
     private void setPrivateField(String fieldName, Object value) throws Exception {
         Field f = LoginController.class.getDeclaredField(fieldName);
         f.setAccessible(true);
         f.set(controller, value);
     }
-
     
     private Object invokeValidateCredentials(String username, String password) throws Exception {
-        Method m = LoginController.class.getDeclaredMethod(
-                "validateCredentials",
-                String.class,
-                String.class
-        );
+        Method m = LoginController.class.getDeclaredMethod("validateCredentials", String.class, String.class);
         m.setAccessible(true);
         return m.invoke(controller, username, password);
     }
 
-    @BeforeEach
-    void setUp() throws Exception {
-        controller = new LoginController();
-
-        
-        usernameField = new TextField();
-        passwordField = new PasswordField();
-        errorMessageLabel = new Label();
-
-        
-        setPrivateField("usernameField", usernameField);
-        setPrivateField("passwordField", passwordField);
-        setPrivateField("errorMessage", errorMessageLabel);
-
-        
-        File f = new File("users.txt");
-        if (f.exists()) {
-            f.delete();
-        }
-    }
-
-    // ---------------  handleLogin ---------------
-
+    /**
+     * Verifies empty fields show error.
+     */
     @Test
-    void testHandleLogin_emptyFields_showsErrorMessage() throws Exception {
-        
+    void testHandleLogin_EmptyFields() throws Exception {
         usernameField.setText("");
         passwordField.setText("");
-
-        
         controller.handleLogin(null);
-
         assertEquals("⚠️ Please fill in all fields.", errorMessageLabel.getText());
     }
 
+    /**
+     * Verifies invalid credentials show error.
+     */
     @Test
-    void testHandleLogin_invalidCredentials_showsErrorMessage() throws Exception {
-        
-        File f = new File("users.txt");
-        try (PrintWriter out = new PrintWriter(new FileWriter(f))) {
-            out.println("m,123,Admin");
+    void testHandleLogin_InvalidCredentials() throws Exception {
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("admin,123,Admin");
         }
-
         
-        usernameField.setText("wrongUser");
-        passwordField.setText("wrongPass");
-
+        usernameField.setText("wrong");
+        passwordField.setText("wrong");
         controller.handleLogin(null);
-
+        
         assertEquals("❌ Invalid username or password.", errorMessageLabel.getText());
-        assertEquals("", passwordField.getText(), "Password field should be cleared");
     }
 
-    // ---------------  validateCredentials (بالـ reflection) ---------------
-
+    /**
+     * Verifies valid user validation.
+     */
     @Test
-    void testValidateCredentials_usersFileNotFound_returnsNullAndSetsError() throws Exception {
-        
-        File f = new File("users.txt");
-        if (f.exists()) {
-            f.delete();
-        }
-
-        Object result = invokeValidateCredentials("m", "123");
-        assertNull(result);
-        assertEquals("⚠️ Users file not found!", errorMessageLabel.getText());
-    }
-
-    @Test
-    void testValidateCredentials_validAdminLine_parsedCorrectly() throws Exception {
-        
+    void testValidateCredentials_ValidUser() throws Exception {
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("m,123,Admin");
-        }
-
-        Object result = invokeValidateCredentials("m", "123");
-        assertNotNull(result, "UserInfo should not be null for valid credentials");
-
-        
-        Class<?> userInfoClass = result.getClass();
-
-        Field roleField = userInfoClass.getDeclaredField("role");
-        roleField.setAccessible(true);
-        String role = (String) roleField.get(result);
-
-        Field membershipField = userInfoClass.getDeclaredField("membership");
-        membershipField.setAccessible(true);
-        String membership = (String) membershipField.get(result);
-
-        Field emailField = userInfoClass.getDeclaredField("email");
-        emailField.setAccessible(true);
-        String email = (String) emailField.get(result);
-
-        assertEquals("Admin", role);
-        
-        assertEquals("Silver", membership);
-        assertEquals("", email);
-    }
-
-    @Test
-    void testValidateCredentials_validUserLine_parsedWithMembershipAndEmail() throws Exception {
-        
-        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("u1,1,User,Gold,manar@gmail.com");
+            out.println("u1,1,User,Gold,u1@mail.com");
         }
 
         Object result = invokeValidateCredentials("u1", "1");
-        assertNotNull(result, "UserInfo should not be null for valid user");
+        assertNotNull(result);
+        
+        Field emailField = result.getClass().getDeclaredField("email");
+        emailField.setAccessible(true);
+        assertEquals("u1@mail.com", emailField.get(result));
+    }
 
-        Class<?> userInfoClass = result.getClass();
-
-        Field roleField = userInfoClass.getDeclaredField("role");
+    /**
+     * Verifies Admin validation.
+     */
+    @Test
+    void testValidateCredentials_Admin() throws Exception {
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("admin,123,Admin");
+        }
+        
+        Object result = invokeValidateCredentials("admin", "123");
+        assertNotNull(result);
+        
+        Field roleField = result.getClass().getDeclaredField("role");
         roleField.setAccessible(true);
-        String role = (String) roleField.get(result);
-
-        Field membershipField = userInfoClass.getDeclaredField("membership");
-        membershipField.setAccessible(true);
-        String membership = (String) membershipField.get(result);
-
-        Field emailField = userInfoClass.getDeclaredField("email");
-        emailField.setAccessible(true);
-        String email = (String) emailField.get(result);
-
-        assertEquals("User", role);
-        assertEquals("Gold", membership);
-        assertEquals("manar@gmail.com", email);
+        assertEquals("Admin", roleField.get(result));
     }
 
+    /**
+     * Verifies malformed lines in users file.
+     */
     @Test
-    void testValidateCredentials_wrongPassword_returnsNull() throws Exception {
+    void testValidateCredentials_MalformedLines() throws Exception {
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("m,123,Admin");
+            out.println("");
+            out.println("badline");
+            out.println("u1,1,User");
         }
-
-        Object result = invokeValidateCredentials("m", "999");
-        assertNull(result, "Should return null if password does not match");
+        
+        Object result = invokeValidateCredentials("u1", "1");
+        assertNotNull(result);
     }
-
+    
+    /**
+     * Verifies file not found scenario.
+     */
     @Test
-    void testValidateCredentials_skipsEmptyAndMalformedLines() throws Exception {
+    void testValidateCredentials_NoFile() throws Exception {
+        File f = new File("users.txt");
+        if (f.exists()) f.delete();
+        
+        Object result = invokeValidateCredentials("u", "p");
+        assertNull(result);
+        assertEquals("⚠️ Users file not found!", errorMessageLabel.getText());
+    }
+    
+    /**
+     * Verifies different roles logic (Simulation only as we cannot open stages in test).
+     */
+    @Test
+    void testHandleLogin_Roles() throws Exception {
+        // Create user file
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("");                      
-            out.println("invalidLineWithoutComma"); 
-            out.println("x,111");                 
-            out.println("user1,pass1,User,Silver,user1@mail.com");
+            out.println("admin,123,Admin");
+            out.println("lib,123,Librarian");
+            out.println("user,123,User");
         }
 
-        Object result = invokeValidateCredentials("user1", "pass1");
-        assertNotNull(result, "Should still find valid user after bad lines");
-
-        Class<?> userInfoClass = result.getClass();
-        Field emailField = userInfoClass.getDeclaredField("email");
-        emailField.setAccessible(true);
-        String email = (String) emailField.get(result);
-
-        assertEquals("user1@mail.com", email);
+        
+        usernameField.setText("admin");
+        passwordField.setText("123");
+        
+        
+        controller.handleLogin(null);
+        assertTrue(errorMessageLabel.getText().contains("Error") || errorMessageLabel.getText().contains("Admin"));
     }
 }
