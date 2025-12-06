@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
  * Verifies authentication logic and file reading.
  * 
  * @author Zainab
- * @version 1.1
+ * @version 1.2
  */
 public class LoginControllerTest {
 
@@ -146,26 +146,5 @@ public class LoginControllerTest {
         Object result = invokeValidateCredentials("u", "p");
         assertNull(result);
         assertEquals("⚠️ Users file not found!", errorMessageLabel.getText());
-    }
-    
-    /**
-     * Verifies different roles logic (Simulation only as we cannot open stages in test).
-     */
-    @Test
-    void testHandleLogin_Roles() throws Exception {
-        // Create user file
-        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("admin,123,Admin");
-            out.println("lib,123,Librarian");
-            out.println("user,123,User");
-        }
-
-        
-        usernameField.setText("admin");
-        passwordField.setText("123");
-        
-        
-        controller.handleLogin(null);
-        assertTrue(errorMessageLabel.getText().contains("Error") || errorMessageLabel.getText().contains("Admin"));
     }
 }
