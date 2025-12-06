@@ -24,7 +24,7 @@ import java.time.LocalDate;
  * </p>
  * 
  * @author Zainab
- * @version 2.0
+ * @version 2.1
  */
 public class UserControllerTest {
 
@@ -68,7 +68,10 @@ public class UserControllerTest {
 
         controller.initialize();
 
-        controller.setCurrentUser("u1", "Silver", "u1@mail.com");
+        
+        injectField("accountEmail", ""); 
+        
+        controller.setCurrentUser("u1", "Silver", "");
     }
 
     @AfterEach
@@ -199,7 +202,7 @@ public class UserControllerTest {
         controller.handleBorrowBook();
         Label msg = (Label) getPrivateField("messageLabel");
         String text = msg.getText().toLowerCase();
-        assertTrue(text.contains("select") || text.contains("item"), "Message should prompt to select an item");
+        assertTrue(text.contains("select") || text.contains("item"), "Should prompt to select item");
     }
 
     /**
@@ -226,6 +229,8 @@ public class UserControllerTest {
     @Test
     void testHandlePayFine_AllCases() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
+        
+        // --- Setup Item 1 for Error Checking & Partial Payment ---
         Media item = new Book("B", "A", "1", "Overdue", "", 0.0, "u1", 0.0, 1);
         item.calculateFine("Silver"); 
         double fine = item.getFineAmount(); 
@@ -234,31 +239,47 @@ public class UserControllerTest {
         TableView<Media> table = (TableView<Media>) getPrivateField("bookTable");
         table.setItems(mediaList);
         table.getSelectionModel().select(item);
+        
         TextField payField = (TextField) getPrivateField("paymentField");
         Label info = (Label) getPrivateField("infoLabel");
 
+       
         payField.setText("abc");
         controller.handlePayFine();
         assertTrue(info.getText().contains("Invalid number"));
 
+        
         payField.setText("-5");
         controller.handlePayFine();
         assertTrue(info.getText().contains("positive"));
+        
         
         payField.setText(String.valueOf(fine + 100));
         controller.handlePayFine();
         assertTrue(info.getText().contains("exceeds fine"));
 
+        
         payField.setText("1.0");
         controller.handlePayFine();
         assertTrue(info.getText().contains("Partial payment"));
-        assertTrue(item.getFineAmount() < fine);
+        assertTrue(item.getFineAmount() < fine); // Fine reduced
 
-        payField.setText(String.valueOf(item.getFineAmount()));
+        
+        Media item2 = new Book("Clean", "C", "22", "Overdue", "", 0.0, "u1", 0.0, 1);
+        item2.calculateFine("Silver");
+        mediaList.add(item2);
+        
+        
+        table.getSelectionModel().select(item2);
+        
+        
+        payField.setText(String.valueOf(item2.getFineAmount()));
         controller.handlePayFine();
+        
         String infoText = info.getText().toLowerCase();
-        assertTrue(infoText.contains("returned") || infoText.contains("paid"), "Message should confirm return or payment");
-        assertEquals("Available", item.getStatus());
+        assertTrue(infoText.contains("returned") || infoText.contains("paid"), 
+                   "Message should indicate success. Actual: " + info.getText());
+        assertEquals("Available", item2.getStatus());
     }
 
     /**
@@ -351,6 +372,7 @@ public class UserControllerTest {
             writer.newLine();
             writer.write("CD,Title2,Auth2,222,1,Borrowed,2025-01-01,0.0,u1,0.0");
         }
+        
         
         injectField("accountEmail", "");
         
