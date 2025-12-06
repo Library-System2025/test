@@ -12,10 +12,10 @@ import java.time.LocalDate;
 
 /**
  * Integration tests for the UserController.
- * Uses dynamic dates to ensure tests pass regardless of execution year.
+ * Verifies borrowing, returning, and fine payment logic using dynamic dates.
  * 
  * @author Zainab
- * @version 1.3
+ * @version 1.5
  */
 public class UserControllerTest {
 
@@ -27,12 +27,18 @@ public class UserControllerTest {
 
     private UserController controller;
 
+    /**
+     * Helper method to inject values into private fields using Reflection.
+     */
     private void injectField(String name, Object value) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
         f.setAccessible(true);
         f.set(controller, value);
     }
 
+    /**
+     * Helper method to retrieve the media list from the controller.
+     */
     @SuppressWarnings("unchecked")
     private ObservableList<Media> getMediaList() throws Exception {
         Field f = UserController.class.getDeclaredField("mediaList");
@@ -40,30 +46,42 @@ public class UserControllerTest {
         return (ObservableList<Media>) f.get(controller);
     }
 
+    /**
+     * Helper method to set private fields using Reflection.
+     */
     private void setPrivate(String name, Object value) throws Exception {
         Field f = UserController.class.getDeclaredField(name);
         f.setAccessible(true);
         f.set(controller, value);
     }
 
+    /**
+     * Helper method to get private fields using Reflection.
+     */
+    private Object getPrivateField(String name) throws Exception {
+        Field f = UserController.class.getDeclaredField(name);
+        f.setAccessible(true);
+        return f.get(controller);
+    }
+
+    /**
+     * Sets up the test environment, initializes the controller,
+     * injects mock UI components, and sets a default user context.
+     */
     @BeforeEach
     void setUp() throws Exception {
         controller = new UserController();
 
-        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
 
-        
         injectField("welcomeLabel", new Label());
         injectField("paymentField", new TextField());
         injectField("infoLabel", new Label());
         injectField("messageLabel", new Label());
 
-        
         TableView<Media> bookTable = new TableView<>();
         injectField("bookTable", bookTable);
-        
         
         injectField("typeColumn", new TableColumn<>("Type"));
         injectField("titleColumn", new TableColumn<>("Title"));
@@ -77,19 +95,18 @@ public class UserControllerTest {
 
         controller.initialize();
 
-        
         setPrivate("accountUsername", "u1");
         setPrivate("membershipType", "Silver");
         setPrivate("accountEmail", "u1@mail.com");
     }
 
     /**
-     * Verifies borrowing fails if user has unpaid fines.
+     * Verifies that borrowing is blocked if the user has unpaid overdue fines.
+     * Uses dynamic dates to ensure test validity.
      */
     @Test
     void testHandleBorrowBook_BlockedByFines() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
-        
         
         String pastDate = LocalDate.now().minusDays(10).toString();
         
@@ -110,18 +127,15 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies full fine payment returns item.
-     * Uses dynamic calculation to match the fine exactly.
+     * Verifies that paying the full fine amount returns the item to available status.
      */
     @Test
     void testHandlePayFine_FullPayment() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         
-        
         String pastDate = LocalDate.now().minusDays(5).toString();
         
         Media item = new Book("Book", "A", "1", "Overdue", pastDate, 0.0, "u1", 0.0, 1);
-        
         item.calculateFine("Silver");
         double exactFine = item.getFineAmount();
         
@@ -131,7 +145,6 @@ public class UserControllerTest {
         table.setItems(mediaList);
         table.getSelectionModel().select(item);
         
-        // Pay the EXACT calculated fine
         ((TextField) getPrivateField("paymentField")).setText(String.valueOf(exactFine));
         
         controller.handlePayFine();
@@ -142,19 +155,18 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies partial fine payment.
+     * Verifies that partial payment reduces the fine amount without returning the item.
      */
     @Test
     void testHandlePayFine_PartialPayment() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
-        
         
         String pastDate = LocalDate.now().minusDays(10).toString();
         
         Media item = new Book("Book", "A", "1", "Overdue", pastDate, 0.0, "u1", 0.0, 1);
         item.calculateFine("Silver");
         double totalFine = item.getFineAmount();
-        double payAmount = totalFine / 2; 
+        double payAmount = totalFine / 2;
         
         mediaList.add(item);
         
@@ -166,7 +178,6 @@ public class UserControllerTest {
         
         controller.handlePayFine();
         
-        
         double expectedRemaining = totalFine - payAmount;
         assertEquals(expectedRemaining, item.getFineAmount(), 0.01);
         
@@ -175,12 +186,11 @@ public class UserControllerTest {
     }
 
     /**
-     * Verifies returning item logic.
+     * Verifies successful return of a borrowed item that is not overdue.
      */
     @Test
     void testHandleReturnBook_Success() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
-        
         
         String futureDate = LocalDate.now().plusDays(5).toString();
         
@@ -198,13 +208,15 @@ public class UserControllerTest {
         assertEquals("✅ Returned successfully!", msg.getText());
     }
 
+    /**
+     * Verifies that returning an overdue item is blocked and requires fine payment.
+     * Clears the user email to prevent RuntimeException during email sending.
+     */
     @Test
     void testHandleReturnBook_OverdueBlocked() throws Exception {
         ObservableList<Media> mediaList = getMediaList();
         
-        
         String pastDate = LocalDate.now().minusDays(5).toString();
-        
         Media item = new Book("Book", "A", "1", "Borrowed", pastDate, 0.0, "u1", 0.0, 1);
         mediaList.add(item);
         
@@ -212,14 +224,28 @@ public class UserControllerTest {
         table.setItems(mediaList);
         table.getSelectionModel().select(item);
         
+        setPrivate("accountEmail", ""); 
+        
         controller.handleReturnBook();
         
         assertEquals("Overdue", item.getStatus());
         Label msg = (Label) getPrivateField("messageLabel");
         assertTrue(msg.getText().contains("Pay the fine first"));
     }
+
+    /**
+     * Verifies that setting the current user updates the UI labels correctly.
+     */
+    @Test
+    void testSetCurrentUser() throws Exception {
+        controller.setCurrentUser("u1", "Gold", "test@mail.com");
+        Label welcome = (Label) getPrivateField("welcomeLabel");
+        assertTrue(welcome.getText().contains("Gold"));
+    }
     
-    
+    /**
+     * Verifies warning message when borrowing without selection.
+     */
     @Test
     void testHandleBorrowBook_NoSelection() throws Exception {
         controller.handleBorrowBook();
@@ -227,16 +253,13 @@ public class UserControllerTest {
         assertEquals("⚠️ Please select an item to borrow.", msg.getText());
     }
 
+    /**
+     * Verifies warning message when paying fine without selection.
+     */
     @Test
     void testHandlePayFine_NoSelection() throws Exception {
         controller.handlePayFine();
         Label info = (Label) getPrivateField("infoLabel");
         assertEquals("⚠️ Select an item.", info.getText());
-    }
-    
-    private Object getPrivateField(String name) throws Exception {
-        Field f = UserController.class.getDeclaredField(name);
-        f.setAccessible(true);
-        return f.get(controller);
     }
 }
