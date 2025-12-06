@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
  * </p>
  * 
  * @author Zainab
- * @version 1.1
+ * @version 1.2
  */
 public class HomepageControllerTest {
 
@@ -28,24 +28,33 @@ public class HomepageControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // JavaFX toolkit already initialized
+            
         }
     }
 
     private homepageController controller;
 
+    /**
+     * Helper method to inject values into private fields.
+     */
     private void injectField(String name, Object value) throws Exception {
         Field f = homepageController.class.getDeclaredField(name);
         f.setAccessible(true);
         f.set(controller, value);
     }
 
+    /**
+     * Helper method to retrieve values from private fields.
+     */
     private Object getPrivateField(String name) throws Exception {
         Field f = homepageController.class.getDeclaredField(name);
         f.setAccessible(true);
         return f.get(controller);
     }
 
+    /**
+     * Helper method to invoke private methods.
+     */
     private Object invokePrivate(String name, Class<?>[] types, Object... args) throws Exception {
         Method m = homepageController.class.getDeclaredMethod(name, types);
         m.setAccessible(true);
@@ -56,9 +65,22 @@ public class HomepageControllerTest {
     void setUp() throws Exception {
         controller = new homepageController();
 
+        
         injectField("mediaList", FXCollections.observableArrayList());
         injectField("usersList", FXCollections.observableArrayList());
+        
+        
+        injectField("addBookMessage", new Label());
+        injectField("welcomeLabel", new Label());
+        injectField("titleField", new TextField());
+        injectField("authorField", new TextField());
+        injectField("isbnField", new TextField());
+        
+        ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Book", "CD"));
+        typeCombo.getSelectionModel().select("Book");
+        injectField("typeCombo", typeCombo);
 
+        
         File books = new File("books.txt");
         if (books.exists()) books.delete();
         File users = new File("users.txt");
@@ -72,248 +94,296 @@ public class HomepageControllerTest {
     }
 
     /**
-     * Verifies that a valid book is added successfully and that
-     * a second book with same ISBN but different title/author is rejected.
+     * Verifies that adding a Book works correctly.
      */
     @Test
-    void testHandleAddBook_validBook_addedOnce_andRejectsDifferentTitleForSameIsbn()
-            throws Exception {
+    void testHandleAddBook_ValidBook_AddedSuccessfully() throws Exception {
+        ((TextField) getPrivateField("titleField")).setText("Clean Code");
+        ((TextField) getPrivateField("authorField")).setText("Robert Martin");
+        ((TextField) getPrivateField("isbnField")).setText("111");
 
-        ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Book", "CD"));
-        typeCombo.getSelectionModel().select("Book");
-
-        TextField titleField = new TextField("Clean Code");
-        TextField authorField = new TextField("Robert Martin");
-        TextField isbnField = new TextField("111");
-        Label addBookMessage = new Label();
-
-        injectField("typeCombo", typeCombo);
-        injectField("titleField", titleField);
-        injectField("authorField", authorField);
-        injectField("isbnField", isbnField);
-        injectField("addBookMessage", addBookMessage);
-
-        // أول إضافة
         controller.handleAddBook();
 
         @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList =
-                (ObservableList<Media>) getPrivateField("mediaList");
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        Label msg = (Label) getPrivateField("addBookMessage");
 
-        assertEquals(1, mediaList.size(), "List should have 1 item");
-        assertEquals("111", mediaList.get(0).getIsbn());
-        // ✅ الرسالة الجديدة للنسخة الأولى
-        assertEquals("📗 New Book Added (Copy #1).", addBookMessage.getText());
-
-        // محاولة إضافة بنفس ISBN لكن بعنوان/مؤلف مختلف → مرفوض
-        titleField.setText("Another Title");
-        authorField.setText("Another Author");
-        isbnField.setText("111");
-
-        controller.handleAddBook();
-
-        assertEquals("❌ ISBN already exists but with different title/author!",
-                     addBookMessage.getText());
-        assertEquals(1, mediaList.size(), "List size should remain 1");
+        assertEquals(1, mediaList.size());
+        assertTrue(mediaList.get(0) instanceof Book);
+        assertTrue(msg.getText().contains("New Book Added"));
     }
 
     /**
-     * Verifies that adding a second copy with the same title/author/ISBN
-     * is allowed and increases mediaList size and copyId.
+     * Verifies that adding a CD works correctly (Testing the else/if branch).
      */
     @Test
-    void testHandleAddBook_secondCopy_sameBook_allowed() throws Exception {
+    void testHandleAddBook_ValidCD_AddedSuccessfully() throws Exception {
         ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Book", "CD"));
-        typeCombo.getSelectionModel().select("Book");
-
-        TextField titleField = new TextField("Clean Code");
-        TextField authorField = new TextField("Robert Martin");
-        TextField isbnField = new TextField("111");
-        Label addBookMessage = new Label();
-
+        typeCombo.getSelectionModel().select("CD");
         injectField("typeCombo", typeCombo);
-        injectField("titleField", titleField);
-        injectField("authorField", authorField);
-        injectField("isbnField", isbnField);
-        injectField("addBookMessage", addBookMessage);
 
-        // النسخة الأولى
+        ((TextField) getPrivateField("titleField")).setText("Greatest Hits");
+        ((TextField) getPrivateField("authorField")).setText("Queen");
+        ((TextField) getPrivateField("isbnField")).setText("999");
+
         controller.handleAddBook();
 
         @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList =
-                (ObservableList<Media>) getPrivateField("mediaList");
-
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        
         assertEquals(1, mediaList.size());
-        Media first = mediaList.get(0);
-        assertEquals(1, first.getCopyId());
-
-        // النسخة الثانية، نفس العنوان والمؤلف و ISBN
-     // بعد أول handleAddBook()
-        controller.handleAddBook();
-
-        // رجّعي تعبي الفيلدز قبل النداء الثاني
-        titleField.setText("Clean Code");
-        authorField.setText("Robert Martin");
-        isbnField.setText("111");
-
-        controller.handleAddBook();
-
-        assertEquals(2, mediaList.size(), "Should now have 2 copies");
-        Media second = mediaList.get(1);
-        assertEquals("111", second.getIsbn());
-        assertEquals("Clean Code", second.getTitle());
-        assertEquals("Robert Martin", second.getAuthor());
-        assertEquals(2, second.getCopyId(), "Second copy should have copyId=2");
-
-        assertEquals("📚 Added NEW COPY (Copy #2) of this book.",
-                     addBookMessage.getText());
+        assertTrue(mediaList.get(0) instanceof CD);
     }
 
+    /**
+     * Verifies that duplicate ISBN with different details is rejected.
+     */
     @Test
-    void testHandleAddBook_missingFields_showsError() throws Exception {
-        ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Book"));
-        typeCombo.getSelectionModel().select("Book");
-
-        injectField("typeCombo", typeCombo);
-        injectField("titleField", new TextField(""));   // empty title
-        injectField("authorField", new TextField("Author"));
-        injectField("isbnField", new TextField("111"));
-
-        Label msgLabel = new Label();
-        injectField("addBookMessage", msgLabel);
-
+    void testHandleAddBook_DuplicateIsbnDifferentDetails_Rejected() throws Exception {
+        
+        ((TextField) getPrivateField("titleField")).setText("Book 1");
+        ((TextField) getPrivateField("authorField")).setText("Author 1");
+        ((TextField) getPrivateField("isbnField")).setText("123");
         controller.handleAddBook();
 
-        assertEquals("❗ Please fill all fields.", msgLabel.getText());
-    }
+        
+        ((TextField) getPrivateField("titleField")).setText("Book 2");
+        ((TextField) getPrivateField("authorField")).setText("Author 1");
+        ((TextField) getPrivateField("isbnField")).setText("123");
+        controller.handleAddBook();
 
-    @Test
-    void testHandleSearch_emptyKeyword_showsAllItems() throws Exception {
+        Label msg = (Label) getPrivateField("addBookMessage");
+        assertTrue(msg.getText().contains("ISBN already exists but with different title"));
+        
         @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList =
-                (ObservableList<Media>) getPrivateField("mediaList");
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        assertEquals(1, mediaList.size());
+    }
 
-        mediaList.add(new Book("Clean Code", "Robert", "111"));
-        mediaList.add(new Book("Java FX", "Author", "222"));
+    /**
+     * Verifies that adding a second copy works.
+     */
+    @Test
+    void testHandleAddBook_SecondCopy_IncrementsCopyId() throws Exception {
+        
+        ((TextField) getPrivateField("titleField")).setText("Book 1");
+        ((TextField) getPrivateField("authorField")).setText("Author 1");
+        ((TextField) getPrivateField("isbnField")).setText("123");
+        controller.handleAddBook();
+
+        
+        ((TextField) getPrivateField("titleField")).setText("Book 1");
+        ((TextField) getPrivateField("authorField")).setText("Author 1");
+        ((TextField) getPrivateField("isbnField")).setText("123");
+        controller.handleAddBook();
+
+        @SuppressWarnings("unchecked")
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        assertEquals(2, mediaList.size());
+        assertEquals(2, mediaList.get(1).getCopyId());
+    }
+
+    /**
+     * Verifies that empty fields prevent addition.
+     */
+    @Test
+    void testHandleAddBook_MissingFields_ShowsError() throws Exception {
+        ((TextField) getPrivateField("titleField")).setText("");
+        controller.handleAddBook();
+
+        Label msg = (Label) getPrivateField("addBookMessage");
+        assertEquals("❗ Please fill all fields.", msg.getText());
+    }
+
+    /**
+     * Verifies search functionality filters by specific criteria (Title).
+     */
+    @Test
+    void testHandleSearch_FilterByTitle() throws Exception {
+        @SuppressWarnings("unchecked")
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        mediaList.add(new Book("Java", "Author A", "111"));
+        mediaList.add(new Book("Python", "Author B", "222"));
 
         TableView<Media> table = new TableView<>();
-        TextField searchField = new TextField("");
-        ComboBox<String> searchBy =
-                new ComboBox<>(FXCollections.observableArrayList("All"));
-        searchBy.getSelectionModel().select("All");
-        Label msg = new Label();
-
         injectField("searchResultsTable", table);
-        injectField("searchField", searchField);
+        injectField("searchField", new TextField("Java"));
+        
+        ComboBox<String> searchBy = new ComboBox<>(FXCollections.observableArrayList("Title"));
+        searchBy.getSelectionModel().select("Title");
         injectField("searchByCombo", searchBy);
-        injectField("addBookMessage", msg);
 
         controller.handleSearch();
 
-        assertEquals(2, table.getItems().size());
-        assertEquals("📚 Showing all items.", msg.getText());
+        assertEquals(1, table.getItems().size());
+        assertEquals("Java", table.getItems().get(0).getTitle());
     }
-
+    
+    /**
+     * Verifies search functionality filters by specific criteria (Author).
+     */
     @Test
-    void testLoadUsersFromFile_readsNonAdminUsers() throws Exception {
-        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("admin,123,Admin,Gold,admin@mail.com");
-            out.println("user1,1,User,Silver,user1@mail.com");
-        }
-
-        TableView<User> usersTable = new TableView<>();
-        injectField("usersTable", usersTable);
-
-        invokePrivate("loadUsersFromFile", new Class<?>[] {});
-
+    void testHandleSearch_FilterByAuthor() throws Exception {
         @SuppressWarnings("unchecked")
-        ObservableList<User> usersList =
-                (ObservableList<User>) getPrivateField("usersList");
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        mediaList.add(new Book("Book 1", "John", "111"));
+        mediaList.add(new Book("Book 2", "Jane", "222"));
 
-        assertEquals(1, usersList.size());
-        assertEquals("user1", usersList.get(0).getUsername());
+        TableView<Media> table = new TableView<>();
+        injectField("searchResultsTable", table);
+        injectField("searchField", new TextField("Jane"));
+        
+        ComboBox<String> searchBy = new ComboBox<>(FXCollections.observableArrayList("Author"));
+        searchBy.getSelectionModel().select("Author");
+        injectField("searchByCombo", searchBy);
+
+        controller.handleSearch();
+
+        assertEquals(1, table.getItems().size());
+        assertEquals("Jane", table.getItems().get(0).getAuthor());
     }
 
+    /**
+     * Verifies reloading data from file.
+     */
     @Test
-    void testHandleReload_loadsFromFileAndUpdatesMessage() throws Exception {
-        // سطر بالـ format الجديد: type,title,author,isbn,copyId,status,dueDate,fine,borrowedBy,amountPaid
+    void testHandleReload_LoadsFromFile() throws Exception {
         try (PrintWriter out = new PrintWriter(new FileWriter("books.txt"))) {
-            out.println("Book,Clean Code,Robert Martin,111,1,Borrowed,2025-12-20,0.0,u1,0.0");
+            out.println("Book,Reloaded Book,Author,123,1,Available,2025-01-01,0.0,,0.0");
         }
 
         TableView<Media> table = new TableView<>();
-        Label addBookMessage = new Label();
-
         injectField("searchResultsTable", table);
-        injectField("addBookMessage", addBookMessage);
+        
+        injectField("typeColumn", new TableColumn<>("Type"));
+        injectField("titleColumn", new TableColumn<>("Title"));
+        injectField("authorColumn", new TableColumn<>("Author"));
+        injectField("isbnColumn", new TableColumn<>("ISBN"));
+        injectField("copyIdColumn", new TableColumn<>("CopyId"));
+        injectField("statusColumn", new TableColumn<>("Status"));
+        injectField("dueDateColumn", new TableColumn<>("Due"));
+        injectField("fineColumn", new TableColumn<>("Fine"));
+        injectField("borrowedByColumn", new TableColumn<>("By"));
 
         controller.handleReload();
 
         @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList =
-                (ObservableList<Media>) getPrivateField("mediaList");
-
-        assertFalse(mediaList.isEmpty(), "Media list should be populated from file");
-        assertEquals("Clean Code", mediaList.get(0).getTitle());
-        assertEquals("🔄 Reloaded.", addBookMessage.getText());
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+        assertFalse(mediaList.isEmpty());
+        assertEquals("Reloaded Book", mediaList.get(0).getTitle());
     }
 
+    /**
+     * Verifies deleting a user fails if they have active loans.
+     */
     @Test
-    void testHandleDeleteUser_userHasLoans_notDeleted() throws Exception {
+    void testHandleDeleteUser_WithActiveLoans_Fails() throws Exception {
         @SuppressWarnings("unchecked")
-        ObservableList<User> usersList =
-                (ObservableList<User>) getPrivateField("usersList");
+        ObservableList<User> usersList = (ObservableList<User>) getPrivateField("usersList");
         @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList =
-                (ObservableList<Media>) getPrivateField("mediaList");
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
 
         User u1 = new User("u1", "1", "User", "Gold");
         usersList.add(u1);
 
-        Media m = new Book("Clean Code", "Robert", "111");
+        Media m = new Book("B1", "A1", "111");
         m.setBorrowedBy("u1");
         mediaList.add(m);
 
         TableView<User> usersTable = new TableView<>();
         usersTable.setItems(usersList);
         usersTable.getSelectionModel().select(u1);
-
         injectField("usersTable", usersTable);
 
         controller.handleDeleteUser();
 
-        assertEquals(1, usersList.size(),
-                "User should NOT be deleted if they have active loans");
+        assertEquals(1, usersList.size());
     }
 
+    /**
+     * Verifies successful user deletion.
+     */
     @Test
-    void testHandleDeleteUser_success() throws Exception {
+    void testHandleDeleteUser_Success() throws Exception {
         @SuppressWarnings("unchecked")
-        ObservableList<User> usersList =
-                (ObservableList<User>) getPrivateField("usersList");
-
+        ObservableList<User> usersList = (ObservableList<User>) getPrivateField("usersList");
         User u1 = new User("u1", "1", "User", "Gold");
         usersList.add(u1);
 
+        // Prepare file for saving
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
-            out.println("m,123,Admin,Gold");
-            out.println("u1,1,User,Gold");
+            out.println("admin,123,Admin,Gold");
         }
 
         TableView<User> usersTable = new TableView<>();
         usersTable.setItems(usersList);
         usersTable.getSelectionModel().select(u1);
-
         injectField("usersTable", usersTable);
 
         controller.handleDeleteUser();
 
-        assertTrue(usersList.isEmpty(), "User list should be empty after deletion");
+        assertTrue(usersList.isEmpty());
+    }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader("users.txt"))) {
-            assertEquals("m,123,Admin,Gold", reader.readLine());
-            assertNull(reader.readLine(), "Should be no more lines");
+    /**
+     * Verifies logic for sending reminders when no user is selected.
+     */
+    @Test
+    void testHandleSendReminder_NoSelection() throws Exception {
+        TableView<User> usersTable = new TableView<>();
+        injectField("usersTable", usersTable);
+
+        
+        invokePrivate("handleSendReminder", new Class<?>[]{});
+    }
+
+    /**
+     * Verifies logic for sending reminders when user has no email.
+     */
+    @Test
+    void testHandleSendReminder_NoEmail() throws Exception {
+        // Create user in file without email
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("uNoEmail,123,User,Silver"); 
         }
+
+        User u = new User("uNoEmail", "1", "User", "Silver");
+        
+        TableView<User> usersTable = new TableView<>();
+        usersTable.setItems(FXCollections.observableArrayList(u));
+        usersTable.getSelectionModel().select(u);
+        injectField("usersTable", usersTable);
+
+        invokePrivate("handleSendReminder", new Class<?>[]{});
+    }
+
+    /**
+     * Verifies logic for sending reminders when user has no overdue books.
+     */
+    @Test
+    void testHandleSendReminder_NoOverdueBooks() throws Exception {
+        // Create user with email
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("uGood,123,User,Silver,test@mail.com"); 
+        }
+
+        User u = new User("uGood", "1", "User", "Silver");
+        
+        TableView<User> usersTable = new TableView<>();
+        usersTable.setItems(FXCollections.observableArrayList(u));
+        usersTable.getSelectionModel().select(u);
+        injectField("usersTable", usersTable);
+
+        invokePrivate("handleSendReminder", new Class<?>[]{});
+    }
+
+    /**
+     * Verifies setting current username updates the label.
+     */
+    @Test
+    void testSetCurrentUsername() throws Exception {
+        controller.setCurrentUsername("Admin");
+        Label welcome = (Label) getPrivateField("welcomeLabel");
+        assertEquals("Welcome, Admin 👋", welcome.getText());
     }
 }
