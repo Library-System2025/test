@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
  * Unit tests for the Book class.
  * Ensures constructors and overridden methods behave correctly.
  * 
- * @author Zainab
- * @version 1.1
+ * @version 1.2
  */
 public class BookTest {
 
@@ -32,6 +31,26 @@ public class BookTest {
     }
 
     /**
+     * Verifies that the constructor with copyId initializes the object correctly.
+     */
+    @Test
+    void testConstructorWithCopyId_initializesValuesCorrectly() {
+        Book b = new Book("Refactoring", "Martin Fowler", "333", 5);
+
+        assertEquals("Refactoring", b.getTitle());
+        assertEquals("Martin Fowler", b.getAuthor());
+        assertEquals("333", b.getIsbn());
+
+        assertEquals("Available", b.getStatus());
+        assertEquals("", b.getDueDate());
+        assertEquals(0.0, b.getFineAmount());
+        assertEquals("", b.getBorrowedBy());
+        assertEquals(0.0, b.getAmountPaid());
+
+        assertEquals(5, b.getCopyId());
+    }
+
+    /**
      * Verifies that the full constructor correctly sets all fields,
      * including copyId.
      */
@@ -46,7 +65,7 @@ public class BookTest {
                 3.5,
                 "u1",
                 0.0,
-                2           
+                2
         );
 
         assertEquals("Effective Java", b.getTitle());

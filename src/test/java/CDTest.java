@@ -4,9 +4,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for the CD class.
  * Ensures constructors and overridden methods behave correctly.
- * 
- * @author Zainab
- * @version 1.1
+ *
+ * @version 1.2
  */
 public class CDTest {
 
@@ -32,6 +31,28 @@ public class CDTest {
     }
 
     /**
+     * Verifies that the constructor with copyId initializes the object correctly.
+     */
+    @Test
+    void testConstructorWithCopyId_initializesValuesCorrectly() {
+        CD cd = new CD("Summer Mix", "DJ Alex", "CD500", 7);
+
+        assertEquals("Summer Mix", cd.getTitle());
+        assertEquals("DJ Alex", cd.getAuthor());
+        assertEquals("CD500", cd.getIsbn());
+
+        // defaults same as short constructor
+        assertEquals("Available", cd.getStatus());
+        assertEquals("", cd.getDueDate());
+        assertEquals(0.0, cd.getFineAmount());
+        assertEquals("", cd.getBorrowedBy());
+        assertEquals(0.0, cd.getAmountPaid());
+
+        // important part
+        assertEquals(7, cd.getCopyId());
+    }
+
+    /**
      * Verifies that the full constructor correctly sets all fields including copyId.
      */
     @Test
@@ -45,7 +66,7 @@ public class CDTest {
                 4.5,
                 "u1",
                 0.0,
-                3      
+                3
         );
 
         assertEquals("Top Mix", cd.getTitle());

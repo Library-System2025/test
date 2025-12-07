@@ -6,47 +6,24 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
-
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
-/**
- * Service class responsible for sending emails.
- * <p>
- * This class configures the SMTP server (Gmail) and handles the actual transmission of emails.
- * It is used by the system to send overdue notifications and reminders.
- * </p>
- *
- * @author Zainab
- * @version 1.0
- */
-
 public class EmailService {
 
-    private final String username;   
-    private final String password;   
+    private final String username;
+    private final String password;
 
-    /**
-     * Constructs a new EmailService with the given credentials.
-     * 
-     * @param username The email account username (sender).
-     * @param password The email account password (app password).
-     */
-    
     public EmailService(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    /**
-     * Sends an email with the specified subject and body to the recipient.
-     *
-     * @param to      The recipient's email address.
-     * @param subject The subject line of the email.
-     * @param body    The body content of the email.
-     * @throws RuntimeException If the email sending fails.
-     */
-    
+    // helper method نقدر نختبرها في JUnit
+    PasswordAuthentication createPasswordAuthentication() {
+        return new PasswordAuthentication(username, password);
+    }
+
     public void sendEmail(String to, String subject, String body) {
 
         Properties props = new Properties();
@@ -58,7 +35,8 @@ public class EmailService {
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, password);
+                // نستخدم الهيلبر بدل ما نكرر السطر
+                return createPasswordAuthentication();
             }
         });
 
@@ -78,17 +56,7 @@ public class EmailService {
         }
     }
 
-    /**
-     * Convenience method to send a reminder email.
-     * Delegates to the {@link #sendEmail(String, String, String)} method.
-     * 
-     * @param to      The recipient's email address.
-     * @param subject The subject line.
-     * @param body    The body content.
-     */
-    
     public void sendReminder(String to, String subject, String body) {
-       
         sendEmail(to, subject, body);
     }
 }

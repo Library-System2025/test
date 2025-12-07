@@ -60,25 +60,25 @@ public class HomepageControllerTest {
         injectField("mediaList", FXCollections.observableArrayList());
         injectField("mediaMap", new java.util.HashMap<String, Media>());
         injectField("usersList", FXCollections.observableArrayList());
-        
+
         injectField("addBookMessage", new Label());
         injectField("welcomeLabel", new Label());
         injectField("titleField", new TextField());
         injectField("authorField", new TextField());
         injectField("isbnField", new TextField());
         injectField("searchField", new TextField());
-        
+
         ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().select("Book");
         injectField("typeCombo", typeCombo);
-        
+
         ComboBox<String> searchByCombo = new ComboBox<>(FXCollections.observableArrayList("All", "Title", "Author", "ISBN"));
         searchByCombo.getSelectionModel().select("All");
         injectField("searchByCombo", searchByCombo);
-        
+
         TableView<Media> searchResultsTable = new TableView<>();
         injectField("searchResultsTable", searchResultsTable);
-        
+
         injectField("typeColumn", new TableColumn<>("Type"));
         injectField("titleColumn", new TableColumn<>("Title"));
         injectField("authorColumn", new TableColumn<>("Author"));
@@ -94,7 +94,7 @@ public class HomepageControllerTest {
         injectField("colUsername", new TableColumn<>("Username"));
         injectField("colRole", new TableColumn<>("Role"));
         injectField("colMembership", new TableColumn<>("Membership"));
-        
+
         Files.deleteIfExists(Paths.get("books.txt"));
         Files.deleteIfExists(Paths.get("users.txt"));
 
@@ -151,11 +151,11 @@ public class HomepageControllerTest {
         TableView<Media> table = (TableView<Media>) getPrivateField("searchResultsTable");
         Callback<TableView<Media>, TableRow<Media>> factory = table.getRowFactory();
         assertNotNull(factory);
-        
+
         TableRow<Media> row = factory.call(table);
         Method updateItem = javafx.scene.control.Cell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
         updateItem.setAccessible(true);
-        
+
         updateItem.invoke(row, new Book("A","B","1","Available","",0.0,"",0.0,1), false);
         assertEquals("-fx-background-color: #d0f0c0;", row.getStyle());
 
@@ -198,14 +198,14 @@ public class HomepageControllerTest {
 
         t.setText("Java 101"); a.setText("Gosling"); i.setText("999"); type.setValue("Book");
         controller.handleAddBook();
-        
+
         ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
         assertEquals(1, list.size());
         assertEquals(1, list.get(0).getCopyId());
 
         t.setText("Java 101"); a.setText("Gosling"); i.setText("999");
         controller.handleAddBook();
-        
+
         assertEquals(2, list.size());
         assertEquals(2, list.get(1).getCopyId());
         Label msg = (Label) getPrivateField("addBookMessage");
@@ -230,9 +230,9 @@ public class HomepageControllerTest {
         ((TextField) getPrivateField("titleField")).setText("Fake Book");
         ((TextField) getPrivateField("authorField")).setText("Other Guy");
         ((TextField) getPrivateField("isbnField")).setText("123");
-        
+
         controller.handleAddBook();
-        
+
         Label msg = (Label) getPrivateField("addBookMessage");
         assertTrue(msg.getText().contains("ISBN already exists but with different title"));
         assertEquals(1, list.size());
@@ -248,13 +248,13 @@ public class HomepageControllerTest {
     void testHandleAddBook_CD_Logic() throws Exception {
         ComboBox<String> type = (ComboBox<String>) getPrivateField("typeCombo");
         type.setValue("CD");
-        
+
         ((TextField) getPrivateField("titleField")).setText("Best Hits");
         ((TextField) getPrivateField("authorField")).setText("Singer");
         ((TextField) getPrivateField("isbnField")).setText("CD-001");
 
         controller.handleAddBook();
-        
+
         ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
         assertTrue(list.get(0) instanceof CD);
     }
@@ -290,7 +290,7 @@ public class HomepageControllerTest {
         combo.setValue("ISBN");
         controller.handleSearch();
         assertEquals(1, table.getItems().size());
-        
+
         searchField.setText("");
         controller.handleSearch();
         assertEquals(2, table.getItems().size());
@@ -316,11 +316,21 @@ public class HomepageControllerTest {
         }
 
         controller.handleReload();
-        
+
         ObservableList<Media> list = (ObservableList<Media>) getPrivateField("mediaList");
         assertEquals(2, list.size());
         assertEquals("Clean Code", list.get(0).getTitle());
         assertEquals("Music", list.get(1).getTitle());
+    }
+
+    /**
+     * Tests that handleReload also sets the reload message.
+     */
+    @Test
+    void testHandleReload_SetsReloadMessage() throws Exception {
+        controller.handleReload();
+        Label msg = (Label) getPrivateField("addBookMessage");
+        assertEquals("🔄 Reloaded.", msg.getText());
     }
 
     /**
@@ -333,7 +343,7 @@ public class HomepageControllerTest {
     void testHandleDeleteUser_NoSelection() throws Exception {
         TableView<User> table = (TableView<User>) getPrivateField("usersTable");
         table.getSelectionModel().clearSelection();
-        
+
         controller.handleDeleteUser();
         // Implicit assertion: no exception thrown
     }
@@ -349,7 +359,7 @@ public class HomepageControllerTest {
         ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
         User u = new User("loaner", "1", "User", "Silver");
         users.add(u);
-        
+
         ObservableList<Media> media = (ObservableList<Media>) getPrivateField("mediaList");
         media.add(new Book("B", "A", "I", "Borrowed", "", 0.0, "loaner", 0.0, 1));
 
@@ -358,8 +368,8 @@ public class HomepageControllerTest {
         table.getSelectionModel().select(u);
 
         controller.handleDeleteUser();
-        
-        assertEquals(1, users.size()); 
+
+        assertEquals(1, users.size());
     }
 
     /**
@@ -373,13 +383,13 @@ public class HomepageControllerTest {
         ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
         User u = new User("free", "1", "User", "Silver");
         users.add(u);
-        
+
         TableView<User> table = (TableView<User>) getPrivateField("usersTable");
         table.setItems(users);
         table.getSelectionModel().select(u);
 
         controller.handleDeleteUser();
-        
+
         assertTrue(users.isEmpty());
     }
 
@@ -392,30 +402,156 @@ public class HomepageControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void testSendReminder_Validation() throws Exception {
-        controller.handleSendReminder(); 
-        
+        // no selection
+        controller.handleSendReminder();
+
         ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
         User noEmailUser = new User("noemail", "1", "User", "Silver");
         users.add(noEmailUser);
-        
+
         TableView<User> table = (TableView<User>) getPrivateField("usersTable");
         table.setItems(users);
         table.getSelectionModel().select(noEmailUser);
-        
+
+        // user with no email
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
-            writer.write("noemail,1,User,Silver,"); 
+            writer.write("noemail,1,User,Silver,");
         }
         controller.handleSendReminder();
 
+        // user with email but no overdue items
         User goodUser = new User("good", "1", "User", "Gold");
         users.add(goodUser);
         table.getSelectionModel().select(goodUser);
-        
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
-            writer.write("good,1,User,Gold,test@test.com"); 
+            writer.write("good,1,User,Gold,test@test.com");
         }
-        
+
         controller.handleSendReminder();
+    }
+
+    /**
+     * Verifies the success path of handleSendReminder:
+     * user has an email AND at least one overdue item,
+     * while stubbing the real email sending via subscribers list.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleSendReminder_SuccessPath() throws Exception {
+
+        // 1) add user with email
+        ObservableList<User> users =
+                (ObservableList<User>) getPrivateField("usersList");
+        User u = new User("good2", "1", "User", "Gold");
+        users.add(u);
+
+        TableView<User> table =
+                (TableView<User>) getPrivateField("usersTable");
+        table.setItems(users);
+        table.getSelectionModel().select(u);
+
+        // ensure getUserEmail finds an address
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+            writer.write("good2,1,User,Gold,good2@test.com");
+            writer.newLine();
+        }
+
+        // 2) add an overdue media item for that user
+        ObservableList<Media> media =
+                (ObservableList<Media>) getPrivateField("mediaList");
+
+        Media overdueItem = new Book(
+                "Late Book",
+                "Author",
+                "XYZ",
+                "Overdue",
+                "2000-01-01",
+                0.0,
+                "good2",
+                0.0,
+                1
+        );
+        media.add(overdueItem);
+
+        // 3) replace subscribers in OverduePublisher with a no-op subscriber
+        Field pubField = homepageController.class.getDeclaredField("overduePublisher");
+        pubField.setAccessible(true);
+        OverduePublisher publisher = (OverduePublisher) pubField.get(null); // static field
+
+        Field subsField = OverduePublisher.class.getDeclaredField("subscribers");
+        subsField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        java.util.List<OverdueSubscriber> subs =
+                (java.util.List<OverdueSubscriber>) subsField.get(publisher);
+
+        subs.clear();
+        subs.add(new OverdueSubscriber() {
+            @Override
+            public void update(String username, String email, java.util.List<Media> overdueList) {
+                // no-op: don't actually send email in tests
+            }
+        });
+
+        // 4) now success path should execute without throwing
+        assertDoesNotThrow(() -> controller.handleSendReminder());
+    }
+
+    /**
+     * Tests getUserMembership for an existing user and for default Silver when not found.
+     */
+    @Test
+    void testGetUserMembership_FoundAndDefault() throws Exception {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+            writer.write("ali,123,User,Gold");
+            writer.newLine();
+        }
+
+        Method m = homepageController.class.getDeclaredMethod("getUserMembership", String.class);
+        m.setAccessible(true);
+
+        String membershipExisting = (String) m.invoke(controller, "ali");
+        String membershipMissing = (String) m.invoke(controller, "someone");
+
+        assertEquals("Gold", membershipExisting);
+        assertEquals("Silver", membershipMissing);
+    }
+
+    /**
+     * Tests getUserEmail for an existing user and for an unknown user.
+     */
+    @Test
+    void testGetUserEmail_FoundAndEmpty() throws Exception {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+            writer.write("ali,123,User,Gold,ali@mail.com");
+            writer.newLine();
+        }
+
+        Method m = homepageController.class.getDeclaredMethod("getUserEmail", String.class);
+        m.setAccessible(true);
+
+        String emailExisting = (String) m.invoke(controller, "ali");
+        String emailMissing = (String) m.invoke(controller, "x");
+
+        assertEquals("ali@mail.com", emailExisting);
+        assertEquals("", emailMissing);
+    }
+
+    /**
+     * Tests that showAlert can be invoked off the FX thread (test mode branch).
+     */
+    @Test
+    void testShowAlert_NonFxThread_DoesNotThrow() throws Exception {
+        Method m = homepageController.class.getDeclaredMethod("showAlert", String.class, String.class);
+        m.setAccessible(true);
+
+        assertDoesNotThrow(() -> {
+            try {
+                m.invoke(controller, "Title", "Content");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     /**
