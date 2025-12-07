@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
  * Verifies authentication logic and file reading.
  * 
  * @author Zainab
- * @version 1.2
+ * @version 1.3
  */
 public class LoginControllerTest {
 
@@ -41,8 +41,7 @@ public class LoginControllerTest {
         setPrivateField("usernameField", usernameField);
         setPrivateField("passwordField", passwordField);
         setPrivateField("errorMessage", errorMessageLabel);
-        
-        
+
         File f = new File("users.txt");
         if (f.exists()) f.delete();
     }
@@ -52,7 +51,7 @@ public class LoginControllerTest {
         f.setAccessible(true);
         f.set(controller, value);
     }
-    
+
     private Object invokeValidateCredentials(String username, String password) throws Exception {
         Method m = LoginController.class.getDeclaredMethod("validateCredentials", String.class, String.class);
         m.setAccessible(true);
@@ -71,23 +70,24 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies invalid credentials show error.
+     * Verifies invalid credentials show error AND clear password.
      */
     @Test
     void testHandleLogin_InvalidCredentials() throws Exception {
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("admin,123,Admin");
         }
-        
+
         usernameField.setText("wrong");
         passwordField.setText("wrong");
         controller.handleLogin(null);
-        
+
         assertEquals("❌ Invalid username or password.", errorMessageLabel.getText());
+        assertEquals("", passwordField.getText(), "Password field should be cleared on invalid login");
     }
 
     /**
-     * Verifies valid user validation.
+     * Verifies valid user validation with full data (membership + email).
      */
     @Test
     void testValidateCredentials_ValidUser() throws Exception {
@@ -97,10 +97,14 @@ public class LoginControllerTest {
 
         Object result = invokeValidateCredentials("u1", "1");
         assertNotNull(result);
-        
+
         Field emailField = result.getClass().getDeclaredField("email");
         emailField.setAccessible(true);
         assertEquals("u1@mail.com", emailField.get(result));
+
+        Field membershipField = result.getClass().getDeclaredField("membership");
+        membershipField.setAccessible(true);
+        assertEquals("Gold", membershipField.get(result));
     }
 
     /**
@@ -111,17 +115,17 @@ public class LoginControllerTest {
         try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
             out.println("admin,123,Admin");
         }
-        
+
         Object result = invokeValidateCredentials("admin", "123");
         assertNotNull(result);
-        
+
         Field roleField = result.getClass().getDeclaredField("role");
         roleField.setAccessible(true);
         assertEquals("Admin", roleField.get(result));
     }
 
     /**
-     * Verifies malformed lines in users file.
+     * Verifies malformed lines in users file are skipped, and valid line still works.
      */
     @Test
     void testValidateCredentials_MalformedLines() throws Exception {
@@ -130,11 +134,11 @@ public class LoginControllerTest {
             out.println("badline");
             out.println("u1,1,User");
         }
-        
+
         Object result = invokeValidateCredentials("u1", "1");
         assertNotNull(result);
     }
-    
+
     /**
      * Verifies file not found scenario.
      */
@@ -142,9 +146,67 @@ public class LoginControllerTest {
     void testValidateCredentials_NoFile() throws Exception {
         File f = new File("users.txt");
         if (f.exists()) f.delete();
-        
+
         Object result = invokeValidateCredentials("u", "p");
         assertNull(result);
         assertEquals("⚠️ Users file not found!", errorMessageLabel.getText());
+    }
+
+    /**
+     * membership should default to Silver when membership field is missing.
+     * Line format: username,password,role
+     */
+    @Test
+    void testValidateCredentials_DefaultMembership_WhenMissing() throws Exception {
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("u2,2,User");
+        }
+
+        Object result = invokeValidateCredentials("u2", "2");
+        assertNotNull(result);
+
+        Field membershipField = result.getClass().getDeclaredField("membership");
+        membershipField.setAccessible(true);
+        assertEquals("Silver", membershipField.get(result));
+    }
+
+    /**
+     * membership should default to Silver when membership field is empty,
+     * but email is present.
+     * Line format: username,password,role,,email
+     */
+    @Test
+    void testValidateCredentials_DefaultMembership_WhenEmptyField() throws Exception {
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("u3,3,User,,u3@mail.com");
+        }
+
+        Object result = invokeValidateCredentials("u3", "3");
+        assertNotNull(result);
+
+        Field membershipField = result.getClass().getDeclaredField("membership");
+        membershipField.setAccessible(true);
+        assertEquals("Silver", membershipField.get(result));
+
+        Field emailField = result.getClass().getDeclaredField("email");
+        emailField.setAccessible(true);
+        assertEquals("u3@mail.com", emailField.get(result));
+    }
+
+    /**
+     * تأكدنا هنا إن handleLogin يمشي لحد ما يحاول يفتح الـ Stage
+     * ووقتها JavaFX ترمي IllegalStateException لأنه مش على FX Application Thread.
+     * هذا طبيعي في التست، وإحنا بس مهتمين إنه ما يعلق أو يرمي نوع تاني من الأخطاء.
+     */
+    @Test
+    void testHandleLogin_ValidAdmin_throwsIllegalStateOnStageCreation() throws Exception {
+        try (PrintWriter out = new PrintWriter(new FileWriter("users.txt"))) {
+            out.println("admin,123,Admin");
+        }
+
+        usernameField.setText("admin");
+        passwordField.setText("123");
+
+        assertThrows(IllegalStateException.class, () -> controller.handleLogin(null));
     }
 }
