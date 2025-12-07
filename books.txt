@@ -1,9 +1,1 @@
 Book,Clean Code,Robert Martin,111,1,Available,,0.0,,0.0
-Book,Java Programming,James Gosling,222,1,Overdue,2025-10-30,36.0,u1,0.0
-CD,Greatest Hits,Artist X,333,1,Available,,0.0,,0.0
-CD,Learn English,Oxford,444,1,Available,,0.0,,0.0
-Book,Java Programming,James Gosling,222,2,Available,,0.0,,0.0
-Book,m,m,555,1,Borrowed,2026-01-01,0.0,u1,0.0
-Book,m,m,555,2,Overdue,2025-10-30,18.0,u2,0.0
-Book,m,m,555,3,Available,,0.0,,0.0
-Book,m,m,555,4,Available,,0.0,,0.0

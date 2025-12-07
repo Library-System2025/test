@@ -1,6 +1,0 @@
-m,123,Admin
-z,456,Librarian
-lib2,222,Librarian,Silver
-u1,1,User,Silver,manarnofal01@gmail.com
-u2,2,User,Gold,s12218486@stu.najah.edu
-u3,3,User,Platinum,u3@example.com

@@ -49,7 +49,7 @@ public class EmailOverdueSubscriberTest {
 
         verify(mockEmailService, times(1))
                 .sendEmail(eq("u1@mail.com"),
-                           eq("Library Overdue Notice"),
+                           eq("Library Overdue Notice"),                          
                            bodyCaptor.capture());
 
         String body = bodyCaptor.getValue();
@@ -57,4 +57,6 @@ public class EmailOverdueSubscriberTest {
         assertTrue(body.contains("2025-12-01"));
         assertTrue(body.contains("3.50")); 
     }
+    
 }
+
