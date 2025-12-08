@@ -48,7 +48,7 @@ public class UserController {
     @FXML private TableColumn<Media, Double> fineColumn;
 
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
-    private static final String FILE_PATH       = "books.txt";
+    private static final String FILE_PATH        = "books.txt";
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED  = "Borrowed";
     private static final String STATUS_OVERDUE   = "Overdue";
@@ -82,10 +82,10 @@ public class UserController {
 
     /**
      * Sets the current user details and loads their specific data.
-     * 
-     * @param username The username.
+     *
+     * @param username       The username.
      * @param membershipType The membership type (Gold/Silver).
-     * @param email The user's email address.
+     * @param email          The user's email address.
      */
     public void setCurrentUser(String username, String membershipType, String email) {
         this.accountUsername = username;
@@ -118,11 +118,11 @@ public class UserController {
     /**
      * Sets user credentials (legacy method).
      * @param username The username.
-     * @param email The email.
+     * @param email    The email.
      */
     public void setCurrentUser(String username, String email) {
         this.accountUsername = username;
-        this.accountEmail = email;
+        this.accountEmail    = email;
         updateWelcomeLabel();
         tryLoadBooks();
     }
@@ -150,6 +150,14 @@ public class UserController {
      */
     @FXML
     public void initialize() {
+        configureTableColumns();
+        bookTable.setItems(mediaList);
+        configureRowColors();
+        configureDueDateColumn();
+        configureFineColumn();
+    }
+
+    private void configureTableColumns() {
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
@@ -157,9 +165,9 @@ public class UserController {
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
         fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
+    }
 
-        bookTable.setItems(mediaList);
-
+    private void configureRowColors() {
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
@@ -173,8 +181,7 @@ public class UserController {
                 String borrower = item.getBorrowedBy();
                 String status   = item.getStatus();
 
-                if (borrower != null && borrower.equals(accountUsername)) {
-
+                if (isCurrentUserBorrower(borrower)) {
                     if (STATUS_OVERDUE.equals(status)) {
                         setStyle("-fx-background-color: #ffcccc;");
                     } else {
@@ -183,45 +190,61 @@ public class UserController {
                     return;
                 }
 
-                if (STATUS_BORROWED.equals(status) || STATUS_OVERDUE.equals(status)) {
+                if (isBorrowedOrOverdue(status)) {
                     setStyle("-fx-background-color: #fff3cd;"); // أصفر
                 }
             }
         });
+    }
 
+    private void configureDueDateColumn() {
         dueDateColumn.setCellFactory(col -> new TableCell<Media, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+
+                Media m = (getTableRow() != null) ? getTableRow().getItem() : null;
+                if (empty || m == null) {
                     setText(null);
+                    return;
+                }
+
+                if (isCurrentUserBorrower(m.getBorrowedBy())) {
+                    setText(m.getDueDate());
                 } else {
-                    Media m = getTableRow().getItem();
-                    if (m.getBorrowedBy() != null && m.getBorrowedBy().equals(accountUsername)) {
-                        setText(m.getDueDate());
-                    } else {
-                        setText("");
-                    }
+                    setText("");
                 }
             }
         });
+    }
 
+    private void configureFineColumn() {
         fineColumn.setCellFactory(col -> new TableCell<Media, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+
+                Media m = (getTableRow() != null) ? getTableRow().getItem() : null;
+                if (empty || m == null) {
                     setText(null);
+                    return;
+                }
+
+                if (isCurrentUserBorrower(m.getBorrowedBy())) {
+                    setText(String.format("$%.2f", m.getFineAmount()));
                 } else {
-                    Media m = getTableRow().getItem();
-                    if (m.getBorrowedBy() != null && m.getBorrowedBy().equals(accountUsername)) {
-                        setText(String.format("$%.2f", m.getFineAmount()));
-                    } else {
-                        setText("");
-                    }
+                    setText("");
                 }
             }
         });
+    }
+
+    private boolean isCurrentUserBorrower(String borrower) {
+        return borrower != null && borrower.equals(accountUsername);
+    }
+
+    private boolean isBorrowedOrOverdue(String status) {
+        return STATUS_BORROWED.equals(status) || STATUS_OVERDUE.equals(status);
     }
 
     /**
@@ -231,7 +254,7 @@ public class UserController {
     void handleLogout() {
         try {
             Parent login = FXMLLoader.load(getClass().getResource("login.fxml"));
-            Stage stage = (Stage) bookTable.getScene().getWindow();
+            Stage stage  = (Stage) bookTable.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
             e.printStackTrace();
@@ -436,8 +459,8 @@ public class UserController {
         double amountPaid = parts.length >= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;
 
         Media item = createMediaItem(type, title, author, isbn,
-                                     status, dueDate, fine, borrowedBy,
-                                     amountPaid, copyId);
+                status, dueDate, fine, borrowedBy,
+                amountPaid, copyId);
 
         applyFineForUserIfOverdue(item, borrowedBy);
         return item;
