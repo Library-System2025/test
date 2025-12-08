@@ -48,21 +48,21 @@ public class UserController {
     @FXML private TableColumn<Media, Double> fineColumn;
 
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
-    private static final String FILE_PATH = "books.txt";
+    private static final String FILE_PATH       = "books.txt";
+    private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_BORROWED  = "Borrowed";
+    private static final String STATUS_OVERDUE   = "Overdue";
 
-    
     private String accountUsername;
     private String membershipType;
     private String accountEmail;
 
-    
     private static final OverduePublisher overduePublisher = new OverduePublisher();
     private static EmailService emailService;
 
     /**
      * Static block to initialize the email service and subscribers.
      */
-    
     static {
         try {
             Dotenv dotenv = Dotenv.load();
@@ -87,7 +87,6 @@ public class UserController {
      * @param membershipType The membership type (Gold/Silver).
      * @param email The user's email address.
      */
-    
     public void setCurrentUser(String username, String membershipType, String email) {
         this.accountUsername = username;
         this.membershipType  = membershipType;
@@ -100,18 +99,16 @@ public class UserController {
      * Sets the membership type.
      * @param membershipType The membership type.
      */
-    
     public void setMembershipType(String membershipType) {
         this.membershipType = membershipType;
         updateWelcomeLabel();
         tryLoadBooks();
     }
-    
+
     /**
      * Sets the username.
      * @param username The username.
      */
-
     public void setCurrentUsername(String username) {
         this.accountUsername = username;
         updateWelcomeLabel();
@@ -123,7 +120,6 @@ public class UserController {
      * @param username The username.
      * @param email The email.
      */
-    
     public void setCurrentUser(String username, String email) {
         this.accountUsername = username;
         this.accountEmail = email;
@@ -152,7 +148,6 @@ public class UserController {
      * Initializes the controller class.
      * Configures table columns, row coloring, and privacy logic (hiding other users' data).
      */
-
     @FXML
     public void initialize() {
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
@@ -165,39 +160,38 @@ public class UserController {
 
         bookTable.setItems(mediaList);
 
-        
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
                 super.updateItem(item, empty);
                 setStyle("");
 
-                if (empty || item == null) return;
+                if (empty || item == null) {
+                    return;
+                }
 
                 String borrower = item.getBorrowedBy();
-                String status = item.getStatus();
+                String status   = item.getStatus();
 
                 if (borrower != null && borrower.equals(accountUsername)) {
 
-                    if (status.equals("Overdue")) {
-                        setStyle("-fx-background-color: #ffcccc;"); 
+                    if (STATUS_OVERDUE.equals(status)) {
+                        setStyle("-fx-background-color: #ffcccc;");
                     } else {
                         setStyle("-fx-background-color: #c8f7c5;");
                     }
                     return;
                 }
 
-                if (status.equals("Borrowed") || status.equals("Overdue")) {
+                if (STATUS_BORROWED.equals(status) || STATUS_OVERDUE.equals(status)) {
                     setStyle("-fx-background-color: #fff3cd;"); // أصفر
                 }
-
             }
         });
 
-
-        
         dueDateColumn.setCellFactory(col -> new TableCell<Media, String>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                     setText(null);
@@ -212,9 +206,9 @@ public class UserController {
             }
         });
 
-        
         fineColumn.setCellFactory(col -> new TableCell<Media, Double>() {
-            @Override protected void updateItem(Double item, boolean empty) {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                     setText(null);
@@ -233,9 +227,8 @@ public class UserController {
     /**
      * Handles logout action.
      */
-    
     @FXML
-     void handleLogout() {
+    void handleLogout() {
         try {
             Parent login = FXMLLoader.load(getClass().getResource("login.fxml"));
             Stage stage = (Stage) bookTable.getScene().getWindow();
@@ -249,7 +242,6 @@ public class UserController {
      * Handles borrowing a book.
      * Checks for existing fines and item availability.
      */
-    
     @FXML
     void handleBorrowBook() {
         // 1) أولاً: هل عنده غرامات غير مدفوعة؟
@@ -270,17 +262,17 @@ public class UserController {
             return;
         }
 
-        // ⭐⭐ الجديد المهم: منع استعار نسخة ثانية من نفس الكتاب ⭐⭐
+        // منع استعار نسخة ثانية من نفس الكتاب
         for (Media m : mediaList) {
-            if (m.getIsbn().equals(selected.getIsbn()) &&          // نفس الكتاب (نفس ISBN)
-                accountUsername.equals(m.getBorrowedBy())) {        // واليوزر نفسه مستعيره
+            if (m.getIsbn().equals(selected.getIsbn()) &&
+                accountUsername.equals(m.getBorrowedBy())) {
                 messageLabel.setText("❌ You already borrowed a copy of this item.");
                 return;
             }
         }
 
         // 3) هل النسخة المختارة متاحة أصلاً؟
-        if (!selected.getStatus().equals("Available")) {
+        if (!STATUS_AVAILABLE.equals(selected.getStatus())) {
             messageLabel.setText("❌ This item is not available.");
             return;
         }
@@ -293,14 +285,12 @@ public class UserController {
         messageLabel.setText("✅ Borrowed successfully! Due date: " + selected.getDueDate());
     }
 
-
     /**
      * Handles fine payment.
      * Validates payment amount and updates the fine status.
      */
-    
     @FXML
-     void handlePayFine() {
+    void handlePayFine() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             infoLabel.setText("⚠️ Select an item.");
@@ -345,14 +335,13 @@ public class UserController {
         bookTable.refresh();
         paymentField.clear();
     }
-    
+
     /**
      * Handles returning a book.
      * Ensures no fines are pending before returning.
      */
-
     @FXML
-     void handleReturnBook() {
+    void handleReturnBook() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             messageLabel.setText("⚠️ Select an item to return.");
@@ -367,11 +356,11 @@ public class UserController {
         selected.calculateFine(membershipType);
 
         if (selected.getFineAmount() > 0) {
-            selected.setStatus("Overdue");
+            selected.setStatus(STATUS_OVERDUE);
             messageLabel.setText("⚠️ Cannot return. Pay the fine first.");
 
             if (accountEmail != null && !accountEmail.isEmpty()) {
-                
+
                 List<Media> singleList = new ArrayList<>();
                 singleList.add(selected);
 
@@ -394,70 +383,28 @@ public class UserController {
     /**
      * Reloads data from the file.
      */
-    
     @FXML
-     void handleReload() {
+    void handleReload() {
         reloadBooks();
         infoLabel.setText("🔄 Data reloaded.");
     }
 
     /**
      * Loads media data from 'books.txt'.
+     * (Refactored to reduce cognitive complexity.)
      */
-
     void loadMediaFromFile() {
         mediaList.clear();
         File file = new File(FILE_PATH);
-        if (!file.exists()) return;
+        if (!file.exists()) {
+            return;
+        }
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // type,title,author,isbn,copyId,status,dueDate,fine,borrowedBy,amountPaid
-                String[] parts = line.split(",", 10);
-                if (parts.length >= 5) {
-                    String type   = parts[0].trim();
-                    String title  = parts[1].trim();
-                    String author = parts[2].trim();
-                    String isbn   = parts[3].trim();
-
-                    int copyId = 1;
-                    try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
-
-                    String status  = (parts.length >= 6) ? parts[5].trim() : "Available";
-                    String dueDate = (parts.length >= 7) ? parts[6].trim() : "";
-
-                    double fine = 0.0;
-                    try {
-                        if (parts.length >= 8) fine = Double.parseDouble(parts[7].trim());
-                    } catch (Exception e) {}
-
-                    String borrowedBy = "";
-                    if (parts.length >= 9) {
-                        borrowedBy = parts[8].trim();
-                        if (borrowedBy.equals("0.0")) borrowedBy = "";
-                    }
-
-                    double amountPaid = 0.0;
-                    if (parts.length >= 10) {
-                        try { amountPaid = Double.parseDouble(parts[9].trim()); } catch (Exception e) {}
-                    }
-
-                    Media item;
-                    if (type.equalsIgnoreCase("CD")) {
-                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
-                    } else {
-                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
-                    }
-
-                    if (item.isOverdue()) {
-                        if (borrowedBy.equals(accountUsername) && membershipType != null) {
-                            item.calculateFine(membershipType);
-                        } else {
-                            item.calculateFine("Silver");
-                        }
-                    }
-
+                Media item = parseMediaLineForUser(line);
+                if (item != null) {
                     mediaList.add(item);
                 }
             }
@@ -467,12 +414,113 @@ public class UserController {
         bookTable.refresh();
     }
 
+    /**
+     * Parses a single line for the current user context.
+     */
+    private Media parseMediaLineForUser(String line) {
+        String[] parts = line.split(",", 10);
+        if (parts.length < 5) {
+            return null;
+        }
 
-     /**
-      * Saves all media data to 'books.txt'.
-      */
-     
-     void saveAllMediaToFile() {
+        String type   = parts[0].trim();
+        String title  = parts[1].trim();
+        String author = parts[2].trim();
+        String isbn   = parts[3].trim();
+
+        int copyId        = parseIntSafe(getPart(parts, 4), 1);
+        String status     = parts.length >= 6 ? parts[5].trim() : STATUS_AVAILABLE;
+        String dueDate    = parts.length >= 7 ? parts[6].trim() : "";
+        double fine       = parts.length >= 8 ? parseDoubleSafe(parts[7], 0.0) : 0.0;
+        String borrowedBy = normalizeBorrowedBy(getPart(parts, 8));
+        double amountPaid = parts.length >= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;
+
+        Media item = createMediaItem(type, title, author, isbn,
+                                     status, dueDate, fine, borrowedBy,
+                                     amountPaid, copyId);
+
+        applyFineForUserIfOverdue(item, borrowedBy);
+        return item;
+    }
+
+    /**
+     * Creates a Book or CD based on type.
+     */
+    private Media createMediaItem(String type,
+                                  String title,
+                                  String author,
+                                  String isbn,
+                                  String status,
+                                  String dueDate,
+                                  double fine,
+                                  String borrowedBy,
+                                  double amountPaid,
+                                  int copyId) {
+
+        if ("CD".equalsIgnoreCase(type)) {
+            return new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
+        }
+        return new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
+    }
+
+    /**
+     * Applies the appropriate fine logic if the item is overdue.
+     */
+    private void applyFineForUserIfOverdue(Media item, String borrowedBy) {
+        if (!item.isOverdue()) {
+            return;
+        }
+
+        if (borrowedBy != null &&
+            borrowedBy.equals(accountUsername) &&
+            membershipType != null) {
+            item.calculateFine(membershipType);
+        } else {
+            item.calculateFine("Silver");
+        }
+    }
+
+    /**
+     * Safely parses an int with a default value.
+     */
+    private int parseIntSafe(String value, int defaultValue) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Safely parses a double with a default value.
+     */
+    private double parseDoubleSafe(String value, double defaultValue) {
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Safely returns the element at index or empty string.
+     */
+    private String getPart(String[] parts, int index) {
+        return index < parts.length ? parts[index] : "";
+    }
+
+    /**
+     * Normalizes the borrowedBy field (ignores "0.0").
+     */
+    private String normalizeBorrowedBy(String rawBorrowedBy) {
+        String trimmed = rawBorrowedBy == null ? "" : rawBorrowedBy.trim();
+        return "0.0".equals(trimmed) ? "" : trimmed;
+    }
+
+    /**
+     * Saves all media data to 'books.txt'.
+     */
+    void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Media m : mediaList) {
                 writer.write(m.toFileFormat());
@@ -482,26 +530,27 @@ public class UserController {
             e.printStackTrace();
         }
     }
-     
-     /**
-      * Reloads books and checks for overdue items.
-      */
 
-     void reloadBooks() {
+    /**
+     * Reloads books and checks for overdue items.
+     */
+    void reloadBooks() {
         loadMediaFromFile();
         bookTable.refresh();
         checkOverdueAndNotify();
     }
 
-     /**
-      * Checks for overdue items belonging to the current user and sends notifications.
-      */
+    /**
+     * Checks for overdue items belonging to the current user and sends notifications.
+     */
+    void checkOverdueAndNotify() {
+        if (accountUsername == null || membershipType == null) {
+            return;
+        }
+        if (accountEmail == null || accountEmail.isEmpty()) {
+            return;
+        }
 
-     void checkOverdueAndNotify() {
-        if (accountUsername == null || membershipType == null) return;
-        if (accountEmail == null || accountEmail.isEmpty()) return;
-
-        
         for (Media m : mediaList) {
             if (accountUsername.equals(m.getBorrowedBy()) && m.isOverdue()) {
                 m.calculateFine(membershipType);
