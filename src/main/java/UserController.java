@@ -257,7 +257,7 @@ public class UserController {
             Stage stage  = (Stage) bookTable.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.err.println("Error: " + e.getMessage());
         }
     }
 
@@ -432,7 +432,7 @@ public class UserController {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.err.println("Error: " + e.getMessage());
         }
         bookTable.refresh();
     }
@@ -550,7 +550,7 @@ public class UserController {
                 writer.newLine();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.err.println("Error: " + e.getMessage());
         }
     }
 

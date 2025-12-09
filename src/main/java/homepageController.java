@@ -205,7 +205,7 @@ public class homepageController {
             Parent login = FXMLLoader.load(getClass().getResource("login.fxml"));
             Stage stage = (Stage) titleField.getScene().getWindow();
             stage.setScene(new Scene(login));
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) { System.err.println("Error: " + e.getMessage()); }
     }
 
     /**
@@ -382,7 +382,7 @@ public class homepageController {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.err.println("Error: " + e.getMessage());
         }
 
         if (searchResultsTable != null) searchResultsTable.refresh();
@@ -455,7 +455,7 @@ public class homepageController {
                 writer.write(m.toFileFormat());
                 writer.newLine();
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) { System.err.println("Error: " + e.getMessage()); }
     }
 
     /**
@@ -495,7 +495,7 @@ public class homepageController {
                     return parts[4].trim();
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (IOException e) { System.err.println("Error: " + e.getMessage()); }
         return "";
     }
 

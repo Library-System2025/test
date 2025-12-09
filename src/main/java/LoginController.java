@@ -117,7 +117,7 @@ public class LoginController {
 
             
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.err.println("Error: " + e.getMessage());
             errorMessage.setText("⚠️ Error loading page.");
         }
     }
@@ -167,7 +167,7 @@ public class LoginController {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+        	System.err.println("Error: " + e.getMessage());
         }
 
         return null; 
