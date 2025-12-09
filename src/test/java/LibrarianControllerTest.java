@@ -387,7 +387,7 @@ public class LibrarianControllerTest {
                 assertEquals("", row.getStyle());
 
             } catch (Exception e) {
-            	System.err.println("Error processing file: " + e.getMessage());
+            	e.printStackTrace();
             }
             latch.countDown();
         });
