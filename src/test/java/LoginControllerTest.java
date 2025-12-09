@@ -12,8 +12,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * Unit tests for LoginController.
- * Verifies authentication logic and file reading.
+ * Unit tests for the {@link LoginController} class.
+ * <p>
+ * This suite validates the authentication logic, file parsing for user credentials,
+ * and error handling for various login scenarios (empty fields, invalid credentials, etc.).
+ * </p>
  * 
  * @author Zainab
  * @version 1.3
@@ -59,7 +62,7 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies empty fields show error.
+     * Verifies that attempting to login with empty fields triggers an appropriate warning message.
      */
     @Test
     void testHandleLogin_EmptyFields() throws Exception {
@@ -70,7 +73,7 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies invalid credentials show error AND clear password.
+     * Verifies that invalid credentials result in an error message and clear the password field.
      */
     @Test
     void testHandleLogin_InvalidCredentials() throws Exception {
@@ -87,7 +90,7 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies valid user validation with full data (membership + email).
+     * Verifies that a valid user is correctly validated, parsing extra fields like membership and email.
      */
     @Test
     void testValidateCredentials_ValidUser() throws Exception {
@@ -108,7 +111,7 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies Admin validation.
+     * Verifies that an Admin user is correctly identified with the "Admin" role.
      */
     @Test
     void testValidateCredentials_Admin() throws Exception {
@@ -125,7 +128,8 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies malformed lines in users file are skipped, and valid line still works.
+     * Verifies robustness against malformed lines in the users file.
+     * The parser should skip bad lines and still find valid users.
      */
     @Test
     void testValidateCredentials_MalformedLines() throws Exception {
@@ -140,7 +144,8 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies file not found scenario.
+     * Verifies behavior when the users file is missing.
+     * Should return null and display a file not found error.
      */
     @Test
     void testValidateCredentials_NoFile() throws Exception {
@@ -153,7 +158,7 @@ public class LoginControllerTest {
     }
 
     /**
-     * membership should default to Silver when membership field is missing.
+     * Verifies that membership defaults to "Silver" when the field is missing in the file.
      * Line format: username,password,role
      */
     @Test
@@ -171,8 +176,8 @@ public class LoginControllerTest {
     }
 
     /**
-     * membership should default to Silver when membership field is empty,
-     * but email is present.
+     * Verifies that membership defaults to "Silver" when the field is explicitly empty,
+     * but subsequent fields (like email) are present.
      * Line format: username,password,role,,email
      */
     @Test
@@ -194,9 +199,13 @@ public class LoginControllerTest {
     }
 
     /**
-     * تأكدنا هنا إن handleLogin يمشي لحد ما يحاول يفتح الـ Stage
-     * ووقتها JavaFX ترمي IllegalStateException لأنه مش على FX Application Thread.
-     * هذا طبيعي في التست، وإحنا بس مهتمين إنه ما يعلق أو يرمي نوع تاني من الأخطاء.
+     * Verifies successful login flow up to Stage creation.
+     * <p>
+     * This test confirms that `handleLogin` proceeds through validation successfully.
+     * An {@link IllegalStateException} is expected because opening a new Stage 
+     * requires the JavaFX Application Thread, which is not available in this unit test context.
+     * This exception confirms the code reached the UI transition point.
+     * </p>
      */
     @Test
     void testHandleLogin_ValidAdmin_throwsIllegalStateOnStageCreation() throws Exception {

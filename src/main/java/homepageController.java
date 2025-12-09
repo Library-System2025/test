@@ -25,15 +25,17 @@ import javafx.scene.control.Alert.AlertType;
 import io.github.cdimascio.dotenv.Dotenv;
 
 /**
- * Controller class for the main dashboard (Home Page).
- *
- * This class handles the core administrative functionalities of the library system, including:
+ * Controller class for the Admin Dashboard (Home Page).
+ * <p>
+ * This class serves as the central hub for administrative tasks in the library system.
+ * It manages:
  * <ul>
- *   <li>Adding new Books and CDs.</li>
- *   <li>Searching for media items.</li>
- *   <li>Managing registered users (listing, deleting).</li>
- *   <li>Sending overdue email notifications.</li>
+ *   <li>Inventory Management: Adding, viewing, and searching Books and CDs.</li>
+ *   <li>User Management: Listing and deleting registered users.</li>
+ *   <li>Notifications: Sending automated email reminders for overdue items.</li>
  * </ul>
+ * Data is persisted to local text files (`books.txt`, `users.txt`).
+ * </p>
  *
  * @author Zainab
  * @version 1.0
@@ -75,7 +77,7 @@ public class homepageController {
     private static final String FILE_PATH = "books.txt";
     private static final String USERS_FILE_PATH = "users.txt";
 
-    // Constants for statuses
+    
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED  = "Borrowed";
     private static final String STATUS_OVERDUE   = "Overdue";
@@ -84,8 +86,11 @@ public class homepageController {
     private static EmailService emailService;
 
     /**
-     * Static initialization block to setup the Email Service.
-     * Loads credentials from the .env file and subscribes the email service to overdue notifications.
+     * Static initialization block to configure the Email Service.
+     * <p>
+     * Loads sensitive credentials (email/password) from a `.env` file using Dotenv.
+     * Subscribes the {@link EmailOverdueSubscriber} to the {@link OverduePublisher}.
+     * </p>
      */
     static {
         try {
@@ -106,9 +111,12 @@ public class homepageController {
 
     /**
      * Initializes the controller class.
-     * This method is automatically called after the FXML file has been loaded.
-     * It sets up table columns, loads data, and configures UI behavior.
+     * <p>
+     * This method is automatically called by the JavaFX framework after the FXML file 
+     * has been loaded. It configures table columns, row factories, and loads initial data.
+     * </p>
      */
+    
     @FXML
     public void initialize() {
         configureMediaTable();
@@ -121,7 +129,9 @@ public class homepageController {
         configureUsersTable();
     }
 
-    // ---------- initialization helpers (reduce cognitive complexity) ----------
+    /**
+     * Binds TableView columns to the properties of the Media class.
+     */
 
     private void configureMediaTable() {
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
@@ -146,6 +156,11 @@ public class homepageController {
         typeCombo.setItems(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().selectFirst();
     }
+    
+    /**
+     * Sets up a custom RowFactory to color-code rows based on the media status.
+     * (Green: Available, Yellow: Borrowed, Red: Overdue).
+     */
 
     private void configureMediaRowFactory() {
         searchResultsTable.setRowFactory(tv -> new TableRow<Media>() {
@@ -189,18 +204,20 @@ public class homepageController {
     }
 
     /**
-     * Sets the current username on the welcome label.
+     * Updates the welcome label with the current user's name.
      *
-     * @param username The name of the logged-in user.
+     * @param username The username of the logged-in admin.
      */
+    
     public void setCurrentUsername(String username) {
         if (welcomeLabel != null) welcomeLabel.setText("Welcome, " + username + " 👋");
     }
 
     /**
      * Handles the logout action.
-     * Loads the login screen and closes the current dashboard.
+     * Redirects the user back to the login screen.
      */
+    
     @FXML
     private void handleLogout() {
         try {
@@ -211,10 +228,13 @@ public class homepageController {
     }
 
     /**
-     * Handles adding a new Book or CD to the library.
-     * Validates input fields, checks for duplicate ISBNs, and saves the new item to the file.
-     * (Refactored to reduce Cognitive Complexity.)
+     * Handles the process of adding a new Book or CD.
+     * <p>
+     * Validates inputs, checks for existing ISBNs to manage copies, and persists
+     * the new item to the file system.
+     * </p>
      */
+    
     @FXML
     void handleAddBook() {
         String type   = typeCombo.getValue();
@@ -248,7 +268,7 @@ public class homepageController {
         clearBookForm();
     }
 
-    // ---------- helper methods for handleAddBook ----------
+    
 
     private boolean isInvalidBookInput(String type, String title, String author, String isbn) {
         return title.isEmpty() || author.isEmpty() || isbn.isEmpty() || type == null;
@@ -315,9 +335,7 @@ public class homepageController {
     }
 
     /**
-     * Handles searching for media items based on criteria.
-     * Filters the table view based on Title, Author, or ISBN.
-     * (Refactored to reduce Cognitive Complexity.)
+     * Filters the table view based on the search keyword and selected criteria.
      */
     @FXML
     void handleSearch() {
@@ -353,8 +371,7 @@ public class homepageController {
     }
 
     /**
-     * Reloads data from the file and refreshes the table view.
-     * Useful for updating the view after external changes.
+     * Reloads data from the text files and refreshes the UI.
      */
     @FXML
     void handleReload() {
@@ -365,8 +382,10 @@ public class homepageController {
 
     /**
      * Loads media items from 'books.txt'.
-     * Parses the file and populates the media list. Also calculates fines for overdue items.
-     * (Refactored to reduce Cognitive Complexity.)
+     * <p>
+     * Parses the file content, instantiates appropriate Media objects (Book or CD),
+     * and recalculates fines for any overdue items.
+     * </p>
      */
     private void loadMediaFromFile() {
         mediaList.clear();
@@ -449,7 +468,7 @@ public class homepageController {
     }
 
     /**
-     * Saves all current media items to the 'books.txt' file.
+     * Persists all media items currently in the list to 'books.txt'.
      */
     private void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
@@ -461,10 +480,10 @@ public class homepageController {
     }
 
     /**
-     * Retrieves the membership type for a specific user.
+     * Looks up the membership level for a given username.
      *
      * @param username The username to check.
-     * @return The membership type (Gold/Silver), defaults to Silver if not found.
+     * @return "Gold" or "Silver" (default).
      */
     private String getUserMembership(String username) {
         File file = new File(USERS_FILE_PATH);
@@ -481,10 +500,10 @@ public class homepageController {
     }
 
     /**
-     * Retrieves the email address for a specific user.
+     * Retrieves the registered email for a specific user.
      *
      * @param username The username to check.
-     * @return The email address, or an empty string if not found.
+     * @return The email string, or empty if not found.
      */
     private String getUserEmail(String username) {
         File file = new File(USERS_FILE_PATH);
@@ -502,8 +521,8 @@ public class homepageController {
     }
 
     /**
-     * Loads registered users from 'users.txt' into the table view.
-     * Excludes Admin accounts from the view.
+     * Reads users from 'users.txt' and populates the users table.
+     * Admins are excluded from this list.
      */
     private void loadUsersFromFile() {
         usersList.clear();
@@ -521,8 +540,10 @@ public class homepageController {
     }
 
     /**
-     * Deletes a selected user.
-     * Ensures the user has no active loans before deletion.
+     * Deletes the selected user from the system.
+     * <p>
+     * Prevents deletion if the user has active loans.
+     * </p>
      */
     @FXML
     void handleDeleteUser() {
@@ -550,9 +571,7 @@ public class homepageController {
         }
     }
 
-    /**
-     * Saves the list of users to 'users.txt'.
-     */
+    
     private void saveUsersToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE_PATH))) {
             writer.write("m,123,Admin,Gold");
@@ -565,13 +584,13 @@ public class homepageController {
     }
 
     /**
-     * Shows an information alert dialog.
+     * Displays an informational alert box.
      * <p>
-     * Includes a check for the JavaFX Application Thread to support unit testing.
+     * Checks if running on the JavaFX thread to avoid crashes during unit testing.
      * </p>
      *
-     * @param title   The title of the alert.
-     * @param content The content message.
+     * @param title   The dialog title.
+     * @param content The message body.
      */
     private void showAlert(String title, String content) {
         if (!Platform.isFxApplicationThread()) {
@@ -587,9 +606,10 @@ public class homepageController {
     }
 
     /**
-     * Sends an email reminder to a selected user regarding overdue books.
-     * Uses the Observer pattern to trigger the notification.
+     * Identifies overdue items for a selected user and sends an email reminder.
+     * Uses the {@link OverduePublisher} to notify subscribers.
      */
+    
     @FXML
     void handleSendReminder() {
         User selected = usersTable.getSelectionModel().getSelectedItem();

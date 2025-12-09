@@ -2,16 +2,28 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for the Book class.
- * Ensures constructors and overridden methods behave correctly.
+ * Unit tests for the {@link Book} class.
+ * <p>
+ * Ensures that all constructors correctly initialize the state and that overridden methods 
+ * from the {@link Media} superclass return the expected values specific to a Book.
+ * </p>
  * 
+ * @author Zainab
  * @version 1.2
  */
 public class BookTest {
 
-    /**
-     * Verifies that the short constructor initializes fields with default values
-     * and copyId = 1.
+	/**
+     * Verifies that the simplified constructor initializes fields with default values.
+     * <p>
+     * Specifically checks that:
+     * <ul>
+     *   <li>Title, Author, and ISBN are set correctly.</li>
+     *   <li>Status defaults to "Available".</li>
+     *   <li>Copy ID defaults to 1.</li>
+     *   <li>Financial and due date fields are empty or zero.</li>
+     * </ul>
+     * </p>
      */
     @Test
     void testShortConstructor_initialValuesCorrect() {
@@ -31,7 +43,8 @@ public class BookTest {
     }
 
     /**
-     * Verifies that the constructor with copyId initializes the object correctly.
+     * Verifies that the constructor accepting a copy ID correctly sets it while
+     * maintaining default values for other fields.
      */
     @Test
     void testConstructorWithCopyId_initializesValuesCorrectly() {
@@ -51,8 +64,8 @@ public class BookTest {
     }
 
     /**
-     * Verifies that the full constructor correctly sets all fields,
-     * including copyId.
+     * Verifies that the full constructor correctly populates all fields.
+     * This ensures data loaded from persistence layers (files/databases) is mapped correctly.
      */
     @Test
     void testFullConstructor_setsAllValuesCorrectly() {
@@ -81,7 +94,7 @@ public class BookTest {
     }
 
     /**
-     * Verifies that the loan period for a Book is 28 days.
+     * Verifies that the loan period for a Book is strictly 28 days.
      */
     @Test
     void testGetLoanPeriod_returns28Days() {
@@ -90,7 +103,7 @@ public class BookTest {
     }
 
     /**
-     * Verifies that the daily fine rate for a Book is $1.0.
+     * Verifies that the base daily fine rate for a Book is $1.0.
      */
     @Test
     void testGetBaseDailyFine_returns1Dollar() {
@@ -99,7 +112,7 @@ public class BookTest {
     }
 
     /**
-     * Verifies that the media type is correctly identified as "Book".
+     * Verifies that the media type identifier returns "Book".
      */
     @Test
     void testGetMediaType_returnsBook() {

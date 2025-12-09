@@ -15,7 +15,10 @@ import java.io.IOException;
 
 /**
  * Controller class for the Login Screen.
- * Authenticates users and redirects them to the appropriate dashboard based on their role.
+ * <p>
+ * Handles user authentication by verifying credentials against the local data file.
+ * Redirects the user to the specific dashboard (Admin, Librarian, or User) based on their role.
+ * </p>
  * 
  * @author Zainab
  * @version 1.0
@@ -31,7 +34,7 @@ public class LoginController {
     private static final String USERS_FILE = "users.txt";
 
     /**
-     * Inner class to hold user information after validation.
+     * Private static inner class to hold authenticated user details.
      */
     
     private static class UserInfo {
@@ -47,10 +50,15 @@ public class LoginController {
     }
     
     /**
-     * Handles the login button click.
-     * Validates credentials and opens the corresponding dashboard.
+     * Handles the login button click action.
+     * <p>
+     * 1. Validates that fields are not empty.<br>
+     * 2. Checks credentials against `users.txt`.<br>
+     * 3. Loads the appropriate FXML dashboard based on the user's role.<br>
+     * 4. Passes session data (username, membership) to the next controller.
+     * </p>
      * 
-     * @param event The action event.
+     * @param event The button click event.
      */
 
     @FXML
@@ -123,12 +131,14 @@ public class LoginController {
     }
 
     /**
-     * Validates user credentials against the 'users.txt' file.
-     * Supported format: username,password,role[,membership,email]
+     * Validates user credentials by parsing the 'users.txt' file.
+     * <p>
+     * Expected File Format: {@code username,password,role,[membership],[email]}
+     * </p>
      * 
      * @param username The entered username.
      * @param password The entered password.
-     * @return UserInfo object if valid, null otherwise.
+     * @return A {@link UserInfo} object if credentials match; otherwise null.
      */
     
     private UserInfo validateCredentials(String username, String password) {

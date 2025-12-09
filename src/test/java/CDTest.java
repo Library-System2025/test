@@ -2,16 +2,27 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for the CD class.
- * Ensures constructors and overridden methods behave correctly.
+ * Unit tests for the {@link CD} class.
+ * <p>
+ * Ensures that all constructors correctly initialize the state and that overridden methods 
+ * from the {@link Media} superclass return the expected values specific to a CD.
+ * </p>
  *
+ * @author Zainab
  * @version 1.2
  */
 public class CDTest {
 
-    /**
-     * Verifies that the short constructor initializes fields with default values
-     * and copyId = 1.
+	/**
+     * Verifies that the simplified constructor initializes fields with default values.
+     * <p>
+     * Specifically checks that:
+     * <ul>
+     *   <li>Title, Artist, and ISBN are set correctly.</li>
+     *   <li>Status defaults to "Available".</li>
+     *   <li>Copy ID defaults to 1.</li>
+     * </ul>
+     * </p>
      */
     @Test
     void testShortConstructor_initialValuesCorrect() {
@@ -31,7 +42,8 @@ public class CDTest {
     }
 
     /**
-     * Verifies that the constructor with copyId initializes the object correctly.
+     * Verifies that the constructor accepting a copy ID correctly sets it while
+     * maintaining default values for other fields.
      */
     @Test
     void testConstructorWithCopyId_initializesValuesCorrectly() {
@@ -41,19 +53,20 @@ public class CDTest {
         assertEquals("DJ Alex", cd.getAuthor());
         assertEquals("CD500", cd.getIsbn());
 
-        // defaults same as short constructor
+        
         assertEquals("Available", cd.getStatus());
         assertEquals("", cd.getDueDate());
         assertEquals(0.0, cd.getFineAmount());
         assertEquals("", cd.getBorrowedBy());
         assertEquals(0.0, cd.getAmountPaid());
 
-        // important part
+        
         assertEquals(7, cd.getCopyId());
     }
 
     /**
-     * Verifies that the full constructor correctly sets all fields including copyId.
+     * Verifies that the full constructor correctly populates all fields.
+     * This ensures data loaded from persistence layers is mapped correctly.
      */
     @Test
     void testFullConstructor_setsAllValuesCorrectly() {
@@ -82,7 +95,7 @@ public class CDTest {
     }
 
     /**
-     * Verifies that the loan period for a CD is 7 days.
+     * Verifies that the loan period for a CD is strictly 7 days.
      */
     @Test
     void testGetLoanPeriod_returns7Days() {
@@ -91,7 +104,7 @@ public class CDTest {
     }
 
     /**
-     * Verifies that the daily fine rate for a CD is $2.0.
+     * Verifies that the base daily fine rate for a CD is $2.0.
      */
     @Test
     void testGetBaseDailyFine_returns2Dollars() {
@@ -100,7 +113,7 @@ public class CDTest {
     }
 
     /**
-     * Verifies that the media type is correctly identified as "CD".
+     * Verifies that the media type identifier returns "CD".
      */
     @Test
     void testGetMediaType_returnsCD() {

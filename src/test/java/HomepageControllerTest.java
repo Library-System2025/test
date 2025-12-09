@@ -41,7 +41,7 @@ public class HomepageControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // Toolkit is already initialized
+            
         }
     }
 
@@ -403,7 +403,7 @@ public class HomepageControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void testSendReminder_Validation() throws Exception {
-        // no selection
+        
         controller.handleSendReminder();
 
         ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
@@ -414,13 +414,13 @@ public class HomepageControllerTest {
         table.setItems(users);
         table.getSelectionModel().select(noEmailUser);
 
-        // user with no email
+        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
             writer.write("noemail,1,User,Silver,");
         }
         controller.handleSendReminder();
 
-        // user with email but no overdue items
+        
         User goodUser = new User("good", "1", "User", "Gold");
         users.add(goodUser);
         table.getSelectionModel().select(goodUser);
@@ -441,7 +441,7 @@ public class HomepageControllerTest {
     @SuppressWarnings("unchecked")
     void testHandleSendReminder_SuccessPath() throws Exception {
 
-        // 1) add user with email
+        
         ObservableList<User> users =
                 (ObservableList<User>) getPrivateField("usersList");
         User u = new User("good2", "1", "User", "Gold");
@@ -452,13 +452,13 @@ public class HomepageControllerTest {
         table.setItems(users);
         table.getSelectionModel().select(u);
 
-        // ensure getUserEmail finds an address
+        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
             writer.write("good2,1,User,Gold,good2@test.com");
             writer.newLine();
         }
 
-        // 2) add an overdue media item for that user
+        
         ObservableList<Media> media =
                 (ObservableList<Media>) getPrivateField("mediaList");
 
@@ -490,11 +490,11 @@ public class HomepageControllerTest {
         subs.add(new OverdueSubscriber() {
             @Override
             public void update(String username, String email, java.util.List<Media> overdueList) {
-                // no-op: don't actually send email in tests
+                
             }
         });
 
-        // 4) now success path should execute without throwing
+        
         assertDoesNotThrow(() -> controller.handleSendReminder());
     }
 

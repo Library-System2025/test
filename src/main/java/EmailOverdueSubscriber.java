@@ -1,7 +1,12 @@
 
 
 /**
- * Subscriber implementation that sends email notifications.
+ * Implementation of the {@link OverdueSubscriber} interface that handles email notifications.
+ * <p>
+ * This class follows the Observer design pattern. When notified about overdue items,
+ * it constructs a formatted email containing details of the books and fines, 
+ * then delegates the sending process to the {@link EmailService}.
+ * </p>
  * 
  * @author Zainab
  * @version 1.0
@@ -13,8 +18,10 @@ public class EmailOverdueSubscriber implements OverdueSubscriber {
     private final String fromEmail;
     
     /**
-     * @param emailService The service used to send emails.
-     * @param fromEmail The sender's email address.
+     * Constructs a new EmailOverdueSubscriber.
+     *
+     * @param emailService The service instance used to send the actual emails.
+     * @param fromEmail    The email address from which notifications will be sent.
      */
 
     public EmailOverdueSubscriber(EmailService emailService, String fromEmail) {
@@ -23,9 +30,15 @@ public class EmailOverdueSubscriber implements OverdueSubscriber {
     }
     
     /**
-     * @param username The name of the user with overdue items.
-     * @param email The email address of the user.
-     * @param overdueItems The list of overdue media items.
+     * Receives an update about a user with overdue items and triggers an email notification.
+     * <p>
+     * Constructs a detailed message body listing the title, due date, and fine for each overdue item,
+     * along with the total fine amount.
+     * </p>
+     *
+     * @param username     The name of the user with overdue items.
+     * @param email        The recipient email address of the user.
+     * @param overdueItems The list of {@link Media} items that are overdue.
      */
 
     @Override

@@ -9,13 +9,23 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 /**
- * Unit tests for the EmailService class.
- * Verifies interaction with JavaMail Transport and delegation behavior.
+ * Unit tests for the {@link EmailService} class.
+ * <p>
+ * This class validates the interaction with the JavaMail API. It uses {@link MockedStatic} 
+ * to mock the static {@link Transport#send(Message)} method, ensuring that actual emails 
+ * are not sent during testing.
+ * </p>
+ *
+ * @author Zainab
+ * @version 1.0
  */
 public class EmailServiceTest {
 
-    /**
-     * Tests if sendEmail actually calls Transport.send().
+	/**
+     * Verifies that {@link EmailService#sendEmail} successfully invokes the static 
+     * {@link Transport#send} method when valid parameters are provided.
+     *
+     * @throws Exception if mocking fails.
      */
     @Test
     void testSendEmail_invokesTransportSend() throws Exception {
@@ -38,7 +48,10 @@ public class EmailServiceTest {
     }
 
     /**
-     * Tests exception handling when email sending fails.
+     * Verifies that {@link EmailService#sendEmail} wraps checked {@link jakarta.mail.MessagingException}
+     * into a runtime exception, allowing the application to handle failures gracefully.
+     *
+     * @throws Exception if mocking fails.
      */
     @Test
     void testSendEmail_whenTransportThrows_wrapsInRuntimeException() throws Exception {
@@ -59,14 +72,15 @@ public class EmailServiceTest {
     }
 
     /**
-     * Tests that sendReminder delegates to sendEmail with the same parameters.
+     * Verifies that the {@code sendReminder} convenience method delegates execution 
+     * to the {@code sendEmail} method with identical parameters.
      */
     @Test
     void testSendReminder_delegatesToSendEmail() {
 
         EmailService spyService = spy(new EmailService("sender@gmail.com", "pass123"));
 
-        // ما بدنا فعليًا نبعت إيميل بالتست
+        
         doNothing().when(spyService).sendEmail(anyString(), anyString(), anyString());
 
         spyService.sendReminder("user@mail.com", "Reminder", "Body here");
@@ -76,8 +90,11 @@ public class EmailServiceTest {
     }
 
     /**
-     * Tests that createPasswordAuthentication returns the expected username and password.
-     * This indirectly verifies the logic used inside the Authenticator of EmailService.
+     * Verifies that {@code createPasswordAuthentication} correctly encapsulates 
+     * the username and password provided during initialization.
+     * <p>
+     * This ensures the Authenticator uses the correct credentials.
+     * </p>
      */
     @Test
     void testCreatePasswordAuthentication_usesGivenUsernameAndPassword() {

@@ -12,8 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 /**
- * Unit tests for the EmailOverdueSubscriber class.
- * Verifies that emails are sent with correct content when updates occur.
+ * Unit tests for the {@link EmailOverdueSubscriber} class.
+ * <p>
+ * This test suite uses Mockito to verify that the subscriber correctly formats the email content
+ * and invokes the underlying {@link EmailService} with the expected parameters.
+ * </p>
  * 
  * @author Zainab
  * @version 1.0
@@ -21,8 +24,9 @@ import org.mockito.ArgumentCaptor;
 
 public class EmailOverdueSubscriberTest {
 
-	 /**
-     * Tests if the subscriber correctly formats and sends an email.
+	/**
+     * Verifies that the {@code update} method constructs a properly formatted email body
+     * containing details of the overdue items (Title, Due Date, Fine) and calls the email service.
      */
 	
     @Test

@@ -20,8 +20,15 @@ import java.io.IOException;
 
 /**
  * Controller class for the Librarian Dashboard.
- * Manages core library operations including borrowing, returning, 
- * searching, and viewing library media items.
+ * <p>
+ * Manages core library operations available to Librarians, including:
+ * <ul>
+ *   <li>Viewing the catalog of books and CDs.</li>
+ *   <li>Processing "Borrow" transactions.</li>
+ *   <li>Processing "Return" transactions.</li>
+ *   <li>Searching and filtering inventory.</li>
+ * </ul>
+ * </p>
  * 
  * @author Zainab
  * @version 1.0
@@ -53,7 +60,10 @@ public class LibrarianController {
 
     /**
      * Initializes the controller class.
-     * Configures the table columns, loads data from file, and sets up row styling.
+     * <p>
+     * Called automatically after FXML loading. Sets up table columns, loads data,
+     * and configures conditional row styling (e.g., coloring overdue rows).
+     * </p>
      */
     @FXML
     public void initialize() {
@@ -79,7 +89,12 @@ public class LibrarianController {
     }
 
     /**
-     * Configures the TableRow factory to change background colors based on item status.
+     * Configures the TableRow factory to apply CSS styles based on item status.
+     * <ul>
+     *   <li>Available: Green background</li>
+     *   <li>Borrowed: Yellow background</li>
+     *   <li>Overdue: Red background</li>
+     * </ul>
      */
     private void setupRowColoring() {
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
@@ -102,7 +117,10 @@ public class LibrarianController {
 
     /**
      * Handles the borrowing transaction for the selected media item.
-     * Validates availability and updates the status.
+     * <p>
+     * Validates that an item is selected and that it is not already borrowed.
+     * Updates the item status and persists changes.
+     * </p>
      */
     @FXML
     private void handleBorrowBook() {
@@ -120,7 +138,9 @@ public class LibrarianController {
 
     /**
      * Handles the return transaction for the selected media item.
-     * Validates current status and processes the return.
+     * <p>
+     * Validates that the item is currently borrowed or overdue before returning.
+     * </p>
      */
     @FXML
     private void handleReturnBook() {
@@ -138,9 +158,8 @@ public class LibrarianController {
 
     /**
      * Retrieves the currently selected item from the table.
-     * Displays a warning if no item is selected.
      * 
-     * @return The selected Media object, or null if nothing is selected.
+     * @return The selected Media object, or null if nothing is selected (shows warning).
      */
     private Media getSelectedMedia() {
         Media selected = bookTable.getSelectionModel().getSelectedItem();
@@ -151,7 +170,7 @@ public class LibrarianController {
     }
 
     /**
-     * Completes a transaction by saving data, refreshing the view, and showing a message.
+     * Completes a transaction workflow: saves to file, reloads view, and shows feedback.
      * 
      * @param successMessage The message to display to the user.
      */
@@ -162,7 +181,7 @@ public class LibrarianController {
     }
 
     /**
-     * Updates the information label with a specific message.
+     * Updates the UI status label.
      * 
      * @param message The text to display.
      */
@@ -171,7 +190,7 @@ public class LibrarianController {
     }
 
     /**
-     * Handles the logout process and redirects to the login view.
+     * Logs out the current user and returns to the login screen.
      */
     @FXML
     private void handleLogout() {
@@ -185,7 +204,8 @@ public class LibrarianController {
     }
 
     /**
-     * Filters the displayed media list based on the search input.
+     * Filters the book table based on the text entered in the search field.
+     * Matches against Title or ISBN.
      */
     @FXML
     void handleSearch() {
@@ -205,7 +225,7 @@ public class LibrarianController {
     }
 
     /**
-     * Reloads the data from the source file and refreshes the table view.
+     * Manually triggers a data reload from the file system.
      */
     @FXML
     void handleReload() {
@@ -213,16 +233,14 @@ public class LibrarianController {
         showInfo("🔄 Data reloaded.");
     }
 
-    /**
-     * Helper method that combines loading from file and refreshing the table.
-     */
+    
     private void reloadBooks() {
         loadMediaFromFile();
         bookTable.refresh();
     }
 
     /**
-     * Reads media data from the text file and populates the list.
+     * Reads media data from 'books.txt' and populates the observable list.
      */
     private void loadMediaFromFile() {
         mediaList.clear();
@@ -243,10 +261,13 @@ public class LibrarianController {
     }
 
     /**
-     * Parses a single line of text into a Media object.
+     * Parses a CSV line into a Media object (Book or CD).
+     * <p>
+     * Handles data parsing safely and applies fine calculations for overdue items.
+     * </p>
      * 
      * @param line The comma-separated string from the file.
-     * @return A Media object (Book or CD), or null if parsing fails.
+     * @return A Media object, or null if the line is malformed.
      */
     private Media parseMediaLine(String line) {
         String[] parts = line.split(",", 10);
@@ -306,7 +327,7 @@ public class LibrarianController {
     }
 
     /**
-     * Writes all current media items back to the file.
+     * Writes all current media items back to 'books.txt'.
      */
     private void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
@@ -320,7 +341,7 @@ public class LibrarianController {
     }
 
     /**
-     * Sets the username for the current session.
+     * Sets the username for the current session and updates the welcome label.
      * 
      * @param username The username of the logged-in librarian.
      */
