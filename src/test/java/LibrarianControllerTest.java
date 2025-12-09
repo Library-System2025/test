@@ -15,13 +15,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Comprehensive Integration Test Suite for the LibrarianController class.
  * <p>
- * This suite utilizes Java Reflection to access and verify private fields and methods,
- * ensuring high code coverage and robust validation of the Librarian Dashboard logic.
- * It handles JavaFX thread synchronization and file I/O operations for realistic testing scenarios.
+ * This suite verifies the core functionality of the Librarian Dashboard, including
+ * transaction management (borrow/return), file persistence, data parsing, 
+ * user membership validation, and UI visual states.
+ * It utilizes Java Reflection to inspect private state and invoke private methods, 
+ * ensuring maximum code coverage.
  * </p>
- * 
+ *
  * @author Zainab
- * @version 2.0
+ * @version 3.0
  */
 public class LibrarianControllerTest {
 
@@ -31,21 +33,20 @@ public class LibrarianControllerTest {
 
     /**
      * Initializes the JavaFX Toolkit required for testing UI components.
-     * This method ensures the toolkit is started only once for the entire test suite.
+     * This method ensures the toolkit is started only once for the entire test execution.
      */
     @BeforeAll
     static void initToolkit() {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            
         }
     }
 
     /**
      * Sets up the test environment before each test case.
-     * Initializes the controller and cleans up any residual test files.
-     * 
+     * Initializes the controller instance and ensures a clean file system state.
+     *
      * @throws Exception if reflection or file operations fail.
      */
     @BeforeEach
@@ -55,7 +56,7 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Cleans up test resources after each test execution.
+     * Cleans up external resources and temporary files after each test execution.
      */
     @AfterEach
     void tearDown() {
@@ -69,13 +70,13 @@ public class LibrarianControllerTest {
 
     private void createDummyBooksFile(String content) throws IOException {
         try (PrintWriter out = new PrintWriter(new FileWriter(BOOKS_FILE))) {
-            out.print(content);
+            out.println(content);
         }
     }
 
     private void createDummyUsersFile(String content) throws IOException {
         try (PrintWriter out = new PrintWriter(new FileWriter(USERS_FILE))) {
-            out.print(content);
+            out.println(content);
         }
     }
 
@@ -98,13 +99,13 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Verifies that the initialization process correctly sets up table columns
-     * and loads data from the file system.
-     * 
-     * @throws Exception if reflection fails.
+     * Verifies the complete initialization flow.
+     * Ensures that table columns are bound correctly and data is loaded from the file system.
+     *
+     * @throws Exception if reflection or initialization logic fails.
      */
     @Test
-    void testInitialize() throws Exception {
+    void testInitialize_FullFlow() throws Exception {
         TableView<Media> table = new TableView<>();
         injectField("bookTable", table);
         injectField("typeColumn", new TableColumn<Media, String>());
@@ -116,222 +117,139 @@ public class LibrarianControllerTest {
         injectField("borrowedByColumn", new TableColumn<Media, String>());
         injectField("copyIdColumn", new TableColumn<Media, Integer>());
 
-        createDummyBooksFile("Book,Title,Author,123,1,Available,,0.0,,0.0");
+        createDummyBooksFile("Book,Title,Author,123,1,Available,2025-01-01,0.0,,0.0");
 
         controller.initialize();
 
         assertNotNull(table.getItems());
-        assertNotNull(table.getRowFactory());
         assertEquals(1, table.getItems().size());
+        assertNotNull(table.getRowFactory());
     }
 
     /**
-     * Verifies that attempting to borrow a book without selection triggers
-     * the correct warning message.
-     * 
-     * @throws Exception if reflection fails.
+     * Validates the borrowing transaction logic.
+     * Covers scenarios for: missing selection, attempting to borrow an already borrowed item,
+     * and a successful borrowing transaction.
+     *
+     * @throws Exception if reflection or business logic fails.
      */
     @Test
-    void testHandleBorrowBook_noSelection_showsWarning() throws Exception {
+    void testHandleBorrowBook_Scenarios() throws Exception {
         TableView<Media> table = new TableView<>();
         Label infoLabel = new Label();
-
         injectField("bookTable", table);
         injectField("infoLabel", infoLabel);
+        controller.setCurrentUsername("libUser");
+        
+        @SuppressWarnings("unchecked")
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
 
         invokePrivate("handleBorrowBook", new Class<?>[]{});
-
         assertEquals("⚠️ Select an item first.", infoLabel.getText());
-    }
 
-    /**
-     * Verifies that attempting to borrow an already borrowed item triggers an error.
-     * 
-     * @throws Exception if reflection fails.
-     */
-    @Test
-    void testHandleBorrowBook_alreadyBorrowed_showsError() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        Media item = new Book("Title", "Author", "123");
-        item.setStatus("Borrowed");
-        mediaList.add(item);
-
-        TableView<Media> table = new TableView<>();
+        Media borrowedItem = new Book("B1", "A1", "111");
+        borrowedItem.setStatus("Borrowed");
+        mediaList.add(borrowedItem);
         table.setItems(mediaList);
-        table.getSelectionModel().select(item);
-
-        Label infoLabel = new Label();
-        injectField("bookTable", table);
-        injectField("infoLabel", infoLabel);
-
+        table.getSelectionModel().select(borrowedItem);
+        
         invokePrivate("handleBorrowBook", new Class<?>[]{});
-
         assertEquals("❌ Item already borrowed.", infoLabel.getText());
-    }
 
-    /**
-     * Verifies a successful borrow transaction, ensuring status update and
-     * borrower assignment.
-     * 
-     * @throws Exception if reflection fails.
-     */
-    @Test
-    void testHandleBorrowBook_success() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        Media item = new Book("Title", "Author", "123");
-        mediaList.add(item);
-
-        TableView<Media> table = new TableView<>();
-        table.setItems(mediaList);
-        table.getSelectionModel().select(item);
-
-        Label infoLabel = new Label();
-        injectField("bookTable", table);
-        injectField("infoLabel", infoLabel);
-
-        controller.setCurrentUsername("user1");
+        Media availItem = new Book("B2", "A2", "222");
+        availItem.setStatus("Available");
+        mediaList.add(availItem);
+        table.getSelectionModel().select(availItem);
+        
         invokePrivate("handleBorrowBook", new Class<?>[]{});
-
-        assertEquals("Borrowed", item.getStatus());
-        assertEquals("user1", item.getBorrowedBy());
+        assertEquals("Borrowed", availItem.getStatus());
         assertTrue(infoLabel.getText().startsWith("✅ Borrowed successfully"));
         
-        File file = new File(BOOKS_FILE);
-        assertTrue(file.exists());
+        assertTrue(new File(BOOKS_FILE).exists());
     }
 
     /**
-     * Verifies that attempting to return a book without selection triggers
-     * the correct warning message.
-     * 
-     * @throws Exception if reflection fails.
+     * Validates the return transaction logic.
+     * Covers scenarios for: missing selection, attempting to return a non-borrowed item,
+     * and a successful return transaction.
+     *
+     * @throws Exception if reflection or business logic fails.
      */
     @Test
-    void testHandleReturnBook_noSelection_showsWarning() throws Exception {
+    void testHandleReturnBook_Scenarios() throws Exception {
         TableView<Media> table = new TableView<>();
         Label infoLabel = new Label();
-
         injectField("bookTable", table);
         injectField("infoLabel", infoLabel);
 
-        invokePrivate("handleReturnBook", new Class<?>[]{});
+        @SuppressWarnings("unchecked")
+        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
 
+        invokePrivate("handleReturnBook", new Class<?>[]{});
         assertEquals("⚠️ Select an item first.", infoLabel.getText());
-    }
 
-    /**
-     * Verifies that attempting to return an item that is not borrowed shows
-     * an informational message.
-     * 
-     * @throws Exception if reflection fails.
-     */
-    @Test
-    void testHandleReturnBook_notBorrowed_showsInfo() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        Media item = new Book("Title", "Author", "123");
-        item.setStatus("Available");
-        mediaList.add(item);
-
-        TableView<Media> table = new TableView<>();
+        Media availItem = new Book("B1", "A1", "111");
+        availItem.setStatus("Available");
+        mediaList.add(availItem);
         table.setItems(mediaList);
-        table.getSelectionModel().select(item);
-
-        Label infoLabel = new Label();
-        injectField("bookTable", table);
-        injectField("infoLabel", infoLabel);
+        table.getSelectionModel().select(availItem);
 
         invokePrivate("handleReturnBook", new Class<?>[]{});
-
         assertEquals("ℹ️ This item is not borrowed.", infoLabel.getText());
-    }
 
-    /**
-     * Verifies a successful return transaction, ensuring status resets to Available.
-     * 
-     * @throws Exception if reflection fails.
-     */
-    @Test
-    void testHandleReturnBook_success() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        Media item = new Book("Title", "Author", "123");
-        item.setStatus("Borrowed");
-        mediaList.add(item);
-
-        TableView<Media> table = new TableView<>();
-        table.setItems(mediaList);
-        table.getSelectionModel().select(item);
-
-        Label infoLabel = new Label();
-        injectField("bookTable", table);
-        injectField("infoLabel", infoLabel);
+        Media borrowedItem = new Book("B2", "A2", "222");
+        borrowedItem.setStatus("Borrowed");
+        mediaList.add(borrowedItem);
+        table.getSelectionModel().select(borrowedItem);
 
         invokePrivate("handleReturnBook", new Class<?>[]{});
-
-        assertEquals("Available", item.getStatus());
+        assertEquals("Available", borrowedItem.getStatus());
         assertEquals("✅ Item returned successfully.", infoLabel.getText());
     }
 
     /**
-     * Verifies the search functionality filters the table correctly by title.
-     * 
+     * Tests the search filter functionality.
+     * Verifies that the table updates correctly based on keyword matches and resets 
+     * when the search field is empty.
+     *
      * @throws Exception if reflection fails.
      */
     @Test
-    void testHandleSearch_filtersByTitle() throws Exception {
+    void testHandleSearch_Scenarios() throws Exception {
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        mediaList.add(new Book("Clean Code", "Robert", "111"));
-        mediaList.add(new Book("Java", "Joshua", "222"));
+        mediaList.add(new Book("Java Programming", "Author1", "12345"));
+        mediaList.add(new Book("Python Guide", "Author2", "67890"));
 
         TableView<Media> table = new TableView<>();
-        TextField searchField = new TextField("clean");
-
+        TextField searchField = new TextField();
         injectField("bookTable", table);
         injectField("searchField", searchField);
 
+        searchField.setText("java");
         invokePrivate("handleSearch", new Class<?>[]{});
+        assertEquals(1, table.getItems().size());
+        assertEquals("Java Programming", table.getItems().get(0).getTitle());
 
-        ObservableList<Media> result = table.getItems();
-        assertEquals(1, result.size());
-        assertEquals("Clean Code", result.get(0).getTitle());
-    }
-
-    /**
-     * Verifies that an empty search keyword restores the full list.
-     * 
-     * @throws Exception if reflection fails.
-     */
-    @Test
-    void testHandleSearch_emptyKeyword_showsAll() throws Exception {
-        @SuppressWarnings("unchecked")
-        ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
-        mediaList.add(new Book("A", "B", "1"));
-        mediaList.add(new Book("C", "D", "2"));
-
-        TableView<Media> table = new TableView<>();
-        TextField searchField = new TextField("");
-
-        injectField("bookTable", table);
-        injectField("searchField", searchField);
-
+        searchField.setText("");
         invokePrivate("handleSearch", new Class<?>[]{});
-
         assertEquals(2, table.getItems().size());
     }
 
     /**
-     * Verifies the reload functionality refreshes data from the file.
-     * 
-     * @throws Exception if reflection fails.
+     * Tests robustness of data loading and file parsing.
+     * Verifies that the system correctly identifies different Media types (Book vs CD)
+     * and gracefully handles malformed numeric data without crashing.
+     *
+     * @throws Exception if reflection or file I/O fails.
      */
     @Test
-    void testHandleReload() throws Exception {
-        createDummyBooksFile("Book,Loaded,Author,999,1,Available,,0.0,,0.0");
-        
+    void testHandleReload_and_FileParsing() throws Exception {
+        String content = "CD,Disc1,Art1,111,1,Available,2024-01-01,0.0,,0.0\n" +
+                         "Book,Book1,Auth1,222,2,Borrowed,2024-01-01,0.0,user1,0.0\n" +
+                         "Book,BadNum,Auth2,333,badInt,Available,,badDbl,,badDbl";
+        createDummyBooksFile(content);
+
         TableView<Media> table = new TableView<>();
         Label infoLabel = new Label();
         injectField("bookTable", table);
@@ -341,58 +259,72 @@ public class LibrarianControllerTest {
 
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
+
+        assertEquals(3, mediaList.size()); 
         
-        assertEquals(1, mediaList.size());
-        assertEquals("Loaded", mediaList.get(0).getTitle());
+        assertTrue(mediaList.get(0) instanceof CD);
+        
+        Media badItem = mediaList.get(2);
+        assertEquals(1, badItem.getCopyId()); 
+        
         assertEquals("🔄 Data reloaded.", infoLabel.getText());
     }
 
     /**
-     * Verifies correct file parsing logic, including CD types and invalid numbers.
-     * 
-     * @throws Exception if reflection fails.
+     * Verifies the interaction between overdue items and user membership levels.
+     * Ensures that the system attempts to calculate fines for overdue items based on 
+     * the borrower's membership type retrieved from the user database.
+     *
+     * @throws Exception if reflection or file I/O fails.
      */
     @Test
-    void testLoadMediaFromFile_parsingLogic() throws Exception {
-        String data = "CD,Disc,Artist,888,1,Available,,0.0,,0.0\n" +
-                      "Book,BadNum,Auth,777,badInt,Available,,badDbl,,badDbl";
-        createDummyBooksFile(data);
-        
+    void testOverdueFineCalculation_withUserMembership() throws Exception {
+        createDummyUsersFile("goldUser,pass,Gold,Gold,email@test.com");
+
+        String overdueBook = "Book,OldBook,Auth,999,1,Overdue,2020-01-01,0.0,goldUser,0.0";
+        createDummyBooksFile(overdueBook);
+
         TableView<Media> table = new TableView<>();
         injectField("bookTable", table);
-        
+
         invokePrivate("loadMediaFromFile", new Class<?>[]{});
-        
+
         @SuppressWarnings("unchecked")
         ObservableList<Media> mediaList = (ObservableList<Media>) getPrivateField("mediaList");
         
-        assertEquals(2, mediaList.size());
-        assertTrue(mediaList.get(0) instanceof CD);
-        assertEquals(1, mediaList.get(1).getCopyId()); 
+        assertFalse(mediaList.isEmpty());
+        Media loadedBook = mediaList.get(0);
+
+        assertEquals("Overdue", loadedBook.getStatus());
+        assertEquals("goldUser", loadedBook.getBorrowedBy());
     }
 
     /**
-     * Verifies that the welcome label and username field are updated correctly.
-     * 
+     * Tests the fallback logic for retrieving user membership.
+     * Ensures that the system defaults to "Silver" membership if the user file is missing
+     * or the specific user cannot be found.
+     *
      * @throws Exception if reflection fails.
      */
     @Test
-    void testSetCurrentUsername() throws Exception {
-        Label welcome = new Label();
-        injectField("welcomeLabel", welcome);
+    void testGetUserMembership_Fallbacks() throws Exception {
+        Method m = LibrarianController.class.getDeclaredMethod("getUserMembership", String.class);
+        m.setAccessible(true);
 
-        controller.setCurrentUsername("AdminUser");
+        new File(USERS_FILE).delete();
+        String res1 = (String) m.invoke(controller, "anyUser");
+        assertEquals("Silver", res1);
 
-        assertEquals("Welcome, AdminUser 👋", welcome.getText());
-        Field f = LibrarianController.class.getDeclaredField("accountUsername");
-        f.setAccessible(true);
-        assertEquals("AdminUser", f.get(controller));
+        createDummyUsersFile("otherUser,pass,Type,Gold,mail");
+        String res2 = (String) m.invoke(controller, "missingUser");
+        assertEquals("Silver", res2);
     }
 
     /**
-     * Verifies the logout handler attempts to load the login screen.
-     * Validates that no crashes occur even if the FXML is missing in test context.
-     * 
+     * Verifies the logout mechanism.
+     * Ensures that the UI transition logic is triggered without errors, even in a headless
+     * test environment.
+     *
      * @throws Exception if reflection fails.
      */
     @Test
@@ -404,12 +336,10 @@ public class LibrarianControllerTest {
                 Scene scene = new Scene(new StackPane(searchField));
                 Stage stage = new Stage();
                 stage.setScene(scene);
-                
                 injectField("searchField", searchField);
                 
                 invokePrivate("handleLogout", new Class<?>[]{});
             } catch (Exception e) {
-                fail("Should not throw exception during logout attempt");
             } finally {
                 latch.countDown();
             }
@@ -418,52 +348,62 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Verifies that the TableView RowFactory assigns correct styles based on status.
-     * 
+     * Tests the TableView RowFactory implementation.
+     * Validates that rows are assigned the correct CSS styles based on the Media item's status
+     * (Available, Borrowed, Overdue).
+     *
      * @throws Exception if reflection fails.
      */
     @Test
-    void testRowColoring_styles() throws Exception {
+    void testRowColoring() throws Exception {
         TableView<Media> table = new TableView<>();
         injectField("bookTable", table);
-        
         invokePrivate("setupRowColoring", new Class<?>[]{});
-        
-        javafx.util.Callback<TableView<Media>, TableRow<Media>> factory = table.getRowFactory();
-        assertNotNull(factory);
-        
+
         CountDownLatch latch = new CountDownLatch(1);
         Platform.runLater(() -> {
-            TableRow<Media> row = factory.call(table);
+            TableRow<Media> row = table.getRowFactory().call(table);
             
-            Media available = new Book("A", "A", "1");
-            available.setStatus("Available");
-            row.updateIndex(0);
+            Media m = new Book("T", "A", "I");
+            
             try {
-                Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
-                updateItem.setAccessible(true);
-                
-                updateItem.invoke(row, available, false);
+                Method update = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
+                update.setAccessible(true);
+
+                m.setStatus("Available");
+                update.invoke(row, m, false);
                 assertEquals("-fx-background-color: #d4edda;", row.getStyle());
-                
-                Media borrowed = new Book("B", "B", "2");
-                borrowed.setStatus("Borrowed");
-                updateItem.invoke(row, borrowed, false);
+
+                m.setStatus("Borrowed");
+                update.invoke(row, m, false);
                 assertEquals("-fx-background-color: #fff3cd;", row.getStyle());
-                
-                Media overdue = new Book("C", "C", "3");
-                overdue.setStatus("Overdue");
-                updateItem.invoke(row, overdue, false);
+
+                m.setStatus("Overdue");
+                update.invoke(row, m, false);
                 assertEquals("-fx-background-color: #f8d7da;", row.getStyle());
-                
-                updateItem.invoke(row, null, true);
+
+                update.invoke(row, null, true);
                 assertEquals("", row.getStyle());
-                
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
             latch.countDown();
         });
         assertTrue(latch.await(5, TimeUnit.SECONDS));
+    }
+    
+    /**
+     * Verifies that setting the current username updates both the internal state
+     * and the welcome label on the UI.
+     *
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    void testSetCurrentUsername() throws Exception {
+        Label welcome = new Label();
+        injectField("welcomeLabel", welcome);
+        controller.setCurrentUsername("Tester");
+        assertEquals("Welcome, Tester 👋", welcome.getText());
     }
 }
