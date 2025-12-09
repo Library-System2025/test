@@ -574,4 +574,5 @@ public class homepageController {
 
         showAlert("Success", "Reminder email sent.");
     }
+    
 }
