@@ -1,4 +1,3 @@
-
 import javafx.fxml.FXML;
 
 import javafx.scene.control.*;
@@ -42,8 +41,8 @@ import io.github.cdimascio.dotenv.Dotenv;
  */
 
 public class homepageController {
-	
-	private static final String ERROR_MSG = "Error: ";
+
+    private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
     @FXML private Label addBookMessage;
@@ -77,7 +76,6 @@ public class homepageController {
     private static final String FILE_PATH = "books.txt";
     private static final String USERS_FILE_PATH = "users.txt";
 
-    
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED  = "Borrowed";
     private static final String STATUS_OVERDUE   = "Overdue";
@@ -112,11 +110,10 @@ public class homepageController {
     /**
      * Initializes the controller class.
      * <p>
-     * This method is automatically called by the JavaFX framework after the FXML file 
+     * This method is automatically called by the JavaFX framework after the FXML file
      * has been loaded. It configures table columns, row factories, and loads initial data.
      * </p>
      */
-    
     @FXML
     public void initialize() {
         configureMediaTable();
@@ -132,7 +129,6 @@ public class homepageController {
     /**
      * Binds TableView columns to the properties of the Media class.
      */
-
     private void configureMediaTable() {
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
@@ -156,12 +152,11 @@ public class homepageController {
         typeCombo.setItems(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().selectFirst();
     }
-    
+
     /**
      * Sets up a custom RowFactory to color-code rows based on the media status.
      * (Green: Available, Yellow: Borrowed, Red: Overdue).
      */
-
     private void configureMediaRowFactory() {
         searchResultsTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
@@ -208,7 +203,6 @@ public class homepageController {
      *
      * @param username The username of the logged-in admin.
      */
-    
     public void setCurrentUsername(String username) {
         if (welcomeLabel != null) welcomeLabel.setText("Welcome, " + username + " 👋");
     }
@@ -217,14 +211,15 @@ public class homepageController {
      * Handles the logout action.
      * Redirects the user back to the login screen.
      */
-    
     @FXML
     private void handleLogout() {
         try {
             Parent login = FXMLLoader.load(getClass().getResource("login.fxml"));
             Stage stage = (Stage) titleField.getScene().getWindow();
             stage.setScene(new Scene(login));
-        } catch (IOException e) { System.err.println(ERROR_MSG  + e.getMessage()); }
+        } catch (IOException e) {
+            System.err.println(ERROR_MSG + e.getMessage());
+        }
     }
 
     /**
@@ -234,7 +229,6 @@ public class homepageController {
      * the new item to the file system.
      * </p>
      */
-    
     @FXML
     void handleAddBook() {
         String type   = typeCombo.getValue();
@@ -267,8 +261,6 @@ public class homepageController {
 
         clearBookForm();
     }
-
-    
 
     private boolean isInvalidBookInput(String type, String title, String author, String isbn) {
         return title.isEmpty() || author.isEmpty() || isbn.isEmpty() || type == null;
@@ -403,7 +395,7 @@ public class homepageController {
                 }
             }
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG + e.getMessage());
+            System.err.println(ERROR_MSG + e.getMessage());
         }
 
         if (searchResultsTable != null) searchResultsTable.refresh();
@@ -476,7 +468,9 @@ public class homepageController {
                 writer.write(m.toFileFormat());
                 writer.newLine();
             }
-        } catch (IOException e) { System.err.println(ERROR_MSG + e.getMessage()); }
+        } catch (IOException e) {
+            System.err.println(ERROR_MSG + "Failed to save media list: " + e.getMessage());
+        }
     }
 
     /**
@@ -495,7 +489,11 @@ public class homepageController {
                 if (parts.length >= 4 && parts[0].trim().equals(username.trim()))
                     return parts[3].trim();
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            // Intentionally ignored: if we can't read the file,
+            // we fall back to the default membership (Silver).
+            System.err.println("Warning: unable to read users file for membership: " + e.getMessage());
+        }
         return "Silver";
     }
 
@@ -516,7 +514,9 @@ public class homepageController {
                     return parts[4].trim();
                 }
             }
-        } catch (IOException e) { System.err.println(ERROR_MSG + e.getMessage()); }
+        } catch (IOException e) {
+            System.err.println(ERROR_MSG + e.getMessage());
+        }
         return "";
     }
 
@@ -536,7 +536,11 @@ public class homepageController {
                     usersList.add(new User(parts[0], parts[1], parts[2], parts[3]));
                 }
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            // Intentionally ignored: failure to load users should not prevent
+            // the UI from working; users list will simply be empty.
+            System.err.println("Warning: failed to load users: " + e.getMessage());
+        }
     }
 
     /**
@@ -563,15 +567,15 @@ public class homepageController {
             }
         }
 
-        if (hasLoans) showAlert("Error", "User has active loans.");
-        else {
+        if (hasLoans) {
+            showAlert("Error", "User has active loans.");
+        } else {
             usersList.remove(selected);
             saveUsersToFile();
             showAlert("Success", "User deleted.");
         }
     }
 
-    
     private void saveUsersToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE_PATH))) {
             writer.write("m,123,Admin,Gold");
@@ -580,7 +584,11 @@ public class homepageController {
                 writer.write(u.toFileFormat());
                 writer.newLine();
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            // Intentionally ignored: if saving users fails,
+            // in-memory state remains valid but changes won't persist.
+            System.err.println("Warning: failed to save users file: " + e.getMessage());
+        }
     }
 
     /**
@@ -609,7 +617,6 @@ public class homepageController {
      * Identifies overdue items for a selected user and sends an email reminder.
      * Uses the {@link OverduePublisher} to notify subscribers.
      */
-    
     @FXML
     void handleSendReminder() {
         User selected = usersTable.getSelectionModel().getSelectedItem();
