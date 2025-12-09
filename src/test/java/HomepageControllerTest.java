@@ -41,7 +41,7 @@ public class HomepageControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            
+            // Intentionally ignored: toolkit may already be initialized in some environments.
         }
     }
 
@@ -170,11 +170,6 @@ public class HomepageControllerTest {
         assertEquals("", row.getStyle());
     }
 
-    /**
-     * Tests that attempting to add a book with empty fields triggers an error message.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     void testHandleAddBook_EmptyFields() throws Exception {
         ((TextField) getPrivateField("titleField")).setText("");
@@ -183,12 +178,6 @@ public class HomepageControllerTest {
         assertEquals("❗ Please fill all fields.", msg.getText());
     }
 
-    /**
-     * Tests the successful addition of a new book and the creation of a new copy
-     * when a book with the same ISBN is added.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleAddBook_Success_And_NewCopy() throws Exception {
@@ -213,12 +202,6 @@ public class HomepageControllerTest {
         assertTrue(msg.getText().contains("NEW COPY"));
     }
 
-    /**
-     * Tests that adding a book with an existing ISBN but different author/title
-     * is rejected to prevent data conflicts.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleAddBook_Conflict_ISBN() throws Exception {
@@ -239,11 +222,6 @@ public class HomepageControllerTest {
         assertEquals(1, list.size());
     }
 
-    /**
-     * Verifies that selecting 'CD' from the combo box correctly creates a CD object instance.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleAddBook_CD_Logic() throws Exception {
@@ -260,12 +238,6 @@ public class HomepageControllerTest {
         assertTrue(list.get(0) instanceof CD);
     }
 
-    /**
-     * Tests the search functionality across all modes (Title, Author, ISBN) and ensures
-     * filtering logic works as expected.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleSearch_AllModes() throws Exception {
@@ -297,12 +269,6 @@ public class HomepageControllerTest {
         assertEquals(2, table.getItems().size());
     }
 
-    /**
-     * Tests the persistence loading mechanism by writing dummy data to a file
-     * and triggering a reload to verify data parsing.
-     *
-     * @throws Exception if file I/O or field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleReload_And_LoadFromFile() throws Exception {
@@ -324,9 +290,6 @@ public class HomepageControllerTest {
         assertEquals("Music", list.get(1).getTitle());
     }
 
-    /**
-     * Tests that handleReload also sets the reload message.
-     */
     @Test
     void testHandleReload_SetsReloadMessage() throws Exception {
         controller.handleReload();
@@ -334,11 +297,6 @@ public class HomepageControllerTest {
         assertEquals("🔄 Reloaded.", msg.getText());
     }
 
-    /**
-     * Tests the delete user functionality when no user is selected.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleDeleteUser_NoSelection() throws Exception {
@@ -349,11 +307,6 @@ public class HomepageControllerTest {
         // Implicit assertion: no exception thrown
     }
 
-    /**
-     * Verifies that a user cannot be deleted if they have active loans.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleDeleteUser_WithLoans() throws Exception {
@@ -373,11 +326,6 @@ public class HomepageControllerTest {
         assertEquals(1, users.size());
     }
 
-    /**
-     * Verifies the successful deletion of a user who has no active loans.
-     *
-     * @throws Exception if field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testHandleDeleteUser_Success() throws Exception {
@@ -394,16 +342,10 @@ public class HomepageControllerTest {
         assertTrue(users.isEmpty());
     }
 
-    /**
-     * Tests the validation logic for sending overdue reminders, covering cases like
-     * missing emails or users with no overdue items.
-     *
-     * @throws Exception if file I/O or field access fails.
-     */
     @Test
     @SuppressWarnings("unchecked")
     void testSendReminder_Validation() throws Exception {
-        
+
         controller.handleSendReminder();
 
         ObservableList<User> users = (ObservableList<User>) getPrivateField("usersList");
@@ -414,13 +356,11 @@ public class HomepageControllerTest {
         table.setItems(users);
         table.getSelectionModel().select(noEmailUser);
 
-        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
             writer.write("noemail,1,User,Silver,");
         }
         controller.handleSendReminder();
 
-        
         User goodUser = new User("good", "1", "User", "Gold");
         users.add(goodUser);
         table.getSelectionModel().select(goodUser);
@@ -441,7 +381,6 @@ public class HomepageControllerTest {
     @SuppressWarnings("unchecked")
     void testHandleSendReminder_SuccessPath() throws Exception {
 
-        
         ObservableList<User> users =
                 (ObservableList<User>) getPrivateField("usersList");
         User u = new User("good2", "1", "User", "Gold");
@@ -452,13 +391,11 @@ public class HomepageControllerTest {
         table.setItems(users);
         table.getSelectionModel().select(u);
 
-        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
             writer.write("good2,1,User,Gold,good2@test.com");
             writer.newLine();
         }
 
-        
         ObservableList<Media> media =
                 (ObservableList<Media>) getPrivateField("mediaList");
 
@@ -490,17 +427,15 @@ public class HomepageControllerTest {
         subs.add(new OverdueSubscriber() {
             @Override
             public void update(String username, String email, java.util.List<Media> overdueList) {
-                
+                // Intentionally left blank for this test:
+                // we only need a no-op subscriber to verify that publish()
+                // is invoked without sending real emails or throwing exceptions.
             }
         });
 
-        
         assertDoesNotThrow(() -> controller.handleSendReminder());
     }
 
-    /**
-     * Tests getUserMembership for an existing user and for default Silver when not found.
-     */
     @Test
     void testGetUserMembership_FoundAndDefault() throws Exception {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
@@ -518,9 +453,6 @@ public class HomepageControllerTest {
         assertEquals("Silver", membershipMissing);
     }
 
-    /**
-     * Tests getUserEmail for an existing user and for an unknown user.
-     */
     @Test
     void testGetUserEmail_FoundAndEmpty() throws Exception {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
@@ -538,9 +470,6 @@ public class HomepageControllerTest {
         assertEquals("", emailMissing);
     }
 
-    /**
-     * Tests that showAlert can be invoked off the FX thread (test mode branch).
-     */
     @Test
     void testShowAlert_NonFxThread_DoesNotThrow() throws Exception {
         Method m = homepageController.class.getDeclaredMethod("showAlert", String.class, String.class);
@@ -555,9 +484,6 @@ public class HomepageControllerTest {
         });
     }
 
-    /**
-     * Verifies that the welcome label correctly updates with the provided username.
-     */
     @Test
     void testSetCurrentUsername() {
         controller.setCurrentUsername("Zainab");
