@@ -67,7 +67,9 @@ public class homepageController {
 
     private Map<String, Media> mediaMap = new HashMap<>();
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
-    private static final String FILE_PATH = "books.txt";
+
+    private static final String FILE_PATH       = "books.txt";
+    private static final String USERS_FILE_PATH = "users.txt";
 
     // Constants for statuses
     private static final String STATUS_AVAILABLE = "Available";
@@ -336,7 +338,6 @@ public class homepageController {
     /**
      * Loads media items from 'books.txt'.
      * Parses the file and populates the media list. Also calculates fines for overdue items.
-     * (Refactored to reduce Cognitive Complexity.)
      */
     private void loadMediaFromFile() {
         mediaList.clear();
@@ -347,10 +348,50 @@ public class homepageController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                Media item = parseMediaLine(line);
-                if (item != null) {
+
+                String[] parts = line.split(",", 10);
+                if (parts.length >= 5) {
+                    String type   = parts[0].trim();
+                    String title  = parts[1].trim();
+                    String author = parts[2].trim();
+                    String isbn   = parts[3].trim();
+
+                    int copyId = 1;
+                    try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
+
+                    String status  = (parts.length >= 6) ? parts[5].trim() : STATUS_AVAILABLE;
+                    String dueDate = (parts.length >= 7) ? parts[6].trim() : "";
+
+                    double fine = 0.0;
+                    try {
+                        if (parts.length >= 8) fine = Double.parseDouble(parts[7].trim());
+                    } catch (Exception e) {}
+
+                    String borrowedBy = "";
+                    if (parts.length >= 9) {
+                        borrowedBy = parts[8].trim();
+                        if ("0.0".equals(borrowedBy)) borrowedBy = "";
+                    }
+
+                    double amountPaid = 0.0;
+                    if (parts.length >= 10) {
+                        try { amountPaid = Double.parseDouble(parts[9].trim()); } catch (Exception e) {}
+                    }
+
+                    Media item;
+                    if (type.equalsIgnoreCase("CD")) {
+                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
+                    } else {
+                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
+                    }
+
+                    if (item.isOverdue() && !borrowedBy.isEmpty()) {
+                        String membership = getUserMembership(borrowedBy);
+                        item.calculateFine(membership);
+                    }
+
                     mediaList.add(item);
-                    mediaMap.put(item.getIsbn(), item);
+                    mediaMap.put(isbn, item);
                 }
             }
         } catch (IOException e) {
@@ -358,89 +399,6 @@ public class homepageController {
         }
 
         if (searchResultsTable != null) searchResultsTable.refresh();
-    }
-
-    // ---------- helper methods for loadMediaFromFile ----------
-
-    private Media parseMediaLine(String line) {
-        String[] parts = line.split(",", 10);
-        if (parts.length < 5) {
-            return null;
-        }
-
-        String type   = parts[0].trim();
-        String title  = parts[1].trim();
-        String author = parts[2].trim();
-        String isbn   = parts[3].trim();
-
-        int copyId        = parseIntSafe(getPart(parts, 4), 1);
-        String status     = parts.length >= 6 ? parts[5].trim() : STATUS_AVAILABLE;
-        String dueDate    = parts.length >= 7 ? parts[6].trim() : "";
-        double fine       = parts.length >= 8 ? parseDoubleSafe(parts[7], 0.0) : 0.0;
-        String borrowedBy = normalizeBorrowedBy(getPart(parts, 8));
-        double amountPaid = parts.length >= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;
-
-        Media item = createMediaFromParsedData(
-                type, title, author, isbn,
-                status, dueDate, fine, borrowedBy,
-                amountPaid, copyId
-        );
-
-        applyFineIfOverdue(item, borrowedBy);
-        return item;
-    }
-
-    private Media createMediaFromParsedData(String type,
-                                            String title,
-                                            String author,
-                                            String isbn,
-                                            String status,
-                                            String dueDate,
-                                            double fine,
-                                            String borrowedBy,
-                                            double amountPaid,
-                                            int copyId) {
-
-        if ("CD".equalsIgnoreCase(type)) {
-            return new CD(title, author, isbn,
-                    status, dueDate, fine, borrowedBy, amountPaid, copyId);
-        }
-
-        return new Book(title, author, isbn,
-                status, dueDate, fine, borrowedBy, amountPaid, copyId);
-    }
-
-    private void applyFineIfOverdue(Media item, String borrowedBy) {
-        if (!item.isOverdue() || borrowedBy == null || borrowedBy.isEmpty()) {
-            return;
-        }
-        String membership = getUserMembership(borrowedBy);
-        item.calculateFine(membership);
-    }
-
-    private int parseIntSafe(String value, int defaultValue) {
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
-    private double parseDoubleSafe(String value, double defaultValue) {
-        try {
-            return Double.parseDouble(value.trim());
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
-    private String getPart(String[] parts, int index) {
-        return index < parts.length ? parts[index] : "";
-    }
-
-    private String normalizeBorrowedBy(String rawBorrowedBy) {
-        String trimmed = rawBorrowedBy == null ? "" : rawBorrowedBy.trim();
-        return "0.0".equals(trimmed) ? "" : trimmed;
     }
 
     /**
@@ -462,7 +420,7 @@ public class homepageController {
      * @return The membership type (Gold/Silver), defaults to Silver if not found.
      */
     private String getUserMembership(String username) {
-        File file = new File("users.txt");
+        File file = new File(USERS_FILE_PATH);
         if (!file.exists() || username.isEmpty()) return "Silver";
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -482,7 +440,7 @@ public class homepageController {
      * @return The email address, or an empty string if not found.
      */
     private String getUserEmail(String username) {
-        File file = new File("users.txt");
+        File file = new File(USERS_FILE_PATH);
         if (!file.exists() || username == null || username.isEmpty()) return "";
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -502,7 +460,7 @@ public class homepageController {
      */
     private void loadUsersFromFile() {
         usersList.clear();
-        File file = new File("users.txt");
+        File file = new File(USERS_FILE_PATH);
         if (!file.exists()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -549,7 +507,7 @@ public class homepageController {
      * Saves the list of users to 'users.txt'.
      */
     private void saveUsersToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE_PATH))) {
             writer.write("m,123,Admin,Gold");
             writer.newLine();
             for (User u : usersList) {
@@ -618,4 +576,5 @@ public class homepageController {
 
         showAlert("Success", "Reminder email sent.");
     }
+
 }
