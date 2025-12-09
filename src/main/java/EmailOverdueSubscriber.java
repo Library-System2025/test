@@ -1,4 +1,5 @@
 
+
 /**
  * Subscriber implementation that sends email notifications.
  * 

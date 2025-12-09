@@ -1,3 +1,5 @@
+
+
 /**
  * Represents a Book item in the library.
  * Extends the Media class with specific rules for books.

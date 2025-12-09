@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+
 import org.junit.jupiter.api.*;
 import java.io.*;
 import java.lang.reflect.Field;
@@ -386,7 +387,7 @@ public class LibrarianControllerTest {
                 assertEquals("", row.getStyle());
 
             } catch (Exception e) {
-                e.printStackTrace();
+            	System.err.println("Error processing file: " + e.getMessage());
             }
             latch.countDown();
         });

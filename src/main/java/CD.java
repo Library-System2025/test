@@ -1,3 +1,5 @@
+
+
 /**
  * Represents a CD item in the library.
  * Extends the Media class with specific rules for CDs.
