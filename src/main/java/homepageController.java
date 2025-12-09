@@ -15,16 +15,15 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
-import javafx.application.Platform;   
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-
 
 import io.github.cdimascio.dotenv.Dotenv;
 
 /**
  * Controller class for the main dashboard (Home Page).
- * 
+ *
  * This class handles the core administrative functionalities of the library system, including:
  * <ul>
  *   <li>Adding new Books and CDs.</li>
@@ -32,24 +31,21 @@ import io.github.cdimascio.dotenv.Dotenv;
  *   <li>Managing registered users (listing, deleting).</li>
  *   <li>Sending overdue email notifications.</li>
  * </ul>
- * 
+ *
  * @author Zainab
  * @version 1.0
  */
 
 public class homepageController {
 
-    
     @FXML private Label welcomeLabel;
     @FXML private Label addBookMessage;
 
-    
     @FXML private ComboBox<String> typeCombo;
     @FXML private TextField titleField;
     @FXML private TextField authorField;
     @FXML private TextField isbnField;
 
-    
     @FXML private TextField searchField;
     @FXML private ComboBox<String> searchByCombo;
     @FXML private TableView<Media> searchResultsTable;
@@ -63,20 +59,21 @@ public class homepageController {
     @FXML private TableColumn<Media, String> borrowedByColumn;
     @FXML private TableColumn<Media, Integer> copyIdColumn;
 
-
-    
     @FXML private TableView<User> usersTable;
     @FXML private TableColumn<User, String> colUsername;
     @FXML private TableColumn<User, String> colRole;
     @FXML private TableColumn<User, String> colMembership;
     private ObservableList<User> usersList = FXCollections.observableArrayList();
 
-    
     private Map<String, Media> mediaMap = new HashMap<>();
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
     private static final String FILE_PATH = "books.txt";
 
-    
+    // ✅ Constants for statuses (to avoid duplicated literals)
+    private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_BORROWED  = "Borrowed";
+    private static final String STATUS_OVERDUE   = "Overdue";
+
     private static final OverduePublisher overduePublisher = new OverduePublisher();
     private static EmailService emailService;
 
@@ -84,7 +81,6 @@ public class homepageController {
      * Static initialization block to setup the Email Service.
      * Loads credentials from the .env file and subscribes the email service to overdue notifications.
      */
-    
     static {
         try {
             Dotenv dotenv = Dotenv.load();
@@ -101,36 +97,33 @@ public class homepageController {
             System.err.println("Failed to init email service / subscribers in homepageController: " + e.getMessage());
         }
     }
-    
+
     /**
      * Initializes the controller class.
      * This method is automatically called after the FXML file has been loaded.
      * It sets up table columns, loads data, and configures UI behavior.
      */
-
     @FXML
     public void initialize() {
-        
-    	typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
-    	titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-    	authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
-    	isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
-    	copyIdColumn.setCellValueFactory(new PropertyValueFactory<>("copyId")); 
-    	statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-    	dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
-    	fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
-    	borrowedByColumn.setCellValueFactory(new PropertyValueFactory<>("borrowedBy"));
+
+        typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
+        titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+        authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
+        isbnColumn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+        copyIdColumn.setCellValueFactory(new PropertyValueFactory<>("copyId"));
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
+        fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
+        borrowedByColumn.setCellValueFactory(new PropertyValueFactory<>("borrowedBy"));
 
         searchResultsTable.setItems(mediaList);
 
-        
         searchByCombo.setItems(FXCollections.observableArrayList("All", "Title", "Author", "ISBN"));
         searchByCombo.getSelectionModel().select("All");
 
         typeCombo.setItems(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().selectFirst();
 
-       
         searchResultsTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
@@ -139,41 +132,45 @@ public class homepageController {
                     setStyle("");
                 } else {
                     switch (item.getStatus()) {
-                        case "Available": setStyle("-fx-background-color: #d0f0c0;"); break;
-                        case "Borrowed": setStyle("-fx-background-color: #fff9c4;"); break;
-                        case "Overdue": setStyle("-fx-background-color: #ffcdd2;"); break;
-                        default: setStyle(""); break;
+                        case STATUS_AVAILABLE:
+                            setStyle("-fx-background-color: #d0f0c0;");
+                            break;
+                        case STATUS_BORROWED:
+                            setStyle("-fx-background-color: #fff9c4;");
+                            break;
+                        case STATUS_OVERDUE:
+                            setStyle("-fx-background-color: #ffcdd2;");
+                            break;
+                        default:
+                            setStyle("");
+                            break;
                     }
                 }
             }
         });
 
-        
         loadMediaFromFile();
 
-        
         colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colMembership.setCellValueFactory(new PropertyValueFactory<>("membership"));
         usersTable.setItems(usersList);
         loadUsersFromFile();
     }
-    
+
     /**
      * Sets the current username on the welcome label.
-     * 
+     *
      * @param username The name of the logged-in user.
      */
-
     public void setCurrentUsername(String username) {
         if (welcomeLabel != null) welcomeLabel.setText("Welcome, " + username + " 👋");
     }
-    
+
     /**
      * Handles the logout action.
      * Loads the login screen and closes the current dashboard.
      */
-
     @FXML
     private void handleLogout() {
         try {
@@ -182,12 +179,11 @@ public class homepageController {
             stage.setScene(new Scene(login));
         } catch (IOException e) { e.printStackTrace(); }
     }
-    
+
     /**
      * Handles adding a new Book or CD to the library.
      * Validates input fields, checks for duplicate ISBNs, and saves the new item to the file.
      */
-    
     @FXML
     void handleAddBook() {
         String type   = typeCombo.getValue();
@@ -228,10 +224,10 @@ public class homepageController {
             Media newCopy;
             if ("CD".equals(type)) {
                 newCopy = new CD(title, author, isbn,
-                        "Available", "", 0.0, "", 0.0, newCopyId);
+                        STATUS_AVAILABLE, "", 0.0, "", 0.0, newCopyId);
             } else {
                 newCopy = new Book(title, author, isbn,
-                        "Available", "", 0.0, "", 0.0, newCopyId);
+                        STATUS_AVAILABLE, "", 0.0, "", 0.0, newCopyId);
             }
 
             mediaList.add(newCopy);
@@ -240,22 +236,21 @@ public class homepageController {
 
             addBookMessage.setText("📚 Added NEW COPY (Copy #" + newCopyId + ") of this book.");
 
-            // امسحي الفيلدز هون
             titleField.clear();
             authorField.clear();
             isbnField.clear();
             return;
         }
 
-        // أول نسخة
+        // First copy
         int copyId = 1;
         Media newItem;
         if ("CD".equals(type)) {
             newItem = new CD(title, author, isbn,
-                    "Available", "", 0.0, "", 0.0, copyId);
+                    STATUS_AVAILABLE, "", 0.0, "", 0.0, copyId);
         } else {
             newItem = new Book(title, author, isbn,
-                    "Available", "", 0.0, "", 0.0, copyId);
+                    STATUS_AVAILABLE, "", 0.0, "", 0.0, copyId);
         }
 
         mediaList.add(newItem);
@@ -264,20 +259,17 @@ public class homepageController {
 
         addBookMessage.setText("📗 New Book Added (Copy #1).");
 
-        // وهون كمان
         titleField.clear();
         authorField.clear();
         isbnField.clear();
     }
 
-
     /**
      * Handles searching for media items based on criteria.
      * Filters the table view based on Title, Author, or ISBN.
      */
-    
     @FXML
-     void handleSearch() {
+    void handleSearch() {
         String keyword = searchField.getText().toLowerCase().trim();
         String mode = (searchByCombo.getValue() == null) ? "All" : searchByCombo.getValue();
 
@@ -292,7 +284,7 @@ public class homepageController {
             String t = m.getTitle().toLowerCase();
             String a = m.getAuthor().toLowerCase();
             String i = m.getIsbn().toLowerCase();
-            boolean match = false;
+            boolean match;
             switch (mode) {
                 case "Title":  match = t.contains(keyword); break;
                 case "Author": match = a.contains(keyword); break;
@@ -308,9 +300,8 @@ public class homepageController {
      * Reloads data from the file and refreshes the table view.
      * Useful for updating the view after external changes.
      */
-    
     @FXML
-     void handleReload() {
+    void handleReload() {
         loadMediaFromFile();
         searchResultsTable.refresh();
         addBookMessage.setText("🔄 Reloaded.");
@@ -320,10 +311,9 @@ public class homepageController {
      * Loads media items from 'books.txt'.
      * Parses the file and populates the media list. Also calculates fines for overdue items.
      */
-     
     private void loadMediaFromFile() {
         mediaList.clear();
-        mediaMap.clear(); 
+        mediaMap.clear();
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
 
@@ -331,7 +321,6 @@ public class homepageController {
             String line;
             while ((line = reader.readLine()) != null) {
 
-                
                 String[] parts = line.split(",", 10);
                 if (parts.length >= 5) {
                     String type   = parts[0].trim();
@@ -342,7 +331,7 @@ public class homepageController {
                     int copyId = 1;
                     try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
 
-                    String status  = (parts.length >= 6) ? parts[5].trim() : "Available";
+                    String status  = (parts.length >= 6) ? parts[5].trim() : STATUS_AVAILABLE;
                     String dueDate = (parts.length >= 7) ? parts[6].trim() : "";
 
                     double fine = 0.0;
@@ -368,14 +357,13 @@ public class homepageController {
                         item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
                     }
 
-                 
                     if (item.isOverdue() && !borrowedBy.isEmpty()) {
                         String membership = getUserMembership(borrowedBy);
                         item.calculateFine(membership);
                     }
 
                     mediaList.add(item);
-                    mediaMap.put(isbn, item); 
+                    mediaMap.put(isbn, item);
                 }
             }
         } catch (IOException e) {
@@ -385,11 +373,9 @@ public class homepageController {
         if (searchResultsTable != null) searchResultsTable.refresh();
     }
 
-
     /**
      * Saves all current media items to the 'books.txt' file.
      */
-    
     private void saveAllMediaToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Media m : mediaList) {
@@ -398,14 +384,13 @@ public class homepageController {
             }
         } catch (IOException e) { e.printStackTrace(); }
     }
-    
+
     /**
      * Retrieves the membership type for a specific user.
-     * 
+     *
      * @param username The username to check.
      * @return The membership type (Gold/Silver), defaults to Silver if not found.
      */
-    
     private String getUserMembership(String username) {
         File file = new File("users.txt");
         if (!file.exists() || username.isEmpty()) return "Silver";
@@ -422,11 +407,10 @@ public class homepageController {
 
     /**
      * Retrieves the email address for a specific user.
-     * 
+     *
      * @param username The username to check.
      * @return The email address, or an empty string if not found.
      */
-    
     private String getUserEmail(String username) {
         File file = new File("users.txt");
         if (!file.exists() || username == null || username.isEmpty()) return "";
@@ -441,12 +425,11 @@ public class homepageController {
         } catch (IOException e) { e.printStackTrace(); }
         return "";
     }
-    
+
     /**
      * Loads registered users from 'users.txt' into the table view.
      * Excludes Admin accounts from the view.
      */
-
     private void loadUsersFromFile() {
         usersList.clear();
         File file = new File("users.txt");
@@ -461,14 +444,13 @@ public class homepageController {
             }
         } catch (IOException e) {}
     }
-    
+
     /**
      * Deletes a selected user.
      * Ensures the user has no active loans before deletion.
      */
-
     @FXML
-     void handleDeleteUser() {
+    void handleDeleteUser() {
         User selected = usersTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Select a user.");
@@ -492,11 +474,10 @@ public class homepageController {
             showAlert("Success", "User deleted.");
         }
     }
-    
+
     /**
      * Saves the list of users to 'users.txt'.
      */
-
     private void saveUsersToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
             writer.write("m,123,Admin,Gold");
@@ -507,18 +488,16 @@ public class homepageController {
             }
         } catch (IOException e) {}
     }
-    
+
     /**
      * Shows an information alert dialog.
      * <p>
      * Includes a check for the JavaFX Application Thread to support unit testing.
      * </p>
-     * 
-     * @param title The title of the alert.
+     *
+     * @param title   The title of the alert.
      * @param content The content message.
      */
-
- 
     private void showAlert(String title, String content) {
         if (!Platform.isFxApplicationThread()) {
             System.out.println("ALERT (test mode): " + title + " | " + content);
@@ -527,7 +506,7 @@ public class homepageController {
 
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
-        alert.setHeaderText(null);      
+        alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
     }
@@ -536,9 +515,8 @@ public class homepageController {
      * Sends an email reminder to a selected user regarding overdue books.
      * Uses the Observer pattern to trigger the notification.
      */
-    
     @FXML
-     void handleSendReminder() {
+    void handleSendReminder() {
         User selected = usersTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Select a user to send reminder.");
@@ -546,7 +524,7 @@ public class homepageController {
         }
 
         String username = selected.getUsername();
-        String email = getUserEmail(username);
+        String email    = getUserEmail(username);
 
         if (email == null || email.isEmpty()) {
             showAlert("Error", "This user has no email saved.");
