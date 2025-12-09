@@ -67,8 +67,7 @@ public class homepageController {
 
     private Map<String, Media> mediaMap = new HashMap<>();
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
-
-    private static final String FILE_PATH       = "books.txt";
+    private static final String FILE_PATH = "books.txt";
     private static final String USERS_FILE_PATH = "users.txt";
 
     // Constants for statuses
@@ -107,7 +106,19 @@ public class homepageController {
      */
     @FXML
     public void initialize() {
+        configureMediaTable();
+        configureSearchControls();
+        configureTypeCombo();
+        configureMediaRowFactory();
 
+        loadMediaFromFile();
+
+        configureUsersTable();
+    }
+
+    // ---------- initialization helpers (reduce cognitive complexity) ----------
+
+    private void configureMediaTable() {
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("mediaType"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
@@ -119,40 +130,52 @@ public class homepageController {
         borrowedByColumn.setCellValueFactory(new PropertyValueFactory<>("borrowedBy"));
 
         searchResultsTable.setItems(mediaList);
+    }
 
+    private void configureSearchControls() {
         searchByCombo.setItems(FXCollections.observableArrayList("All", "Title", "Author", "ISBN"));
         searchByCombo.getSelectionModel().select("All");
+    }
 
+    private void configureTypeCombo() {
         typeCombo.setItems(FXCollections.observableArrayList("Book", "CD"));
         typeCombo.getSelectionModel().selectFirst();
+    }
 
+    private void configureMediaRowFactory() {
         searchResultsTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
             protected void updateItem(Media item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setStyle("");
-                } else {
-                    switch (item.getStatus()) {
-                        case STATUS_AVAILABLE:
-                            setStyle("-fx-background-color: #d0f0c0;");
-                            break;
-                        case STATUS_BORROWED:
-                            setStyle("-fx-background-color: #fff9c4;");
-                            break;
-                        case STATUS_OVERDUE:
-                            setStyle("-fx-background-color: #ffcdd2;");
-                            break;
-                        default:
-                            setStyle("");
-                            break;
-                    }
-                }
+                styleMediaRow(this, item, empty);
             }
         });
+    }
 
-        loadMediaFromFile();
+    private void styleMediaRow(TableRow<Media> row, Media item, boolean empty) {
+        if (empty || item == null) {
+            row.setStyle("");
+            return;
+        }
 
+        String status = item.getStatus();
+        switch (status) {
+            case STATUS_AVAILABLE:
+                row.setStyle("-fx-background-color: #d0f0c0;");
+                break;
+            case STATUS_BORROWED:
+                row.setStyle("-fx-background-color: #fff9c4;");
+                break;
+            case STATUS_OVERDUE:
+                row.setStyle("-fx-background-color: #ffcdd2;");
+                break;
+            default:
+                row.setStyle("");
+                break;
+        }
+    }
+
+    private void configureUsersTable() {
         colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colMembership.setCellValueFactory(new PropertyValueFactory<>("membership"));
@@ -338,6 +361,7 @@ public class homepageController {
     /**
      * Loads media items from 'books.txt'.
      * Parses the file and populates the media list. Also calculates fines for overdue items.
+     * (Refactored to reduce Cognitive Complexity.)
      */
     private void loadMediaFromFile() {
         mediaList.clear();
@@ -348,50 +372,10 @@ public class homepageController {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-
-                String[] parts = line.split(",", 10);
-                if (parts.length >= 5) {
-                    String type   = parts[0].trim();
-                    String title  = parts[1].trim();
-                    String author = parts[2].trim();
-                    String isbn   = parts[3].trim();
-
-                    int copyId = 1;
-                    try { copyId = Integer.parseInt(parts[4].trim()); } catch (Exception e) {}
-
-                    String status  = (parts.length >= 6) ? parts[5].trim() : STATUS_AVAILABLE;
-                    String dueDate = (parts.length >= 7) ? parts[6].trim() : "";
-
-                    double fine = 0.0;
-                    try {
-                        if (parts.length >= 8) fine = Double.parseDouble(parts[7].trim());
-                    } catch (Exception e) {}
-
-                    String borrowedBy = "";
-                    if (parts.length >= 9) {
-                        borrowedBy = parts[8].trim();
-                        if ("0.0".equals(borrowedBy)) borrowedBy = "";
-                    }
-
-                    double amountPaid = 0.0;
-                    if (parts.length >= 10) {
-                        try { amountPaid = Double.parseDouble(parts[9].trim()); } catch (Exception e) {}
-                    }
-
-                    Media item;
-                    if (type.equalsIgnoreCase("CD")) {
-                        item = new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
-                    } else {
-                        item = new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
-                    }
-
-                    if (item.isOverdue() && !borrowedBy.isEmpty()) {
-                        String membership = getUserMembership(borrowedBy);
-                        item.calculateFine(membership);
-                    }
-
+                Media item = parseMediaLine(line);
+                if (item != null) {
                     mediaList.add(item);
-                    mediaMap.put(isbn, item);
+                    mediaMap.put(item.getIsbn(), item);
                 }
             }
         } catch (IOException e) {
@@ -399,6 +383,64 @@ public class homepageController {
         }
 
         if (searchResultsTable != null) searchResultsTable.refresh();
+    }
+
+    private Media parseMediaLine(String line) {
+        String[] parts = line.split(",", 10);
+        if (parts.length < 5) {
+            return null;
+        }
+
+        String type   = parts[0].trim();
+        String title  = parts[1].trim();
+        String author = parts[2].trim();
+        String isbn   = parts[3].trim();
+
+        int copyId      = parseIntSafe(getPart(parts, 4), 1);
+        String status   = parts.length >= 6 ? parts[5].trim() : STATUS_AVAILABLE;
+        String dueDate  = parts.length >= 7 ? parts[6].trim() : "";
+        double fine     = parts.length >= 8 ? parseDoubleSafe(parts[7], 0.0) : 0.0;
+        String borrowed = normalizeBorrowedBy(getPart(parts, 8));
+        double amountPaid = parts.length >= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;
+
+        Media item;
+        if (type.equalsIgnoreCase("CD")) {
+            item = new CD(title, author, isbn, status, dueDate, fine, borrowed, amountPaid, copyId);
+        } else {
+            item = new Book(title, author, isbn, status, dueDate, fine, borrowed, amountPaid, copyId);
+        }
+
+        if (item.isOverdue() && !borrowed.isEmpty()) {
+            String membership = getUserMembership(borrowed);
+            item.calculateFine(membership);
+        }
+
+        return item;
+    }
+
+    private int parseIntSafe(String value, int defaultValue) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private double parseDoubleSafe(String value, double defaultValue) {
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private String getPart(String[] parts, int index) {
+        return index < parts.length ? parts[index] : "";
+    }
+
+    private String normalizeBorrowedBy(String rawBorrowedBy) {
+        String trimmed = rawBorrowedBy == null ? "" : rawBorrowedBy.trim();
+        return "0.0".equals(trimmed) ? "" : trimmed;
     }
 
     /**
@@ -576,5 +618,4 @@ public class homepageController {
 
         showAlert("Success", "Reminder email sent.");
     }
-
 }
