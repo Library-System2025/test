@@ -40,6 +40,8 @@ import io.github.cdimascio.dotenv.Dotenv;
  */
 
 public class homepageController {
+	
+	private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
     @FXML private Label addBookMessage;
@@ -205,7 +207,7 @@ public class homepageController {
             Parent login = FXMLLoader.load(getClass().getResource("login.fxml"));
             Stage stage = (Stage) titleField.getScene().getWindow();
             stage.setScene(new Scene(login));
-        } catch (IOException e) { System.err.println("Error: " + e.getMessage()); }
+        } catch (IOException e) { System.err.println(ERROR_MSG  + e.getMessage()); }
     }
 
     /**
@@ -382,7 +384,7 @@ public class homepageController {
                 }
             }
         } catch (IOException e) {
-        	System.err.println("Error: " + e.getMessage());
+        	System.err.println(ERROR_MSG + e.getMessage());
         }
 
         if (searchResultsTable != null) searchResultsTable.refresh();
@@ -455,7 +457,7 @@ public class homepageController {
                 writer.write(m.toFileFormat());
                 writer.newLine();
             }
-        } catch (IOException e) { System.err.println("Error: " + e.getMessage()); }
+        } catch (IOException e) { System.err.println(ERROR_MSG + e.getMessage()); }
     }
 
     /**
@@ -495,7 +497,7 @@ public class homepageController {
                     return parts[4].trim();
                 }
             }
-        } catch (IOException e) { System.err.println("Error: " + e.getMessage()); }
+        } catch (IOException e) { System.err.println(ERROR_MSG + e.getMessage()); }
         return "";
     }
 

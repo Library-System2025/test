@@ -32,6 +32,8 @@ import javafx.stage.Stage;
  */
 
 public class UserController {
+	
+	private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
     @FXML private TextField paymentField;
@@ -257,7 +259,7 @@ public class UserController {
             Stage stage  = (Stage) bookTable.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
-        	System.err.println("Error: " + e.getMessage());
+        	System.err.println(ERROR_MSG  + e.getMessage());
         }
     }
 
@@ -432,7 +434,7 @@ public class UserController {
                 }
             }
         } catch (IOException e) {
-        	System.err.println("Error: " + e.getMessage());
+        	System.err.println(ERROR_MSG  + e.getMessage());
         }
         bookTable.refresh();
     }
@@ -550,7 +552,7 @@ public class UserController {
                 writer.newLine();
             }
         } catch (IOException e) {
-        	System.err.println("Error: " + e.getMessage());
+        	System.err.println(ERROR_MSG  + e.getMessage());
         }
     }
 
