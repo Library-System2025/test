@@ -69,7 +69,7 @@ public class homepageController {
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
     private static final String FILE_PATH = "books.txt";
 
-    // ✅ Constants for statuses (to avoid duplicated literals)
+    // Constants for statuses
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED  = "Borrowed";
     private static final String STATUS_OVERDUE   = "Overdue";
@@ -183,6 +183,7 @@ public class homepageController {
     /**
      * Handles adding a new Book or CD to the library.
      * Validates input fields, checks for duplicate ISBNs, and saves the new item to the file.
+     * (Refactored to reduce Cognitive Complexity.)
      */
     @FXML
     void handleAddBook() {
@@ -191,13 +192,13 @@ public class homepageController {
         String author = authorField.getText().trim();
         String isbn   = isbnField.getText().trim();
 
-        if (title.isEmpty() || author.isEmpty() || isbn.isEmpty() || type == null) {
+        if (isInvalidBookInput(type, title, author, isbn)) {
             addBookMessage.setText("❗ Please fill all fields.");
             return;
         }
 
         Media firstWithIsbn = null;
-        int sameIsbnCount = 0;
+        int sameIsbnCount   = 0;
 
         for (Media m : mediaList) {
             if (isbn.equals(m.getIsbn())) {
@@ -209,56 +210,75 @@ public class homepageController {
         }
 
         if (firstWithIsbn != null) {
-            boolean sameTitle  = firstWithIsbn.getTitle()  != null &&
-                                 firstWithIsbn.getTitle().equals(title);
-            boolean sameAuthor = firstWithIsbn.getAuthor() != null &&
-                                 firstWithIsbn.getAuthor().equals(author);
+            handleExistingIsbn(type, title, author, isbn, firstWithIsbn, sameIsbnCount);
+        } else {
+            addFirstCopy(type, title, author, isbn);
+        }
 
-            if (!sameTitle || !sameAuthor) {
-                addBookMessage.setText("❌ ISBN already exists but with different title/author!");
-                return;
-            }
+        clearBookForm();
+    }
 
-            int newCopyId = sameIsbnCount + 1;
+    // ---------- helper methods for handleAddBook ----------
 
-            Media newCopy;
-            if ("CD".equals(type)) {
-                newCopy = new CD(title, author, isbn,
-                        STATUS_AVAILABLE, "", 0.0, "", 0.0, newCopyId);
-            } else {
-                newCopy = new Book(title, author, isbn,
-                        STATUS_AVAILABLE, "", 0.0, "", 0.0, newCopyId);
-            }
+    private boolean isInvalidBookInput(String type, String title, String author, String isbn) {
+        return title.isEmpty() || author.isEmpty() || isbn.isEmpty() || type == null;
+    }
 
-            mediaList.add(newCopy);
-            mediaMap.putIfAbsent(isbn, firstWithIsbn);
-            saveAllMediaToFile();
+    private void handleExistingIsbn(String type,
+                                    String title,
+                                    String author,
+                                    String isbn,
+                                    Media firstWithIsbn,
+                                    int sameIsbnCount) {
 
-            addBookMessage.setText("📚 Added NEW COPY (Copy #" + newCopyId + ") of this book.");
-
-            titleField.clear();
-            authorField.clear();
-            isbnField.clear();
+        if (!hasSameTitleAndAuthor(firstWithIsbn, title, author)) {
+            addBookMessage.setText("❌ ISBN already exists but with different title/author!");
             return;
         }
 
-        // First copy
+        int newCopyId = sameIsbnCount + 1;
+        Media newCopy = createMediaItem(type, title, author, isbn, newCopyId);
+
+        mediaList.add(newCopy);
+        mediaMap.putIfAbsent(isbn, firstWithIsbn);
+        saveAllMediaToFile();
+
+        addBookMessage.setText("📚 Added NEW COPY (Copy #" + newCopyId + ") of this book.");
+    }
+
+    private boolean hasSameTitleAndAuthor(Media firstWithIsbn, String title, String author) {
+        boolean sameTitle  = firstWithIsbn.getTitle()  != null &&
+                             firstWithIsbn.getTitle().equals(title);
+        boolean sameAuthor = firstWithIsbn.getAuthor() != null &&
+                             firstWithIsbn.getAuthor().equals(author);
+        return sameTitle && sameAuthor;
+    }
+
+    private void addFirstCopy(String type, String title, String author, String isbn) {
         int copyId = 1;
-        Media newItem;
-        if ("CD".equals(type)) {
-            newItem = new CD(title, author, isbn,
-                    STATUS_AVAILABLE, "", 0.0, "", 0.0, copyId);
-        } else {
-            newItem = new Book(title, author, isbn,
-                    STATUS_AVAILABLE, "", 0.0, "", 0.0, copyId);
-        }
+        Media newItem = createMediaItem(type, title, author, isbn, copyId);
 
         mediaList.add(newItem);
         mediaMap.put(isbn, newItem);
         saveAllMediaToFile();
 
         addBookMessage.setText("📗 New Book Added (Copy #1).");
+    }
 
+    private Media createMediaItem(String type,
+                                  String title,
+                                  String author,
+                                  String isbn,
+                                  int copyId) {
+        if ("CD".equals(type)) {
+            return new CD(title, author, isbn,
+                    STATUS_AVAILABLE, "", 0.0, "", 0.0, copyId);
+        }
+        return new Book(title, author, isbn,
+                STATUS_AVAILABLE, "", 0.0, "", 0.0, copyId);
+    }
+
+    private void clearBookForm() {
         titleField.clear();
         authorField.clear();
         isbnField.clear();
@@ -267,11 +287,12 @@ public class homepageController {
     /**
      * Handles searching for media items based on criteria.
      * Filters the table view based on Title, Author, or ISBN.
+     * (Refactored to reduce Cognitive Complexity.)
      */
     @FXML
     void handleSearch() {
         String keyword = searchField.getText().toLowerCase().trim();
-        String mode = (searchByCombo.getValue() == null) ? "All" : searchByCombo.getValue();
+        String mode    = (searchByCombo.getValue() == null) ? "All" : searchByCombo.getValue();
 
         if (keyword.isEmpty()) {
             searchResultsTable.setItems(mediaList);
@@ -281,19 +302,24 @@ public class homepageController {
 
         ObservableList<Media> filtered = FXCollections.observableArrayList();
         for (Media m : mediaList) {
-            String t = m.getTitle().toLowerCase();
-            String a = m.getAuthor().toLowerCase();
-            String i = m.getIsbn().toLowerCase();
-            boolean match;
-            switch (mode) {
-                case "Title":  match = t.contains(keyword); break;
-                case "Author": match = a.contains(keyword); break;
-                case "ISBN":   match = i.contains(keyword); break;
-                default:       match = t.contains(keyword) || a.contains(keyword) || i.contains(keyword); break;
+            if (matchesSearch(m, mode, keyword)) {
+                filtered.add(m);
             }
-            if (match) filtered.add(m);
         }
         searchResultsTable.setItems(filtered);
+    }
+
+    private boolean matchesSearch(Media m, String mode, String keyword) {
+        String t = m.getTitle().toLowerCase();
+        String a = m.getAuthor().toLowerCase();
+        String i = m.getIsbn().toLowerCase();
+
+        switch (mode) {
+            case "Title":  return t.contains(keyword);
+            case "Author": return a.contains(keyword);
+            case "ISBN":   return i.contains(keyword);
+            default:       return t.contains(keyword) || a.contains(keyword) || i.contains(keyword);
+        }
     }
 
     /**
