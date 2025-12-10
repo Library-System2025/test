@@ -72,11 +72,11 @@ public class MediaTest {
 
             Book b = new Book("Clean Code", "Robert Martin", "111");
 
-            // not overdue
+            
             b.setDueDate("2025-01-25");
             assertFalse(b.isOverdue());
 
-            // overdue
+            
             b.setDueDate("2025-01-10");
             assertTrue(b.isOverdue());
         }
@@ -164,20 +164,20 @@ public class MediaTest {
                 3.5,
                 "u1",
                 1.0,
-                2     // copyId
+                2     
         );
 
         String expected = String.join(",",
-                "Book",              // media type
-                "Clean Code",        // title
-                "Robert Martin",     // author
-                "111",               // isbn
-                "2",                 // copyId 
-                "Borrowed",          // status
-                "2025-12-20",        // dueDate
-                "3.5",               // fineAmount
-                "u1",                // borrowedBy
-                "1.0"                // amountPaid
+                "Book",             
+                "Clean Code",        
+                "Robert Martin",     
+                "111",               
+                "2",                  
+                "Borrowed",          
+                "2025-12-20",        
+                "3.5",               
+                "u1",                
+                "1.0"                
         );
 
         assertEquals(expected, b.toFileFormat());

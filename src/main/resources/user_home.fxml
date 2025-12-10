@@ -9,7 +9,7 @@
             fx:controller="UserController"
             prefWidth="800" prefHeight="520">
 
-    <!-- 🔹 الشريط العلوي -->
+    
     <top>
         <HBox spacing="15" alignment="CENTER_RIGHT">
             <padding>
@@ -23,17 +23,17 @@
         </HBox>
     </top>
 
-    <!-- 🔹 المحتوى الرئيسي -->
+    
     <center>
         <VBox spacing="15">
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
 
-            <!-- 📚 جدول الكتب والوسائط -->
+            
             <TableView fx:id="bookTable" prefHeight="330">
                 <columns>
-                    <!-- ✅ التعديل: إضافة عمود النوع -->
+                    
                     <TableColumn fx:id="typeColumn" text="Type" prefWidth="70"/>
                     
                     <TableColumn fx:id="titleColumn" text="Title" prefWidth="180"/>
@@ -45,7 +45,7 @@
                 </columns>
             </TableView>
 
-            <!-- 🔘 الأزرار السفلية -->
+            
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <TextField fx:id="paymentField" promptText="Enter amount to pay..." prefWidth="200"/>
 

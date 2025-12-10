@@ -21,7 +21,7 @@ public class OverduePublisherTest {
 
         OverduePublisher publisher = new OverduePublisher();
 
-        // Mock subscribers
+        
         OverdueSubscriber sub1 = mock(OverdueSubscriber.class);
         OverdueSubscriber sub2 = mock(OverdueSubscriber.class);
 
