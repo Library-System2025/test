@@ -49,4 +49,4 @@ jobs:
           -Dsonar.projectKey=Library-System2025_test \
           -Dsonar.organization=library-system2025 \
           -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+          -Dsonar.token=$SONAR_TOKEN
