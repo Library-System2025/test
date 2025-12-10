@@ -27,9 +27,9 @@ import org.junit.jupiter.api.Test;
  * Comprehensive JUnit Test suite for the {@link UserController} class.
  * <p>
  * This suite guarantees:
- * 1. High Code Coverage (>85%) via Reflection and Logic testing.
+ * 1. High Code Coverage via Reflection and Logic testing.
  * 2. Strict Adherence to Quality Gates (No Security Hotspots).
- * 3. Robust Error Handling testing.
+ * 3. Robust Error Handling and dynamic fine calculation testing.
  * </p>
  * 
  * @author Zainab
@@ -42,7 +42,7 @@ class UserControllerTest {
 
     /**
      * Initializes the JavaFX Platform and sets up mock environment variables.
-     * Uses string concatenation to bypass security scanners looking for credentials.
+     * Uses string concatenation to bypass security scanners.
      */
     @BeforeAll
     static void initJfxAndEnv() {
@@ -244,7 +244,8 @@ class UserControllerTest {
         item.borrow("TestUser");
         item.setStatus("Overdue");
         item.setDueDate("2000-01-01");
-        item.setFineAmount(100.0);
+        
+        item.calculateFine("Gold");
 
         performPayment(item, "1.0");
 
@@ -265,9 +266,11 @@ class UserControllerTest {
         item.borrow("TestUser");
         item.setStatus("Overdue");
         item.setDueDate("2000-01-01");
-        item.setFineAmount(10.0);
         
-        performPayment(item, "10.0");
+        item.calculateFine("Gold");
+        double exactFine = item.getFineAmount();
+        
+        performPayment(item, String.valueOf(exactFine));
         
         Label info = getField(controller, "infoLabel");
         assertTrue(info.getText().contains("fully paid") || info.getText().contains("Item returned"));
@@ -285,7 +288,7 @@ class UserControllerTest {
         
         item.borrow("TestUser");
         item.setStatus("Overdue");
-        item.setFineAmount(10.0);
+        item.setDueDate("2000-01-01"); 
 
         performPayment(item, "-5");
         Label info = getField(controller, "infoLabel");
@@ -297,7 +300,7 @@ class UserControllerTest {
         performPayment(item, "0");
         assertTrue(info.getText().contains("positive"));
         
-        performPayment(item, "20.0");
+        performPayment(item, "10000000.0");
         assertTrue(info.getText().contains("Payment exceeds"));
     }
     
