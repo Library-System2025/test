@@ -190,10 +190,9 @@ class UserControllerTest {
      */
     @Test
     void testBorrowBookFailWithFines() throws InterruptedException {
-        setupItemWithStatus(1, "Available", 0.0);
-        
         TableView<Media> table = getField(controller, "bookTable");
         Media fineItem = table.getItems().get(1);
+        
         fineItem.borrow("TestUser");
         fineItem.setFineAmount(10.0);
 
@@ -237,9 +236,13 @@ class UserControllerTest {
      */
     @Test
     void testPayFinePartialPayment() throws InterruptedException {
-        Media item = setupItemWithStatus(1, "Overdue", 100.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(1);
+        
         item.borrow("TestUser");
+        item.setStatus("Overdue");
         item.setDueDate("2000-01-01");
+        item.setFineAmount(100.0);
 
         performPayment(item, "1.0");
 
@@ -254,8 +257,12 @@ class UserControllerTest {
      */
     @Test
     void testPayFineFullPayment() throws InterruptedException {
-        Media item = setupItemWithStatus(1, "Overdue", 10.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(1);
+        
         item.borrow("TestUser");
+        item.setStatus("Overdue");
+        item.setFineAmount(10.0);
         
         performPayment(item, "10.0");
         
@@ -270,8 +277,12 @@ class UserControllerTest {
      */
     @Test
     void testPayFineValidation() throws InterruptedException {
-        Media item = setupItemWithStatus(1, "Overdue", 10.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(1);
+        
         item.borrow("TestUser");
+        item.setStatus("Overdue");
+        item.setFineAmount(10.0);
 
         performPayment(item, "-5");
         Label info = getField(controller, "infoLabel");
@@ -310,8 +321,12 @@ class UserControllerTest {
      */
     @Test
     void testPayFineWrongUser() throws InterruptedException {
-        Media item = setupItemWithStatus(1, "Borrowed", 10.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(1);
+        
         item.borrow("OtherUser");
+        item.setFineAmount(10.0);
+        
         performPayment(item, "10.0");
         Label info = getField(controller, "infoLabel");
         assertTrue(info.getText().contains("YOUR borrowed items"));
@@ -324,8 +339,11 @@ class UserControllerTest {
      */
     @Test
     void testReturnBookSuccess() throws InterruptedException {
-        Media item = setupItemWithStatus(0, "Borrowed", 0.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(0);
+        
         item.borrow("TestUser");
+        item.setFineAmount(0);
         
         runOnFxThreadAndWait(() -> {
             getField(controller, "bookTable", TableView.class).getSelectionModel().select(item);
@@ -342,7 +360,9 @@ class UserControllerTest {
      */
     @Test
     void testReturnBookFailWithFine() throws InterruptedException {
-        Media item = setupItemWithStatus(1, "Borrowed", 0.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(1);
+        
         item.borrow("TestUser");
         item.setDueDate("2000-01-01"); 
 
@@ -364,7 +384,8 @@ class UserControllerTest {
      */
     @Test
     void testValidationNotBorrower() throws InterruptedException {
-        Media item = setupItemWithStatus(1, "Borrowed", 0.0);
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(1);
         item.borrow("OtherPerson");
         
         runOnFxThreadAndWait(() -> {
@@ -475,8 +496,12 @@ class UserControllerTest {
     @Test
     void testOverdueNotificationNullEmail() throws InterruptedException {
         runOnFxThreadAndWait(() -> controller.setCurrentUser("TestUser", "Gold", null));
-        Media item = setupItemWithStatus(0, "Overdue", 0.0);
+        
+        TableView<Media> table = getField(controller, "bookTable");
+        Media item = table.getItems().get(0);
+        
         item.borrow("TestUser");
+        item.setStatus("Overdue");
         item.setDueDate("2000-01-01");
         
         runOnFxThreadAndWait(() -> {
@@ -559,22 +584,6 @@ class UserControllerTest {
             table.getSelectionModel().select(item);
             controller.handlePayFine();
         });
-    }
-    
-    /**
-     * Helper method to setup an item with a specific status and fine.
-     * 
-     * @param index The index of the item.
-     * @param status The status to set.
-     * @param fine The fine amount to set.
-     * @return The modified Media item.
-     */
-    private Media setupItemWithStatus(int index, String status, double fine) {
-        TableView<Media> table = getField(controller, "bookTable");
-        Media item = table.getItems().get(index);
-        item.setStatus(status);
-        item.setFineAmount(fine);
-        return item;
     }
 
     /**
