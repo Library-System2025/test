@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * </p>
  *
  * @author Zainab
- * @version 2.0
+ * @version 1.0
  */
 public class LoginControllerTest {
 

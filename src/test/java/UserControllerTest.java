@@ -14,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,13 +30,13 @@ import org.junit.jupiter.api.Test;
  * </p>
  * 
  * @author Zainab
- * @version 3.1
+ * @version 1.0
  */
 class UserControllerTest {
 
     /** The instance of the controller under test. */
     private UserController controller;
-    
+
     /** The path to the temporary test database file. */
     private static final String TEST_FILE = "books.txt";
 
@@ -48,6 +49,7 @@ class UserControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
+            
         }
         System.setProperty("EMAIL_USERNAME", "test_user");
         System.setProperty("EMAIL_PASSWORD", "test_pass");
@@ -67,6 +69,7 @@ class UserControllerTest {
         createTestFile();
         controller = new UserController();
 
+        
         injectField(controller, "welcomeLabel", new Label());
         injectField(controller, "paymentField", new TextField());
         injectField(controller, "infoLabel", new Label());
@@ -82,8 +85,8 @@ class UserControllerTest {
         injectField(controller, "dueDateColumn", new TableColumn<Media, String>());
         injectField(controller, "fineColumn", new TableColumn<Media, Double>());
 
+        
         runOnFxThreadAndWait(() -> controller.initialize());
-
         controller.setCurrentUser("TestUser", "Gold", "test@mail.com");
     }
 
@@ -134,7 +137,6 @@ class UserControllerTest {
     @Test
     void testSetCurrentUser() throws InterruptedException {
         runOnFxThreadAndWait(() -> controller.setCurrentUser("NewUser", "Silver", "new@mail.com"));
-        
         Label label = getField(controller, "welcomeLabel");
         assertTrue(label.getText().contains("NewUser"));
         assertTrue(label.getText().contains("Silver"));
@@ -149,9 +151,8 @@ class UserControllerTest {
     @Test
     void testBorrowBookSuccess() throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
-        
         runOnFxThreadAndWait(() -> {
-            table.getSelectionModel().select(0); 
+            table.getSelectionModel().select(0);
             controller.handleBorrowBook();
         });
 
@@ -168,7 +169,6 @@ class UserControllerTest {
     @Test
     void testBorrowBookFailNoSelection() throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
-        
         runOnFxThreadAndWait(() -> {
             table.getSelectionModel().clearSelection();
             controller.handleBorrowBook();
@@ -190,10 +190,10 @@ class UserControllerTest {
         
         Media fineItem = items.get(1);
         fineItem.borrow("TestUser");
-        fineItem.setFineAmount(10.0); 
+        fineItem.setFineAmount(10.0);
 
         runOnFxThreadAndWait(() -> {
-            table.getSelectionModel().select(0); 
+            table.getSelectionModel().select(0);
             controller.handleBorrowBook();
         });
 
@@ -224,8 +224,8 @@ class UserControllerTest {
     /**
      * Tests partial payment of a fine.
      * <p>
-     * Explicitly sets the due date to the past to ensure a valid fine is calculated,
-     * allowing for a partial payment scenario.
+     * Explicitly sets the fine amount to ensure the controller allows the payment logic
+     * to proceed to the partial payment block.
      * </p>
      * 
      * @throws InterruptedException If the FX thread is interrupted.
@@ -234,13 +234,15 @@ class UserControllerTest {
     void testPayFinePartialPayment() throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
         Media item = table.getItems().get(1);
-        
         item.borrow("TestUser");
         item.setStatus("Overdue");
-        item.setDueDate("2000-01-01"); 
+        item.setDueDate("2000-01-01");
+        
+        
+        item.setFineAmount(100.0); 
 
         TextField payField = getField(controller, "paymentField");
-        payField.setText("1.0");
+        payField.setText("1.0"); // Pay partial amount
 
         runOnFxThreadAndWait(() -> {
             table.getSelectionModel().select(item);
@@ -248,8 +250,7 @@ class UserControllerTest {
         });
 
         Label info = getField(controller, "infoLabel");
-        
-        assertTrue(info.getText().contains("Partial payment"));
+        assertTrue(info.getText().contains("Partial payment"), "Expected partial payment message but got: " + info.getText());
         assertTrue(item.getFineAmount() > 0);
         assertEquals("Overdue", item.getStatus());
     }
@@ -264,7 +265,6 @@ class UserControllerTest {
     void testPayFineFullPayment() throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
         Media item = table.getItems().get(1);
-        
         item.borrow("TestUser");
         item.setStatus("Overdue");
         item.setFineAmount(10.0);
@@ -330,7 +330,7 @@ class UserControllerTest {
 
     /**
      * Tests failure to return a book when fines are pending.
-     * Simulates an old due date to trigger fine calculation logic.
+     * Simulates an old due date to trigger fine calculation logic within the return process.
      * 
      * @throws InterruptedException If the FX thread is interrupted.
      */
@@ -340,15 +340,17 @@ class UserControllerTest {
         Media item = table.getItems().get(1);
         item.borrow("TestUser");
         item.setDueDate("2000-01-01"); 
-        
+
         runOnFxThreadAndWait(() -> {
             table.getSelectionModel().select(item);
             try {
                 controller.handleReturnBook();
             } catch (Exception e) {
+                
             }
         });
 
+        
         if (item.getFineAmount() > 0) {
             Label msg = getField(controller, "messageLabel");
             assertTrue(msg.getText().contains("Pay the fine"));
@@ -377,7 +379,7 @@ class UserControllerTest {
     void testLogout() throws InterruptedException {
         runOnFxThreadAndWait(() -> controller.handleLogout());
     }
-    
+
     /**
      * Tests the system's resilience when loading a file containing corrupted data lines.
      * 
@@ -390,9 +392,7 @@ class UserControllerTest {
             writer.write("Invalid,Line,Without,Enough,Commas");
             writer.newLine();
         }
-        
         runOnFxThreadAndWait(() -> controller.handleReload());
-        
         TableView<Media> table = getField(controller, "bookTable");
         assertNotNull(table.getItems());
     }
