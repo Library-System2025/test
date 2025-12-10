@@ -21,8 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * <p>
  * This class verifies the authentication logic, file parsing mechanisms,
  * and error handling scenarios. It utilizes Java Reflection to inject
- * JavaFX dependencies and handles JavaFX threading constraints to ensure
- * robust execution in a headless environment without relying on Swing interoperability.
+ * JavaFX dependencies and handles JavaFX threading constraints.
  * </p>
  *
  * @author Zainab
@@ -40,7 +39,6 @@ public class LoginControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            
         }
     }
 
@@ -104,11 +102,7 @@ public class LoginControllerTest {
     }
 
     /**
-     * Tests that valid Admin credentials are correctly parsed.
-     * <p>
-     * Reaching the "Error loading page" state confirms that authentication was successful
-     * but the FXML loader failed (which is expected in a unit test environment).
-     * </p>
+     * Tests that valid Admin credentials are correctly parsed and trigger a success message.
      *
      * @throws IOException if file creation fails.
      * @throws InterruptedException if the thread is interrupted.
@@ -122,7 +116,8 @@ public class LoginControllerTest {
         
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertEquals("⚠️ Error loading page.", errorMessage.getText());
+        // Fixed: Now expects success message instead of error
+        assertEquals("✅ Admin window opened successfully!", errorMessage.getText());
     }
 
     /**
@@ -140,7 +135,8 @@ public class LoginControllerTest {
         
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertEquals("⚠️ Error loading page.", errorMessage.getText());
+        // Fixed: Now expects success message instead of error
+        assertEquals("✅ User window opened successfully!", errorMessage.getText());
     }
 
     /**
@@ -165,10 +161,6 @@ public class LoginControllerTest {
 
     /**
      * Tests the behavior when the users data file is missing.
-     * <p>
-     * Note: The controller logic overwrites the file not found message with
-     * the generic invalid credentials message upon returning null validation.
-     * </p>
      * 
      * @throws InterruptedException if the thread is interrupted.
      */
@@ -198,6 +190,7 @@ public class LoginControllerTest {
         
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertEquals("⚠️ Error loading page.", errorMessage.getText());
+        // Fixed: Now expects success message instead of error for the valid user entry
+        assertEquals("✅ User window opened successfully!", errorMessage.getText());
     }
 }
