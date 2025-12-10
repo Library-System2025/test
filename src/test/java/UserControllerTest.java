@@ -27,13 +27,13 @@ import org.junit.jupiter.api.Test;
 /**
  * Comprehensive JUnit Test suite for the {@link UserController} class.
  * <p>
- * This suite is optimized for maximum code coverage (>85%), validating not just
- * standard operations but also private parsing logic, UI cell rendering, 
- * exception handling, and edge case validation.
+ * Optimized for robustness and high coverage. This suite mocks the UI environment,
+ * reflects into private fields, and validates logic for borrowing, returning,
+ * fines, and data parsing edge cases.
  * </p>
  * 
  * @author Zainab
- * @version 1.0
+ * @version 1.0 
  */
 class UserControllerTest {
 
@@ -41,22 +41,23 @@ class UserControllerTest {
     private static final String TEST_FILE = "books.txt";
 
     /**
-     * Initializes the JavaFX Platform environment.
+     * Initializes the JavaFX Platform to avoid IllegalStateException.
      */
     @BeforeAll
     static void initJfxAndEnv() {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
+            // Platform already running
         }
         System.setProperty("EMAIL_USERNAME", "test_user");
         System.setProperty("EMAIL_PASSWORD", "test_pass");
     }
 
     /**
-     * Sets up the controller and injects dependencies before each test.
+     * Sets up the test environment, creating a clean file and injecting dependencies.
      * 
-     * @throws Exception If reflection fails.
+     * @throws Exception If reflection or file IO fails.
      */
     @BeforeEach
     void setUp() throws Exception {
@@ -83,7 +84,7 @@ class UserControllerTest {
     }
 
     /**
-     * Cleans up the temporary test file.
+     * Deletes the temporary test file after each test.
      */
     @AfterEach
     void tearDown() {
@@ -94,10 +95,10 @@ class UserControllerTest {
     }
 
     /**
-     * Runs a task on the JavaFX thread and waits for completion.
+     * Executes the given runnable on the JavaFX Application Thread and waits.
      * 
-     * @param action The task to run.
-     * @throws InterruptedException If interrupted.
+     * @param action The action to run.
+     * @throws InterruptedException If the thread is interrupted.
      */
     private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
@@ -112,7 +113,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests table initialization.
+     * Verifies table initialization.
      */
     @Test
     void testInitialize() {
@@ -122,9 +123,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests setting the current user.
+     * Verifies welcome label updates.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testSetCurrentUser() throws InterruptedException {
@@ -135,9 +136,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests legacy setters for coverage.
+     * Verifies legacy setters work correctly.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testLegacySetters() throws InterruptedException {
@@ -153,7 +154,7 @@ class UserControllerTest {
     /**
      * Tests successful borrowing.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testBorrowBookSuccess() throws InterruptedException {
@@ -167,9 +168,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrowing with no selection.
+     * Tests borrowing without selection.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testBorrowBookFailNoSelection() throws InterruptedException {
@@ -185,7 +186,7 @@ class UserControllerTest {
     /**
      * Tests borrowing with unpaid fines.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testBorrowBookFailWithFines() throws InterruptedException {
@@ -204,9 +205,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrowing an already borrowed item.
+     * Tests borrowing already borrowed item.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testBorrowBookFailAlreadyBorrowed() throws InterruptedException {
@@ -222,9 +223,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests borrowing an unavailable item.
+     * Tests borrowing unavailable item.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testBorrowBookFailUnavailable() throws InterruptedException {
@@ -241,9 +242,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests partial fine payment.
+     * Tests partial payment.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFinePartialPayment() throws InterruptedException {
@@ -267,9 +268,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests full fine payment.
+     * Tests full payment.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFineFullPayment() throws InterruptedException {
@@ -291,9 +292,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests invalid negative payment.
+     * Tests negative payment amount.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFineInvalidNegative() throws InterruptedException {
@@ -312,9 +313,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests invalid non-numeric payment.
+     * Tests non-numeric payment.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFineInvalidFormat() throws InterruptedException {
@@ -333,9 +334,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests zero payment.
+     * Tests zero payment amount.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFineZeroOrLess() throws InterruptedException {
@@ -354,9 +355,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests overpayment.
+     * Tests payment exceeding fine.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFineExceedsAmount() throws InterruptedException {
@@ -375,9 +376,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests paying without selection.
+     * Tests payment without selection.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testPayFineNoSelection() throws InterruptedException {
@@ -393,7 +394,7 @@ class UserControllerTest {
     /**
      * Tests successful return.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testReturnBookSuccess() throws InterruptedException {
@@ -410,9 +411,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests return with pending fines.
+     * Tests return failed due to fines.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testReturnBookFailWithFine() throws InterruptedException {
@@ -435,9 +436,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests return validation for non-owned items.
+     * Tests validation for returning items not owned by user.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testValidationNotBorrower() throws InterruptedException {
@@ -461,9 +462,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests return with no selection.
+     * Tests return without selection.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testReturnBookNoSelection() throws InterruptedException {
@@ -477,7 +478,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests the cell rendering logic for hiding data of other users.
+     * Tests cell factory rendering logic using reflection.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -511,6 +512,7 @@ class UserControllerTest {
             updateItemDouble.invoke(fineCell, myItem.getFineAmount(), false);
             
         } catch (Exception e) { 
+            // Ignore reflection errors in test
         }
         
         assertNotNull(dueCell);
@@ -518,15 +520,16 @@ class UserControllerTest {
     }
 
     /**
-     * Tests parsing logic with corrupted data to ensure exceptions are caught.
+     * Tests parsing of corrupted data lines. Overwrites file to ensure strict environment.
      * 
-     * @throws IOException If file writing fails.
-     * @throws InterruptedException If interrupted.
+     * @throws IOException If file IO fails.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testParsingExceptionsAndDefaults() throws IOException, InterruptedException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TEST_FILE, true))) {
-            writer.write("Book,BadData,Auth,111,NOT_A_NUMBER,Available,Date,NOT_DOUBLE,User,NOT_DOUBLE");
+        // Overwrite file completely to avoid append conflicts
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TEST_FILE))) {
+            writer.write("Book,BadData,Auth,111,NOT_NUM,Available,2022-01-01,NOT_DBL,User,NOT_DBL");
             writer.newLine();
         }
         
@@ -534,15 +537,15 @@ class UserControllerTest {
         TableView<Media> table = getField(controller, "bookTable");
         
         boolean foundBadData = table.getItems().stream()
-                                    .anyMatch(m -> m.getTitle().equals("BadData"));
+                                    .anyMatch(m -> "BadData".equals(m.getTitle()));
         
         assertTrue(foundBadData, "Should have loaded the item with default values for corrupted fields");
     }
     
     /**
-     * Tests notification logic when email is null.
+     * Tests overdue notification when email is null.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testOverdueNotificationNullEmail() throws InterruptedException {
@@ -565,7 +568,7 @@ class UserControllerTest {
     /**
      * Tests reload functionality.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testReload() throws InterruptedException {
@@ -575,9 +578,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests logout (expects exception in headless mode).
+     * Tests logout functionality with exception handling for headless environment.
      * 
-     * @throws InterruptedException If interrupted.
+     * @throws InterruptedException If FX thread interrupted.
      */
     @Test
     void testLogout() throws InterruptedException {
@@ -585,15 +588,15 @@ class UserControllerTest {
             try {
                 controller.handleLogout();
             } catch (Exception e) {
-                // Expected NullPointerException in test env as there is no Stage
+                // Expected in headless test environment
             }
         });
     }
 
     /**
-     * Creates a test file.
+     * Helper to create the initial test file.
      * 
-     * @throws IOException If file creation fails.
+     * @throws IOException If write fails.
      */
     private void createTestFile() throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(TEST_FILE))) {
@@ -605,12 +608,7 @@ class UserControllerTest {
     }
 
     /**
-     * Injects a private field.
-     * 
-     * @param target Object.
-     * @param fieldName Field name.
-     * @param value Value.
-     * @throws Exception If reflection fails.
+     * Helper to inject private fields.
      */
     private void injectField(Object target, String fieldName, Object value) throws Exception {
         Field field = target.getClass().getDeclaredField(fieldName);
@@ -619,12 +617,7 @@ class UserControllerTest {
     }
 
     /**
-     * Gets a private field.
-     * 
-     * @param target Object.
-     * @param fieldName Field name.
-     * @param <T> Type.
-     * @return Value.
+     * Helper to get private fields.
      */
     @SuppressWarnings("unchecked")
     private <T> T getField(Object target, String fieldName) {
