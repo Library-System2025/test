@@ -28,7 +28,6 @@ import java.io.IOException;
  *   <li>Processing "Return" transactions.</li>
  *   <li>Searching and filtering inventory.</li>
  * </ul>
- * </p>
  * 
  * @author Zainab
  * @version 1.0

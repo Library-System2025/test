@@ -6,14 +6,10 @@ import org.junit.jupiter.api.Test;
  * <p>
  * Ensures that all constructors correctly initialize the state and that overridden methods 
  * from the {@link Media} superclass return the expected values specific to a CD.
- * </p>
- *
- * @author Zainab
- * @version 1.2
  */
 public class CDTest {
 
-	/**
+    /**
      * Verifies that the simplified constructor initializes fields with default values.
      * <p>
      * Specifically checks that:
@@ -22,7 +18,6 @@ public class CDTest {
      *   <li>Status defaults to "Available".</li>
      *   <li>Copy ID defaults to 1.</li>
      * </ul>
-     * </p>
      */
     @Test
     void testShortConstructor_initialValuesCorrect() {
@@ -53,14 +48,12 @@ public class CDTest {
         assertEquals("DJ Alex", cd.getAuthor());
         assertEquals("CD500", cd.getIsbn());
 
-        
         assertEquals("Available", cd.getStatus());
         assertEquals("", cd.getDueDate());
         assertEquals(0.0, cd.getFineAmount());
         assertEquals("", cd.getBorrowedBy());
         assertEquals(0.0, cd.getAmountPaid());
 
-        
         assertEquals(7, cd.getCopyId());
     }
 

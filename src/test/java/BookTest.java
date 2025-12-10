@@ -6,14 +6,10 @@ import org.junit.jupiter.api.Test;
  * <p>
  * Ensures that all constructors correctly initialize the state and that overridden methods 
  * from the {@link Media} superclass return the expected values specific to a Book.
- * </p>
- * 
- * @author Zainab
- * @version 1.2
  */
 public class BookTest {
 
-	/**
+    /**
      * Verifies that the simplified constructor initializes fields with default values.
      * <p>
      * Specifically checks that:
@@ -23,7 +19,6 @@ public class BookTest {
      *   <li>Copy ID defaults to 1.</li>
      *   <li>Financial and due date fields are empty or zero.</li>
      * </ul>
-     * </p>
      */
     @Test
     void testShortConstructor_initialValuesCorrect() {

@@ -34,7 +34,6 @@ import io.github.cdimascio.dotenv.Dotenv;
  *   <li>Notifications: Sending automated email reminders for overdue items.</li>
  * </ul>
  * Data is persisted to local text files (`books.txt`, `users.txt`).
- * </p>
  *
  * @author Zainab
  * @version 1.0

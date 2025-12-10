@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
  * user membership validation, and UI visual states.
  * It utilizes Java Reflection to inspect private state and invoke private methods, 
  * ensuring maximum code coverage.
- * </p>
  *
  * @author Zainab
  * @version 3.0

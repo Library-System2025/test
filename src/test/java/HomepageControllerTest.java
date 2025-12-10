@@ -22,7 +22,6 @@ import java.util.Map;
  * within the controller, allowing for comprehensive white-box testing of
  * UI logic, data persistence, and validation rules without relying on the
  * full JavaFX application lifecycle.
- * </p>
  *
  * @author Zainab
  * @version 2.0
@@ -50,7 +49,6 @@ public class HomepageControllerTest {
      * <p>
      * This method initializes the controller, injects mock UI components using reflection,
      * and clears any existing data files to ensure test isolation.
-     * </p>
      *
      * @throws Exception if reflection access fails.
      */
