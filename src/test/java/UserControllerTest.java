@@ -26,8 +26,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Advanced JUnit Suite for UserController.
  * <p>
- * Fixes DateTimeParseException by using strict ISO-8601 date formats.
- * Maintains high coverage, security compliance, and cleaner logic.
+ * Fixes DateTimeParseException by using strictly formatted ISO-8601 dates.
+ * Ensures high coverage, security compliance, and robust error handling.
  * </p>
  * 
  * @author Zainab
@@ -39,7 +39,7 @@ class UserControllerTest {
     private static final String DB_FILE = "books.txt";
 
     /**
-     * Initializes the JavaFX platform and sets up mock environment variables.
+     * Initializes JavaFX and sets mock environment variables.
      */
     @BeforeAll
     static void launchJavaFX() {
@@ -52,7 +52,7 @@ class UserControllerTest {
     }
 
     /**
-     * Sets up the controller and injects dependencies.
+     * Sets up the environment before each test.
      * 
      * @throws Exception If setup fails.
      */
@@ -66,7 +66,7 @@ class UserControllerTest {
     }
 
     /**
-     * Cleans up the temporary database file.
+     * Cleans up the test file.
      */
     @AfterEach
     void cleanup() {
@@ -74,9 +74,9 @@ class UserControllerTest {
     }
 
     /**
-     * Injects mock JavaFX components.
+     * Injects UI components.
      * 
-     * @throws Exception If injection fails.
+     * @throws Exception If reflection fails.
      */
     private void injectComponents() throws Exception {
         setField(controller, "welcomeLabel", new Label());
@@ -96,10 +96,10 @@ class UserControllerTest {
     }
 
     /**
-     * Executes a Runnable on the JavaFX Application Thread.
+     * Runs actions on the JavaFX thread.
      * 
-     * @param cmd The command to run.
-     * @throws InterruptedException If the thread is interrupted.
+     * @param cmd The action to run.
+     * @throws InterruptedException If interrupted.
      */
     private void executeOnFx(Runnable cmd) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
@@ -114,7 +114,7 @@ class UserControllerTest {
     }
 
     /**
-     * Verifies initialization.
+     * Tests initialization.
      */
     @Test
     void verifyInitialization() {
@@ -124,9 +124,9 @@ class UserControllerTest {
     }
 
     /**
-     * Verifies user context updates.
+     * Tests user context setting.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void verifyUserContext() throws InterruptedException {
@@ -136,9 +136,9 @@ class UserControllerTest {
     }
 
     /**
-     * Verifies legacy methods.
+     * Tests legacy setters.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void verifyLegacyMethods() throws InterruptedException {
@@ -154,7 +154,7 @@ class UserControllerTest {
     /**
      * Tests successful borrowing.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowBorrowSuccess() throws InterruptedException {
@@ -165,9 +165,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrowing failure (no selection).
+     * Tests borrow failure (no selection).
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowBorrowFailNoSelect() throws InterruptedException {
@@ -180,9 +180,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrowing failure (unpaid fines).
+     * Tests borrow failure (fines).
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowBorrowFailFines() throws InterruptedException {
@@ -200,9 +200,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrowing failure (already borrowed).
+     * Tests borrow failure (duplicate).
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowBorrowFailDuplicate() throws InterruptedException {
@@ -217,9 +217,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests borrowing failure (unavailable).
+     * Tests borrow failure (unavailable).
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowBorrowFailTaken() throws InterruptedException {
@@ -236,7 +236,7 @@ class UserControllerTest {
     /**
      * Tests partial payment.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowPayPartial() throws InterruptedException {
@@ -256,7 +256,7 @@ class UserControllerTest {
     /**
      * Tests full payment.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowPayFull() throws InterruptedException {
@@ -276,7 +276,7 @@ class UserControllerTest {
     /**
      * Tests payment validation.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowPayValidation() throws InterruptedException {
@@ -299,9 +299,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests payment wrong user.
+     * Tests wrong user payment.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowPayWrongUser() throws InterruptedException {
@@ -317,7 +317,7 @@ class UserControllerTest {
     /**
      * Tests successful return.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowReturnSuccess() throws InterruptedException {
@@ -332,7 +332,7 @@ class UserControllerTest {
     /**
      * Tests return failure (fines).
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowReturnFail() throws InterruptedException {
@@ -354,7 +354,7 @@ class UserControllerTest {
     /**
      * Tests return wrong user.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowReturnWrongUser() throws InterruptedException {
@@ -367,7 +367,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests private helper methods.
+     * Tests private helpers via reflection.
      * 
      * @throws Exception If reflection fails.
      */
@@ -391,7 +391,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests UI visual logic.
+     * Tests row factory via reflection.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -413,7 +413,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests Cell rendering logic.
+     * Tests cell factory via reflection.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -442,7 +442,7 @@ class UserControllerTest {
      * Tests corrupted file handling.
      * 
      * @throws IOException If write fails.
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowCorruptedFile() throws IOException, InterruptedException {
@@ -455,9 +455,9 @@ class UserControllerTest {
     }
     
     /**
-     * Tests notification with null email.
+     * Tests null email notification.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowNullEmail() throws InterruptedException {
@@ -474,9 +474,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests reload button.
+     * Tests reload.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowReload() throws InterruptedException {
@@ -486,9 +486,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests logout button.
+     * Tests logout.
      * 
-     * @throws InterruptedException If FX interrupted.
+     * @throws InterruptedException If interrupted.
      */
     @Test
     void flowLogout() throws InterruptedException {
@@ -498,7 +498,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests file save error handling.
+     * Tests save error.
      * 
      * @throws Exception If failure.
      */

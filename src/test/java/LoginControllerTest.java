@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Advanced Unit Test suite for LoginController.
  * <p>
- * Ensures complete logic coverage for the authentication mechanism.
+ * Ensures complete logic coverage for the authentication mechanism using mock environments.
  * </p>
  *
  * @author Zainab
@@ -35,7 +35,7 @@ class LoginControllerTest {
     private static final String FILE_NAME = "users.txt";
 
     /**
-     * Initializes the JavaFX toolkit.
+     * Initializes JavaFX.
      */
     @BeforeAll
     static void setupToolkit() {
@@ -46,7 +46,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Sets up the controller and mocks UI fields before each test.
+     * Prepares the controller and UI before each test.
      * 
      * @throws Exception If reflection fails.
      */
@@ -58,7 +58,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Cleans up the test environment.
+     * Cleans up after each test.
      * 
      * @throws IOException If file deletion fails.
      */
@@ -68,7 +68,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Assigns mock UI components to the controller.
+     * Injects UI components.
      * 
      * @throws Exception If reflection fails.
      */
@@ -79,7 +79,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests validation for empty fields.
+     * Tests empty fields.
      * 
      * @throws Exception If execution fails.
      */
@@ -90,7 +90,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests behavior when the user database file is missing.
+     * Tests missing file.
      * 
      * @throws Exception If execution fails.
      */
@@ -102,7 +102,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests authentication failure with wrong credentials.
+     * Tests wrong credentials.
      * 
      * @throws Exception If execution fails.
      */
@@ -115,7 +115,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests the parser's robustness against empty lines and malformed data.
+     * Tests parsing resilience.
      * 
      * @throws Exception If execution fails.
      */
@@ -130,7 +130,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests successful login for an Admin user.
+     * Tests Admin login.
      * 
      * @throws Exception If execution fails.
      */
@@ -143,7 +143,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests successful login for a Librarian user.
+     * Tests Librarian login.
      * 
      * @throws Exception If execution fails.
      */
@@ -156,7 +156,7 @@ class LoginControllerTest {
     }
 
     /**
-     * Tests successful login for a standard User.
+     * Tests User login.
      * 
      * @throws Exception If execution fails.
      */
@@ -169,7 +169,7 @@ class LoginControllerTest {
     }
     
     /**
-     * Tests login functionality when user details (membership/email) are missing.
+     * Tests User login with defaults.
      * 
      * @throws Exception If execution fails.
      */
@@ -182,11 +182,11 @@ class LoginControllerTest {
     }
 
     /**
-     * Sets a private field value using reflection.
+     * Sets a field value via reflection.
      * 
-     * @param name The field name.
-     * @param val The value to set.
-     * @throws Exception If reflection fails.
+     * @param name Field name.
+     * @param val Value to set.
+     * @throws Exception If access fails.
      */
     private void setVal(String name, Object val) throws Exception {
         Field f = LoginController.class.getDeclaredField(name);
@@ -195,7 +195,7 @@ class LoginControllerTest {
     }
     
     /**
-     * Sets input fields text.
+     * Sets input fields.
      * 
      * @param u Username.
      * @param p Password.
@@ -207,11 +207,11 @@ class LoginControllerTest {
     }
 
     /**
-     * Gets a private field value using reflection.
+     * Gets a field value via reflection.
      * 
-     * @param name The field name.
-     * @return The field value.
-     * @throws Exception If reflection fails.
+     * @param name Field name.
+     * @return Field value.
+     * @throws Exception If access fails.
      */
     private Object getVal(String name) throws Exception {
         Field f = LoginController.class.getDeclaredField(name);
@@ -220,9 +220,9 @@ class LoginControllerTest {
     }
 
     /**
-     * Asserts the error message content.
+     * Asserts error message.
      * 
-     * @param part The expected string part.
+     * @param part Expected part of string.
      * @throws Exception If access fails.
      */
     private void assertMsg(String part) throws Exception {
@@ -232,9 +232,9 @@ class LoginControllerTest {
     }
     
     /**
-     * Asserts the outcome success message.
+     * Asserts success outcome.
      * 
-     * @param successPart The success message part.
+     * @param successPart Expected success string.
      * @throws Exception If access fails.
      */
     private void assertOutcome(String successPart) throws Exception {
@@ -244,9 +244,9 @@ class LoginControllerTest {
     }
 
     /**
-     * Writes content to the test file.
+     * Writes to test file.
      * 
-     * @param data The data to write.
+     * @param data Data to write.
      * @throws IOException If write fails.
      */
     private void writeFile(String data) throws IOException {
@@ -256,18 +256,18 @@ class LoginControllerTest {
     }
     
     /**
-     * Removes the test file.
+     * Deletes test file.
      * 
-     * @throws IOException If deletion fails.
+     * @throws IOException If delete fails.
      */
     private void removeFile() throws IOException {
         Files.deleteIfExists(Paths.get(FILE_NAME));
     }
 
     /**
-     * Runs a runnable on the FX thread.
+     * Runs on FX thread.
      * 
-     * @param r The runnable.
+     * @param r Runnable.
      * @throws InterruptedException If interrupted.
      */
     private void runUI(Runnable r) throws InterruptedException {
