@@ -24,6 +24,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import javax.annotation.processing.Generated;
 
+
 /**
  * Controller class for the User Dashboard.
  * Handles borrowing, returning, paying fines, and viewing borrowed items.
@@ -31,8 +32,9 @@ import javax.annotation.processing.Generated;
  * @author Zainab
  * @version 1.0
  */
-public class UserController {
 
+public class UserController {
+	
     private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
@@ -103,6 +105,7 @@ public class UserController {
                     + e.getMessage()); // NOSONAR
         }
     }
+
 
     /**
      * Sets the current user details and loads their specific data.
@@ -209,7 +212,6 @@ public class UserController {
      * Configures row styling based on the item's status and borrower.
      * Highlights overdue items and borrowed items with specific colors.
      */
-    @Generated("gui-row-styling")
     private void configureRowColors() {
         bookTable.setRowFactory(tv -> new TableRow<Media>() {
             @Override
