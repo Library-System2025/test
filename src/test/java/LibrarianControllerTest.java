@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * ensuring maximum code coverage.
  *
  * @author Zainab
- * @version 3.0
+ * @version 1.0
  */
 public class LibrarianControllerTest {
 
