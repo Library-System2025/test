@@ -26,8 +26,9 @@ import org.junit.jupiter.api.Test;
 /**
  * Comprehensive JUnit Test suite for the {@link UserController} class.
  * <p>
- * This suite guarantees high Code Coverage via Reflection and Logic testing,
- * ensuring robust error handling and adherence to quality gates.
+ * This suite is engineered to achieve maximum branch and line coverage by 
+ * utilizing reflection to simulate UI interactions and test private logic,
+ * including RowFactories and CellFactories.
  * </p>
  * 
  * @author Zainab
@@ -39,26 +40,24 @@ class UserControllerTest {
     private static final String TEST_FILE = "books.txt";
 
     /**
-     * Initializes the JavaFX Platform and sets up mock environment variables.
+     * Initializes the JavaFX Platform.
      */
     @BeforeAll
-    static void initJfxAndEnv() {
+    static void initJfx() {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
         }
-        System.setProperty("EMAIL_USERNAME", "mock_user");
-        System.setProperty("EMAIL_" + "PASSWORD", "mock_cred");
     }
 
     /**
-     * Default constructor for the test class.
+     * Default constructor.
      */
     public UserControllerTest() {
     }
 
     /**
-     * Sets up the test environment before each test execution.
+     * Sets up the test environment.
      * 
      * @throws Exception If setup fails.
      */
@@ -72,7 +71,7 @@ class UserControllerTest {
     }
 
     /**
-     * Cleans up temporary files after each test.
+     * Cleans up temporary files.
      */
     @AfterEach
     void tearDown() {
@@ -83,7 +82,7 @@ class UserControllerTest {
     }
 
     /**
-     * Injects mock UI components into the controller.
+     * Injects mock UI components.
      * 
      * @throws Exception If reflection fails.
      */
@@ -105,9 +104,9 @@ class UserControllerTest {
     }
 
     /**
-     * Runs a runnable on the JavaFX thread and awaits completion.
+     * Helper to run on FX thread.
      * 
-     * @param action The action to run.
+     * @param action Runnable action.
      * @throws InterruptedException If interrupted.
      */
     private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
@@ -133,15 +132,18 @@ class UserControllerTest {
     }
 
     /**
-     * Tests user context setting.
+     * Tests user context setting and label styling.
      * 
      * @throws InterruptedException If interrupted.
      */
     @Test
     void testSetCurrentUser() throws InterruptedException {
-        runOnFxThreadAndWait(() -> controller.setCurrentUser("NewUser", "Silver", "new@mail.com"));
+        runOnFxThreadAndWait(() -> controller.setCurrentUser("GoldUser", "Gold", "g@mail.com"));
         Label label = getField(controller, "welcomeLabel");
-        assertTrue(label.getText().contains("NewUser"));
+        assertTrue(label.getStyle().contains("gold"));
+
+        runOnFxThreadAndWait(() -> controller.setCurrentUser("SilverUser", "Silver", "s@mail.com"));
+        assertTrue(label.getStyle().contains("silver"));
     }
 
     /**
@@ -161,7 +163,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests successful borrowing.
+     * Tests borrowing success.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -173,7 +175,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrow failure when nothing is selected.
+     * Tests borrow failure: No selection.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -189,7 +191,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrow failure due to existing fines.
+     * Tests borrow failure: Unpaid fines exist.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -207,7 +209,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrow failure if already borrowed.
+     * Tests borrow failure: Already borrowed copy.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -221,7 +223,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests borrow failure if unavailable.
+     * Tests borrow failure: Item not available.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -280,7 +282,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests validation of payment input.
+     * Tests payment validation logic.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -308,7 +310,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests pay failure with no selection.
+     * Tests payment failure: No selection.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -324,7 +326,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests pay failure for wrong user.
+     * Tests payment failure: Wrong user.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -363,7 +365,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests return failure due to fines.
+     * Tests return failure due to outstanding fines.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -387,7 +389,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests return validation for other users.
+     * Tests return failure: Wrong user.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -406,7 +408,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests return with no selection.
+     * Tests return failure: No selection.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -422,7 +424,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests private helper methods via Reflection to maximize coverage.
+     * Tests private helpers via reflection.
      * 
      * @throws Exception If reflection fails.
      */
@@ -446,33 +448,46 @@ class UserControllerTest {
     }
 
     /**
-     * Tests UI row styling via reflection.
+     * Tests RowFactory logic by direct invocation.
+     * 
+     * @throws Exception If reflection fails.
      */
     @Test
     @SuppressWarnings("unchecked")
-    void testRowFactoryStyling() {
+    void testRowFactoryStyling() throws Exception {
         TableView<Media> table = getField(controller, "bookTable");
         Callback<TableView<Media>, TableRow<Media>> rowFactory = table.getRowFactory();
         assertNotNull(rowFactory);
 
         TableRow<Media> row = rowFactory.call(table);
-        try {
-            Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
-            updateItem.setAccessible(true);
+        Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
+        updateItem.setAccessible(true);
 
-            updateItem.invoke(row, null, true);
-            updateItem.invoke(row, new Book("B", "A", "1", "Overdue", "2000-01-01", 10.0, "TestUser", 0, 1), false);
-            updateItem.invoke(row, new Book("B", "A", "2", "Borrowed", "2099-01-01", 0.0, "TestUser", 0, 1), false);
-            updateItem.invoke(row, new Book("B", "A", "3", "Borrowed", "2099-01-01", 0.0, "Other", 0, 1), false);
-        } catch (Exception e) {}
+        // Case 1: Empty
+        updateItem.invoke(row, null, true);
+        assertEquals("", row.getStyle());
+
+        // Case 2: My Item + Overdue
+        updateItem.invoke(row, new Book("B", "A", "1", "Overdue", "2000-01-01", 10.0, "TestUser", 0, 1), false);
+        assertTrue(row.getStyle().contains("ffcccc"));
+
+        // Case 3: My Item + Normal
+        updateItem.invoke(row, new Book("B", "A", "2", "Borrowed", "2099-01-01", 0.0, "TestUser", 0, 1), false);
+        assertTrue(row.getStyle().contains("c8f7c5"));
+
+        // Case 4: Other Item + Borrowed
+        updateItem.invoke(row, new Book("B", "A", "3", "Borrowed", "2099-01-01", 0.0, "Other", 0, 1), false);
+        assertTrue(row.getStyle().contains("fff3cd"));
     }
 
     /**
-     * Tests UI cell rendering via reflection.
+     * Tests CellFactory logic by direct invocation.
+     * 
+     * @throws Exception If reflection fails.
      */
     @Test
     @SuppressWarnings("unchecked")
-    void testCellFactoryRendering() {
+    void testCellFactoryRendering() throws Exception {
         TableColumn<Media, String> dueCol = getField(controller, "dueDateColumn");
         TableColumn<Media, Double> fineCol = getField(controller, "fineColumn");
         
@@ -482,28 +497,33 @@ class UserControllerTest {
         Media myItem = new Book("My Book", "Me", "111", "Borrowed", "2025-01-01", 10.0, "TestUser", 0, 1);
         Media otherItem = new Book("Other Book", "Me", "222", "Borrowed", "2025-01-01", 10.0, "Other", 0, 1);
 
-        try {
-            Method updateItemString = TableCell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
-            updateItemString.setAccessible(true);
-            
-            updateItemString.invoke(dueCell, null, true);
-            
-            injectTableRow(dueCell, createRow(myItem));
-            updateItemString.invoke(dueCell, myItem.getDueDate(), false); 
-            
-            injectTableRow(dueCell, createRow(otherItem));
-            updateItemString.invoke(dueCell, otherItem.getDueDate(), false);
+        Method updateItemString = TableCell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
+        updateItemString.setAccessible(true);
+        
+        
+        updateItemString.invoke(dueCell, null, true);
+        assertNull(dueCell.getText());
 
-            Method updateItemDouble = TableCell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
-            updateItemDouble.setAccessible(true);
-            
-            injectTableRow(fineCell, createRow(myItem));
-            updateItemDouble.invoke(fineCell, 10.0, false);
-        } catch (Exception e) {}
+        
+        injectTableRow(dueCell, createRow(myItem));
+        updateItemString.invoke(dueCell, myItem.getDueDate(), false); 
+        assertEquals("2025-01-01", dueCell.getText());
+
+        
+        injectTableRow(dueCell, createRow(otherItem));
+        updateItemString.invoke(dueCell, otherItem.getDueDate(), false);
+        assertEquals("", dueCell.getText());
+
+        
+        Method updateItemDouble = TableCell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
+        updateItemDouble.setAccessible(true);
+        injectTableRow(fineCell, createRow(myItem));
+        updateItemDouble.invoke(fineCell, 10.0, false);
+        assertTrue(fineCell.getText().contains("10.0"));
     }
 
     /**
-     * Tests file parsing with corrupted data.
+     * Tests file parsing robustness.
      * 
      * @throws IOException If write fails.
      * @throws InterruptedException If interrupted.
@@ -522,7 +542,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests notification when email is null.
+     * Tests notification email flow.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -546,7 +566,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests reload.
+     * Tests reload functionality.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -558,7 +578,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests logout (Headless check).
+     * Tests logout functionality.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -570,7 +590,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests file save exceptions.
+     * Tests file saving exceptions.
      * 
      * @throws Exception If failure occurs.
      */
@@ -591,7 +611,7 @@ class UserControllerTest {
     /**
      * Helper to perform borrow.
      * 
-     * @param index The index to select.
+     * @param index Selection index.
      * @throws InterruptedException If interrupted.
      */
     private void performBorrow(int index) throws InterruptedException {
@@ -605,8 +625,8 @@ class UserControllerTest {
     /**
      * Helper to perform payment.
      * 
-     * @param item The item to pay for.
-     * @param amount The amount to pay.
+     * @param item The item.
+     * @param amount The amount.
      * @throws InterruptedException If interrupted.
      */
     private void performPayment(Media item, String amount) throws InterruptedException {
@@ -620,10 +640,10 @@ class UserControllerTest {
     }
 
     /**
-     * Helper to create row.
+     * Creates a TableRow.
      * 
-     * @param item The item to set in the row.
-     * @return The created row.
+     * @param item The item.
+     * @return The row.
      */
     private TableRow<Media> createRow(Media item) {
         TableRow<Media> row = new TableRow<>();
@@ -632,10 +652,10 @@ class UserControllerTest {
     }
 
     /**
-     * Helper to inject row.
+     * Injects a row into a cell.
      * 
-     * @param cell The cell to inject into.
-     * @param row The row to inject.
+     * @param cell The cell.
+     * @param row The row.
      * @throws Exception If reflection fails.
      */
     private void injectTableRow(TableCell<?, ?> cell, TableRow<?> row) throws Exception {
@@ -645,7 +665,7 @@ class UserControllerTest {
     }
 
     /**
-     * Helper to create file.
+     * Creates a dummy file.
      * 
      * @throws IOException If write fails.
      */
@@ -659,11 +679,11 @@ class UserControllerTest {
     }
 
     /**
-     * Helper to inject field.
+     * Injects a mock field.
      * 
-     * @param target The target object.
+     * @param target The object.
      * @param fieldName The field name.
-     * @param value The value to inject.
+     * @param value The value.
      * @throws Exception If reflection fails.
      */
     private void injectField(Object target, String fieldName, Object value) throws Exception {
@@ -673,12 +693,12 @@ class UserControllerTest {
     }
 
     /**
-     * Helper to get field.
+     * Gets a private field.
      * 
-     * @param <T> The type of the field.
-     * @param target The target object.
+     * @param <T> The type.
+     * @param target The object.
      * @param fieldName The field name.
-     * @return The field value.
+     * @return The value.
      */
     @SuppressWarnings("unchecked")
     private <T> T getField(Object target, String fieldName) {
@@ -689,18 +709,5 @@ class UserControllerTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-    
-    /**
-     * Typed helper to get field.
-     * 
-     * @param <T> The type of the field.
-     * @param target The target object.
-     * @param fieldName The field name.
-     * @param type The class type.
-     * @return The field value.
-     */
-    private <T> T getField(Object target, String fieldName, Class<T> type) {
-        return type.cast(getField(target, fieldName));
     }
 }
