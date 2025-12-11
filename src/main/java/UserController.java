@@ -87,6 +87,7 @@ public class UserController {
         }
     }
 
+
     /**
      * Sets the current user details and loads their specific data.
      *

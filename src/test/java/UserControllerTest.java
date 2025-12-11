@@ -467,16 +467,26 @@ class UserControllerTest {
             Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
             updateItem.setAccessible(true);
 
+            // empty / null
             updateItem.invoke(row, null, true);
+
+            // current user + overdue
             updateItem.invoke(row, new Book("B", "A", "1", "Overdue", "2000-01-01",
                     10.0, "TestUser", 0, 1), false);
+
+            // current user + borrowed
             updateItem.invoke(row, new Book("B", "A", "2", "Borrowed", "2099-01-01",
                     0.0, "TestUser", 0, 1), false);
+
+            // other user + borrowed
             updateItem.invoke(row, new Book("B", "A", "3", "Borrowed", "2099-01-01",
                     0.0, "Other", 0, 1), false);
+
+            // other user + available  -> يضلّ style فاضي
+            updateItem.invoke(row, new Book("B", "A", "4", "Available", "2099-01-01",
+                    0.0, "Other", 0, 1), false);
         } catch (Exception e) {
-            // In headless / CI environments, JavaFX internals may block reflective calls to updateItem.
-            // The goal here is mainly to touch the code path; we ignore such exceptions to keep the test stable.
+            // ما نعمل fail عشان الـ CI ما ينهار لو JavaFX منع الreflection
         }
     }
 
