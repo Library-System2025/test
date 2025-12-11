@@ -1,4 +1,3 @@
-
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.event.ActionEvent;
@@ -11,7 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-
+import java.util.logging.Logger;
 
 /**
  * Controller class for the Login Screen.
@@ -26,17 +25,17 @@ import java.io.IOException;
 
 public class LoginController {
 
+    private static final Logger LOGGER = Logger.getLogger(LoginController.class.getName());
+
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Label errorMessage;
 
-    
     private static final String USERS_FILE = "users.txt";
 
     /**
      * Private static inner class to hold authenticated user details.
      */
-    
     private static class UserInfo {
         String role;
         String membership;
@@ -48,7 +47,7 @@ public class LoginController {
             this.email = email;
         }
     }
-    
+
     /**
      * Handles the login button click action.
      * <p>
@@ -62,7 +61,7 @@ public class LoginController {
      */
 
     @FXML
-     void handleLogin(ActionEvent event) {
+    void handleLogin(ActionEvent event) {
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
 
@@ -81,9 +80,8 @@ public class LoginController {
 
         String role = userInfo.role;
         String membership = userInfo.membership;
-        String email = userInfo.email;   
+        String email = userInfo.email;
 
-        
         String fxmlToLoad;
         switch (role) {
             case "Admin":
@@ -92,7 +90,7 @@ public class LoginController {
             case "Librarian":
                 fxmlToLoad = "librarian_home.fxml";
                 break;
-            default: 
+            default:
                 fxmlToLoad = "user_home.fxml";
                 break;
         }
@@ -100,14 +98,13 @@ public class LoginController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlToLoad));
             Parent dashboard = loader.load();
+
             if ("User".equals(role)) {
                 UserController controller = loader.getController();
-                controller.setCurrentUser(username, membership, email);  
-            }
- else if ("Admin".equals(role)) {
+                controller.setCurrentUser(username, membership, email);
+            } else if ("Admin".equals(role)) {
                 homepageController controller = loader.getController();
                 controller.setCurrentUsername(username);
-
             } else if ("Librarian".equals(role)) {
                 LibrarianController controller = loader.getController();
                 controller.setCurrentUsername(username);
@@ -118,14 +115,12 @@ public class LoginController {
             newStage.setScene(new Scene(dashboard));
             newStage.show();
 
-            
             usernameField.clear();
             passwordField.clear();
             errorMessage.setText("✅ " + role + " window opened successfully!");
 
-            
         } catch (IOException e) {
-        	System.err.println("Error: " + e.getMessage());
+            LOGGER.severe("Error loading page: " + e.getMessage());
             errorMessage.setText("⚠️ Error loading page.");
         }
     }
@@ -152,34 +147,30 @@ public class LoginController {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue;   
+                if (line.isEmpty()) continue;
 
-                
                 String[] parts = line.split(",", 5);
-                if (parts.length < 3) continue; 
+                if (parts.length < 3) continue;
 
                 String fileUser = parts[0].trim();
                 String filePass = parts[1].trim();
                 String fileRole = parts[2].trim();
 
-                
                 String membership = (parts.length >= 4 && !parts[3].trim().isEmpty())
                         ? parts[3].trim()
                         : "Silver";
 
-                
                 String email = (parts.length == 5) ? parts[4].trim() : "";
 
-                
                 if (username.equals(fileUser) && password.equals(filePass)) {
-                    System.out.println("✅ Login matched line: " + line);
+                    LOGGER.info("Login matched user: " + username);
                     return new UserInfo(fileRole, membership, email);
                 }
             }
         } catch (IOException e) {
-        	System.err.println("Error: " + e.getMessage());
+            LOGGER.severe("Error reading users file: " + e.getMessage());
         }
 
-        return null; 
+        return null;
     }
 }
