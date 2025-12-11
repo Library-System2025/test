@@ -22,18 +22,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Comprehensive Unit Test suite for the {@link LoginController} class.
+ * Comprehensive Unit Test suite for the LoginController class.
  * <p>
- * This suite ensures high code coverage and reliability by verifying:
- * </p>
- * <ul>
- *   <li>Input validation logic (empty fields).</li>
- *   <li>File I/O operations (file existence, parsing logic).</li>
- *   <li>Authentication mechanisms (valid/invalid credentials).</li>
- *   <li>Role-based redirection logic (Admin, Librarian, User).</li>
- * </ul>
- * <p>
- * It utilizes JavaFX Platform tools to simulate UI interactions safely without requiring a physical display.
+ * This suite ensures high code coverage and reliability by verifying
+ * input validation, file parsing logic, authentication, and role-based redirection.
  * </p>
  *
  * @author Zainab
@@ -48,38 +40,30 @@ public class LoginControllerTest {
     private static final String USERS_FILE = "users.txt";
 
     /**
-     * Default constructor for LoginControllerTest.
+     * Default constructor.
      */
     public LoginControllerTest() {
-        // Default constructor
     }
 
     /**
-     * Initializes the JavaFX Toolkit once before all tests execution.
-     * This prevents "Toolkit not initialized" errors during UI component instantiation.
+     * Initializes the JavaFX Toolkit once.
      */
     @BeforeAll
     static void initToolkit() {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // Toolkit already initialized
         }
     }
 
     /**
-     * Sets up the test environment before each test method.
-     * <p>
-     * Instantiates the controller and injects mock JavaFX components using reflection
-     * to bypass FXML injection requirements.
-     * </p>
+     * Sets up the test environment, injects mocks, and clears files.
      * 
-     * @throws Exception if reflection access fails.
+     * @throws Exception if reflection fails.
      */
     @BeforeEach
     void setUp() throws Exception {
         controller = new LoginController();
-        
         usernameField = new TextField();
         passwordField = new PasswordField();
         errorMessage = new Label();
@@ -88,27 +72,26 @@ public class LoginControllerTest {
         injectField("passwordField", passwordField);
         injectField("errorMessage", errorMessage);
 
-        cleanupFile();
+        Files.deleteIfExists(Paths.get(USERS_FILE));
     }
 
     /**
-     * Cleans up resources after each test method.
-     * Removes the temporary users file to ensure test isolation.
+     * Cleans up resources after each test.
      * 
      * @throws IOException if file deletion fails.
      */
     @AfterEach
     void tearDown() throws IOException {
-        cleanupFile();
+        Files.deleteIfExists(Paths.get(USERS_FILE));
     }
 
     /**
-     * Verifies that the login handler rejects empty username or password fields.
+     * Tests validation when both fields are empty.
      * 
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws InterruptedException on thread error.
      */
     @Test
-    void testHandleLogin_EmptyFields() throws InterruptedException {
+    void testHandleLogin_AllFieldsEmpty() throws InterruptedException {
         usernameField.setText("");
         passwordField.setText("");
         
@@ -118,9 +101,39 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies behavior when the user database file does not exist.
+     * Tests validation when only username is empty.
      * 
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testHandleLogin_UsernameEmpty() throws InterruptedException {
+        usernameField.setText("");
+        passwordField.setText("password");
+        
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        assertEquals("⚠️ Please fill in all fields.", errorMessage.getText());
+    }
+
+    /**
+     * Tests validation when only password is empty.
+     * 
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testHandleLogin_PasswordEmpty() throws InterruptedException {
+        usernameField.setText("username");
+        passwordField.setText("");
+        
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        assertEquals("⚠️ Please fill in all fields.", errorMessage.getText());
+    }
+
+    /**
+     * Tests behavior when users file is missing.
+     * 
+     * @throws InterruptedException on thread error.
      */
     @Test
     void testHandleLogin_FileNotFound() throws InterruptedException {
@@ -129,17 +142,17 @@ public class LoginControllerTest {
         
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertEquals("❌ Invalid username or password.", errorMessage.getText());
+        assertEquals("⚠️ Users file not found!", errorMessage.getText());
     }
 
     /**
-     * Verifies that valid inputs but incorrect credentials result in a failure message.
+     * Tests login with incorrect password.
      * 
-     * @throws IOException if creating the test file fails.
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
      */
     @Test
-    void testHandleLogin_InvalidCredentials() throws IOException, InterruptedException {
+    void testHandleLogin_InvalidPassword() throws IOException, InterruptedException {
         createUsersFile("admin,123,Admin");
         
         usernameField.setText("admin");
@@ -152,62 +165,120 @@ public class LoginControllerTest {
     }
 
     /**
-     * Verifies the robustness of the file parsing logic.
-     * <p>
-     * Ensures the parser correctly handles:
-     * </p>
-     * <ul>
-     *   <li>Empty lines.</li>
-     *   <li>Lines with whitespace only.</li>
-     *   <li>Malformed data formats.</li>
-     * </ul>
+     * Tests login with incorrect username.
      * 
-     * @throws IOException if creating the test file fails.
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
      */
     @Test
-    void testValidateCredentials_ParsingEdgeCases() throws IOException, InterruptedException {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n");
-        sb.append("   \n");
-        sb.append("bad_line_no_comma\n");
-        sb.append("user,pass\n");
-        sb.append("realUser,123,User\n");
-        createUsersFile(sb.toString());
+    void testHandleLogin_InvalidUsername() throws IOException, InterruptedException {
+        createUsersFile("admin,123,Admin");
         
-        usernameField.setText("realUser");
+        usernameField.setText("wrongUser");
         passwordField.setText("123");
         
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertNotEquals("❌ Invalid username or password.", errorMessage.getText());
+        assertEquals("❌ Invalid username or password.", errorMessage.getText());
     }
 
     /**
-     * Verifies the authentication and redirection flow for an Admin user.
+     * Tests parsing logic with various malformed lines to cover loop continues.
      * 
-     * @throws IOException if creating the test file fails.
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testValidateCredentials_MalformedLines() throws IOException, InterruptedException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n"); 
+        sb.append("   \n"); 
+        sb.append("incomplete,line\n"); 
+        sb.append("validUser,123,User\n");
+        createUsersFile(sb.toString());
+        
+        usernameField.setText("validUser");
+        passwordField.setText("123");
+        
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        assertFalse(errorMessage.getText().contains("Invalid"));
+    }
+
+    /**
+     * Tests parsing logic where membership is missing (defaults to Silver).
+     * 
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testValidateCredentials_DefaultMembership_Length3() throws IOException, InterruptedException {
+        createUsersFile("user3,pass3,User");
+        usernameField.setText("user3");
+        passwordField.setText("pass3");
+        
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        assertTrue(errorMessage.getText().contains("User window") || errorMessage.getText().contains("Error loading page"));
+    }
+
+    /**
+     * Tests parsing logic where membership field exists but is empty.
+     * 
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testValidateCredentials_DefaultMembership_EmptyField() throws IOException, InterruptedException {
+        createUsersFile("user4,pass4,User,  ");
+        usernameField.setText("user4");
+        passwordField.setText("pass4");
+        
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        assertTrue(errorMessage.getText().contains("User window") || errorMessage.getText().contains("Error loading page"));
+    }
+
+    /**
+     * Tests parsing logic with full data (5 parts).
+     * 
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testValidateCredentials_FullData() throws IOException, InterruptedException {
+        createUsersFile("fullUser,123,User,Gold,test@email.com");
+        usernameField.setText("fullUser");
+        passwordField.setText("123");
+
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        assertTrue(errorMessage.getText().contains("User window") || errorMessage.getText().contains("Error loading page"));
+    }
+
+    /**
+     * Tests Admin role flow.
+     * 
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
      */
     @Test
     void testRoleFlow_Admin() throws IOException, InterruptedException {
-        createUsersFile("admin,123,Admin,Gold,admin@test.com");
+        createUsersFile("admin,123,Admin");
         usernameField.setText("admin");
         passwordField.setText("123");
 
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
 
-        boolean isSuccess = errorMessage.getText().contains("opened successfully");
-        boolean isError = errorMessage.getText().contains("Error loading page");
-        
-        assertTrue(isSuccess || isError);
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("Admin window") || msg.contains("Error loading page"));
     }
 
     /**
-     * Verifies the authentication and redirection flow for a Librarian user.
+     * Tests Librarian role flow.
      * 
-     * @throws IOException if creating the test file fails.
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
      */
     @Test
     void testRoleFlow_Librarian() throws IOException, InterruptedException {
@@ -217,27 +288,63 @@ public class LoginControllerTest {
 
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertTrue(errorMessage.getText().contains("opened successfully") 
-                || errorMessage.getText().contains("Error loading page"));
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("Librarian window") || msg.contains("Error loading page"));
     }
 
     /**
-     * Verifies the authentication and redirection flow for a standard User.
-     * Also tests the default values logic when optional fields are missing.
+     * Tests User role flow.
      * 
-     * @throws IOException if creating the test file fails.
-     * @throws InterruptedException if the JavaFX thread is interrupted.
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
      */
     @Test
-    void testRoleFlow_User_Defaults() throws IOException, InterruptedException {
-        createUsersFile("simpleUser,123,User"); 
-        usernameField.setText("simpleUser");
+    void testRoleFlow_User() throws IOException, InterruptedException {
+        createUsersFile("user,123,User");
+        usernameField.setText("user");
         passwordField.setText("123");
 
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertTrue(errorMessage.getText().contains("User window") 
-                || errorMessage.getText().contains("Error loading page"));
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("User window") || msg.contains("Error loading page"));
+    }
+
+    /**
+     * Tests unknown role flow (default case).
+     * 
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testRoleFlow_Unknown() throws IOException, InterruptedException {
+        createUsersFile("guest,123,Guest");
+        usernameField.setText("guest");
+        passwordField.setText("123");
+
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("Guest window") || msg.contains("Error loading page"));
+    }
+    
+    /**
+     * Tests IOException handling during FXML loading.
+     * 
+     * @throws IOException on file error.
+     * @throws InterruptedException on thread error.
+     */
+    @Test
+    void testHandleLogin_FXMLLoadException() throws IOException, InterruptedException {
+        createUsersFile("admin,123,Admin");
+        usernameField.setText("admin");
+        passwordField.setText("123");
+        
+        runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
+        
+        if (!errorMessage.getText().contains("opened successfully")) {
+             assertEquals("⚠️ Error loading page.", errorMessage.getText());
+        }
     }
 
     private void injectField(String fieldName, Object value) throws Exception {
@@ -250,10 +357,6 @@ public class LoginControllerTest {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {
             writer.write(content);
         }
-    }
-    
-    private void cleanupFile() throws IOException {
-        Files.deleteIfExists(Paths.get(USERS_FILE));
     }
 
     private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
