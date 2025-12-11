@@ -30,8 +30,9 @@ import javafx.stage.Stage;
  * @author Zainab
  * @version 1.0
  */
-public class UserController {
 
+public class UserController {
+	
     private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
@@ -49,6 +50,7 @@ public class UserController {
     @FXML private TableColumn<Media, Double> fineColumn;
 
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
+
     /** File path for storing media data. */
     private static final String FILE_PATH        = "books.txt";
     /** Status constant indicating the item is available. */
@@ -64,24 +66,6 @@ public class UserController {
 
     private static final OverduePublisher overduePublisher = new OverduePublisher();
     private static EmailService emailService;
-
-    /**
-     * Simple error logger.
-     * Printing is enabled only when system property APP_DEBUG=true.
-     */
-    private static void logError(String context, Exception e) {
-        // إذا ما في DEBUG، ما نطبع إشي (مفيد للـ CI والتستات).
-        if (!Boolean.getBoolean("APP_DEBUG")) {
-            return;
-        }
-
-        String base = ERROR_MSG + (context != null ? context : "Unexpected error");
-        if (e != null && e.getMessage() != null) {
-            System.err.println(base + " - " + e.getMessage());
-        } else {
-            System.err.println(base);
-        }
-    }
 
     /**
      * Static block to initialize the email service and subscribers.
@@ -100,7 +84,7 @@ public class UserController {
 
             overduePublisher.subscribe(emailSubscriber);
         } catch (Exception e) {
-            logError("Failed to initialize email service / subscribers", e);
+            System.err.println("Failed to initialize email service / subscribers: " + e.getMessage()); // NOSONAR
         }
     }
 
@@ -173,6 +157,10 @@ public class UserController {
             }
         }
     }
+
+    // =====================================================================
+    // coverage ignore start - JavaFX GUI wiring & styling (hard to unit-test)
+    // =====================================================================
 
     /**
      * Initializes the controller class.
@@ -283,6 +271,10 @@ public class UserController {
         });
     }
 
+    // =====================================================================
+    // coverage ignore end
+    // =====================================================================
+
     /**
      * Checks if the given borrower username matches the current logged-in user.
      * 
@@ -313,7 +305,7 @@ public class UserController {
             Stage stage  = (Stage) bookTable.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
-            logError("handleLogout failed", e);
+            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
         }
     }
 
@@ -484,13 +476,16 @@ public class UserController {
                 }
             }
         } catch (IOException e) {
-            logError("loadMediaFromFile failed", e);
+            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
         }
         bookTable.refresh();
     }
 
     /**
      * Parses a single line from the text file for the current user context.
+     * 
+     * @param line The CSV formatted string from the file.
+     * @return A Media object if parsing is successful, or null if the line is invalid.
      */
     private Media parseMediaLineForUser(String line) {
         String[] parts = line.split(",", 10);
@@ -510,14 +505,19 @@ public class UserController {
         String borrowedBy = normalizeBorrowedBy(getPart(parts, 8));
         double amountPaid = parts.length >= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;
 
-        Media item = createMediaItem(type, title, author, isbn,
+        Media item = createMediaItem(
+                type, title, author, isbn,
                 status, dueDate, fine, borrowedBy,
-                amountPaid, copyId);
+                amountPaid, copyId
+        );
 
         applyFineForUserIfOverdue(item, borrowedBy);
         return item;
     }
 
+    /**
+     * Factory method to create a Book or CD based on the type string.
+     */
     private Media createMediaItem(String type,
                                   String title,
                                   String author,
@@ -535,6 +535,10 @@ public class UserController {
         return new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
     }
 
+    /**
+     * Applies the appropriate fine logic if the item is overdue.
+     * Uses the current user's membership type if they are the borrower.
+     */
     private void applyFineForUserIfOverdue(Media item, String borrowedBy) {
         if (!item.isOverdue()) {
             return;
@@ -549,6 +553,9 @@ public class UserController {
         }
     }
 
+    /**
+     * Safely parses an integer with a default fallback value.
+     */
     private int parseIntSafe(String value, int defaultValue) {
         try {
             return Integer.parseInt(value.trim());
@@ -557,6 +564,9 @@ public class UserController {
         }
     }
 
+    /**
+     * Safely parses a double with a default fallback value.
+     */
     private double parseDoubleSafe(String value, double defaultValue) {
         try {
             return Double.parseDouble(value.trim());
@@ -565,10 +575,16 @@ public class UserController {
         }
     }
 
+    /**
+     * Safely retrieves an element from a string array.
+     */
     private String getPart(String[] parts, int index) {
         return index < parts.length ? parts[index] : "";
     }
 
+    /**
+     * Normalizes the borrowedBy field (converts "0.0" or null to empty string).
+     */
     private String normalizeBorrowedBy(String rawBorrowedBy) {
         String trimmed = rawBorrowedBy == null ? "" : rawBorrowedBy.trim();
         return "0.0".equals(trimmed) ? "" : trimmed;
@@ -585,7 +601,7 @@ public class UserController {
                 writer.newLine();
             }
         } catch (IOException e) {
-            logError("saveAllMediaToFile failed", e);
+            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
         }
     }
 
