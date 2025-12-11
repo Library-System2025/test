@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CDTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">CDTest.java</span></div><h1>CDTest.java</h1><pre class="source lang-java linenums">import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Unit tests for the {@link CD} class.
+ * &lt;p&gt;
+ * Ensures that all constructors correctly initialize the state and that overridden methods 
+ * from the {@link Media} superclass return the expected values specific to a CD.
+ */
+<span class="fc" id="L10">public class CDTest {</span>
+
+    /**
+     * Verifies that the simplified constructor initializes fields with default values.
+     * &lt;p&gt;
+     * Specifically checks that:
+     * &lt;ul&gt;
+     *   &lt;li&gt;Title, Artist, and ISBN are set correctly.&lt;/li&gt;
+     *   &lt;li&gt;Status defaults to &quot;Available&quot;.&lt;/li&gt;
+     *   &lt;li&gt;Copy ID defaults to 1.&lt;/li&gt;
+     * &lt;/ul&gt;
+     */
+    @Test
+    void testShortConstructor_initialValuesCorrect() {
+<span class="fc" id="L24">        CD cd = new CD(&quot;Greatest Hits&quot;, &quot;Artist X&quot;, &quot;CD001&quot;);</span>
+
+<span class="fc" id="L26">        assertEquals(&quot;Greatest Hits&quot;, cd.getTitle());</span>
+<span class="fc" id="L27">        assertEquals(&quot;Artist X&quot;, cd.getAuthor());</span>
+<span class="fc" id="L28">        assertEquals(&quot;CD001&quot;, cd.getIsbn());</span>
+
+<span class="fc" id="L30">        assertEquals(&quot;Available&quot;, cd.getStatus());</span>
+<span class="fc" id="L31">        assertEquals(&quot;&quot;, cd.getDueDate());</span>
+<span class="fc" id="L32">        assertEquals(0.0, cd.getFineAmount());</span>
+<span class="fc" id="L33">        assertEquals(&quot;&quot;, cd.getBorrowedBy());</span>
+<span class="fc" id="L34">        assertEquals(0.0, cd.getAmountPaid());</span>
+
+<span class="fc" id="L36">        assertEquals(1, cd.getCopyId());</span>
+<span class="fc" id="L37">    }</span>
+
+    /**
+     * Verifies that the constructor accepting a copy ID correctly sets it while
+     * maintaining default values for other fields.
+     */
+    @Test
+    void testConstructorWithCopyId_initializesValuesCorrectly() {
+<span class="fc" id="L45">        CD cd = new CD(&quot;Summer Mix&quot;, &quot;DJ Alex&quot;, &quot;CD500&quot;, 7);</span>
+
+<span class="fc" id="L47">        assertEquals(&quot;Summer Mix&quot;, cd.getTitle());</span>
+<span class="fc" id="L48">        assertEquals(&quot;DJ Alex&quot;, cd.getAuthor());</span>
+<span class="fc" id="L49">        assertEquals(&quot;CD500&quot;, cd.getIsbn());</span>
+
+<span class="fc" id="L51">        assertEquals(&quot;Available&quot;, cd.getStatus());</span>
+<span class="fc" id="L52">        assertEquals(&quot;&quot;, cd.getDueDate());</span>
+<span class="fc" id="L53">        assertEquals(0.0, cd.getFineAmount());</span>
+<span class="fc" id="L54">        assertEquals(&quot;&quot;, cd.getBorrowedBy());</span>
+<span class="fc" id="L55">        assertEquals(0.0, cd.getAmountPaid());</span>
+
+<span class="fc" id="L57">        assertEquals(7, cd.getCopyId());</span>
+<span class="fc" id="L58">    }</span>
+
+    /**
+     * Verifies that the full constructor correctly populates all fields.
+     * This ensures data loaded from persistence layers is mapped correctly.
+     */
+    @Test
+    void testFullConstructor_setsAllValuesCorrectly() {
+<span class="fc" id="L66">        CD cd = new CD(</span>
+<span class="fc" id="L67">                &quot;Top Mix&quot;,</span>
+<span class="fc" id="L68">                &quot;DJ Max&quot;,</span>
+<span class="fc" id="L69">                &quot;CD002&quot;,</span>
+<span class="fc" id="L70">                &quot;Borrowed&quot;,</span>
+<span class="fc" id="L71">                &quot;2025-12-25&quot;,</span>
+<span class="fc" id="L72">                4.5,</span>
+<span class="fc" id="L73">                &quot;u1&quot;,</span>
+<span class="fc" id="L74">                0.0,</span>
+<span class="fc" id="L75">                3</span>
+        );
+
+<span class="fc" id="L78">        assertEquals(&quot;Top Mix&quot;, cd.getTitle());</span>
+<span class="fc" id="L79">        assertEquals(&quot;DJ Max&quot;, cd.getAuthor());</span>
+<span class="fc" id="L80">        assertEquals(&quot;CD002&quot;, cd.getIsbn());</span>
+<span class="fc" id="L81">        assertEquals(&quot;Borrowed&quot;, cd.getStatus());</span>
+<span class="fc" id="L82">        assertEquals(&quot;2025-12-25&quot;, cd.getDueDate());</span>
+<span class="fc" id="L83">        assertEquals(4.5, cd.getFineAmount());</span>
+<span class="fc" id="L84">        assertEquals(&quot;u1&quot;, cd.getBorrowedBy());</span>
+<span class="fc" id="L85">        assertEquals(0.0, cd.getAmountPaid());</span>
+
+<span class="fc" id="L87">        assertEquals(3, cd.getCopyId());</span>
+<span class="fc" id="L88">    }</span>
+
+    /**
+     * Verifies that the loan period for a CD is strictly 7 days.
+     */
+    @Test
+    void testGetLoanPeriod_returns7Days() {
+<span class="fc" id="L95">        CD cd = new CD(&quot;Test&quot;, &quot;A&quot;, &quot;1&quot;);</span>
+<span class="fc" id="L96">        assertEquals(7, cd.getLoanPeriod());</span>
+<span class="fc" id="L97">    }</span>
+
+    /**
+     * Verifies that the base daily fine rate for a CD is $2.0.
+     */
+    @Test
+    void testGetBaseDailyFine_returns2Dollars() {
+<span class="fc" id="L104">        CD cd = new CD(&quot;Test&quot;, &quot;A&quot;, &quot;1&quot;);</span>
+<span class="fc" id="L105">        assertEquals(2.0, cd.getBaseDailyFine());</span>
+<span class="fc" id="L106">    }</span>
+
+    /**
+     * Verifies that the media type identifier returns &quot;CD&quot;.
+     */
+    @Test
+    void testGetMediaType_returnsCD() {
+<span class="fc" id="L113">        CD cd = new CD(&quot;Test&quot;, &quot;A&quot;, &quot;1&quot;);</span>
+<span class="fc" id="L114">        assertEquals(&quot;CD&quot;, cd.getMediaType());</span>
+<span class="fc" id="L115">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

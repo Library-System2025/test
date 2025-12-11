@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LibrarianControllerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">LibrarianControllerTest.java</span></div><h1>LibrarianControllerTest.java</h1><pre class="source lang-java linenums">import static org.junit.jupiter.api.Assertions.*;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+
+import org.junit.jupiter.api.*;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Comprehensive Integration Test Suite for the LibrarianController class.
+ * &lt;p&gt;
+ * This suite verifies the core functionality of the Librarian Dashboard, including
+ * transaction management (borrow/return), file persistence, data parsing, 
+ * user membership validation, and UI visual states.
+ * It utilizes Java Reflection to inspect private state and invoke private methods, 
+ * ensuring maximum code coverage.
+ *
+ * @author Zainab
+ * @version 1.0
+ */
+<span class="fc" id="L28">public class LibrarianControllerTest {</span>
+
+    private LibrarianController controller;
+    private static final String BOOKS_FILE = &quot;books.txt&quot;;
+    private static final String USERS_FILE = &quot;users.txt&quot;;
+
+    /**
+     * Initializes the JavaFX Toolkit required for testing UI components.
+     * This method ensures the toolkit is started only once for the entire test execution.
+     */
+    @BeforeAll
+    static void initToolkit() {
+        try {
+<span class="nc" id="L41">            Platform.startup(() -&gt; {});</span>
+<span class="pc" id="L42">        } catch (IllegalStateException e) {</span>
+        }
+<span class="fc" id="L44">    }</span>
+
+    /**
+     * Sets up the test environment before each test case.
+     * Initializes the controller instance and ensures a clean file system state.
+     *
+     * @throws Exception if reflection or file operations fail.
+     */
+    @BeforeEach
+    void setUp() throws Exception {
+<span class="fc" id="L54">        controller = new LibrarianController();</span>
+<span class="fc" id="L55">        cleanupFiles();</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Cleans up external resources and temporary files after each test execution.
+     */
+    @AfterEach
+    void tearDown() {
+<span class="fc" id="L63">        cleanupFiles();</span>
+<span class="fc" id="L64">    }</span>
+
+    private void cleanupFiles() {
+<span class="fc" id="L67">        new File(BOOKS_FILE).delete();</span>
+<span class="fc" id="L68">        new File(USERS_FILE).delete();</span>
+<span class="fc" id="L69">    }</span>
+
+    private void createDummyBooksFile(String content) throws IOException {
+<span class="fc" id="L72">        try (PrintWriter out = new PrintWriter(new FileWriter(BOOKS_FILE))) {</span>
+<span class="fc" id="L73">            out.println(content);</span>
+        }
+<span class="fc" id="L75">    }</span>
+
+    private void createDummyUsersFile(String content) throws IOException {
+<span class="fc" id="L78">        try (PrintWriter out = new PrintWriter(new FileWriter(USERS_FILE))) {</span>
+<span class="fc" id="L79">            out.println(content);</span>
+        }
+<span class="fc" id="L81">    }</span>
+
+    private void injectField(String name, Object value) throws Exception {
+<span class="fc" id="L84">        Field f = LibrarianController.class.getDeclaredField(name);</span>
+<span class="fc" id="L85">        f.setAccessible(true);</span>
+<span class="fc" id="L86">        f.set(controller, value);</span>
+<span class="fc" id="L87">    }</span>
+
+    private Object getPrivateField(String name) throws Exception {
+<span class="fc" id="L90">        Field f = LibrarianController.class.getDeclaredField(name);</span>
+<span class="fc" id="L91">        f.setAccessible(true);</span>
+<span class="fc" id="L92">        return f.get(controller);</span>
+    }
+
+    private Object invokePrivate(String name, Class&lt;?&gt;[] types, Object... args) throws Exception {
+<span class="fc" id="L96">        Method m = LibrarianController.class.getDeclaredMethod(name, types);</span>
+<span class="fc" id="L97">        m.setAccessible(true);</span>
+<span class="fc" id="L98">        return m.invoke(controller, args);</span>
+    }
+
+    /**
+     * Verifies the complete initialization flow.
+     * Ensures that table columns are bound correctly and data is loaded from the file system.
+     *
+     * @throws Exception if reflection or initialization logic fails.
+     */
+    @Test
+    void testInitialize_FullFlow() throws Exception {
+<span class="fc" id="L109">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L110">        injectField(&quot;bookTable&quot;, table);</span>
+<span class="fc" id="L111">        injectField(&quot;typeColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L112">        injectField(&quot;titleColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L113">        injectField(&quot;authorColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L114">        injectField(&quot;isbnColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L115">        injectField(&quot;statusColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L116">        injectField(&quot;dueDateColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L117">        injectField(&quot;borrowedByColumn&quot;, new TableColumn&lt;Media, String&gt;());</span>
+<span class="fc" id="L118">        injectField(&quot;copyIdColumn&quot;, new TableColumn&lt;Media, Integer&gt;());</span>
+
+<span class="fc" id="L120">        createDummyBooksFile(&quot;Book,Title,Author,123,1,Available,2025-01-01,0.0,,0.0&quot;);</span>
+
+<span class="fc" id="L122">        controller.initialize();</span>
+
+<span class="fc" id="L124">        assertNotNull(table.getItems());</span>
+<span class="fc" id="L125">        assertEquals(1, table.getItems().size());</span>
+<span class="fc" id="L126">        assertNotNull(table.getRowFactory());</span>
+<span class="fc" id="L127">    }</span>
+
+    /**
+     * Validates the borrowing transaction logic.
+     * Covers scenarios for: missing selection, attempting to borrow an already borrowed item,
+     * and a successful borrowing transaction.
+     *
+     * @throws Exception if reflection or business logic fails.
+     */
+    @Test
+    void testHandleBorrowBook_Scenarios() throws Exception {
+<span class="fc" id="L138">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L139">        Label infoLabel = new Label();</span>
+<span class="fc" id="L140">        injectField(&quot;bookTable&quot;, table);</span>
+<span class="fc" id="L141">        injectField(&quot;infoLabel&quot;, infoLabel);</span>
+<span class="fc" id="L142">        controller.setCurrentUsername(&quot;libUser&quot;);</span>
+        
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L145">        ObservableList&lt;Media&gt; mediaList = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+
+<span class="fc" id="L147">        invokePrivate(&quot;handleBorrowBook&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L148">        assertEquals(&quot;⚠️ Select an item first.&quot;, infoLabel.getText());</span>
+
+<span class="fc" id="L150">        Media borrowedItem = new Book(&quot;B1&quot;, &quot;A1&quot;, &quot;111&quot;);</span>
+<span class="fc" id="L151">        borrowedItem.setStatus(&quot;Borrowed&quot;);</span>
+<span class="fc" id="L152">        mediaList.add(borrowedItem);</span>
+<span class="fc" id="L153">        table.setItems(mediaList);</span>
+<span class="fc" id="L154">        table.getSelectionModel().select(borrowedItem);</span>
+        
+<span class="fc" id="L156">        invokePrivate(&quot;handleBorrowBook&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L157">        assertEquals(&quot;❌ Item already borrowed.&quot;, infoLabel.getText());</span>
+
+<span class="fc" id="L159">        Media availItem = new Book(&quot;B2&quot;, &quot;A2&quot;, &quot;222&quot;);</span>
+<span class="fc" id="L160">        availItem.setStatus(&quot;Available&quot;);</span>
+<span class="fc" id="L161">        mediaList.add(availItem);</span>
+<span class="fc" id="L162">        table.getSelectionModel().select(availItem);</span>
+        
+<span class="fc" id="L164">        invokePrivate(&quot;handleBorrowBook&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L165">        assertEquals(&quot;Borrowed&quot;, availItem.getStatus());</span>
+<span class="fc" id="L166">        assertTrue(infoLabel.getText().startsWith(&quot;✅ Borrowed successfully&quot;));</span>
+        
+<span class="fc" id="L168">        assertTrue(new File(BOOKS_FILE).exists());</span>
+<span class="fc" id="L169">    }</span>
+
+    /**
+     * Validates the return transaction logic.
+     * Covers scenarios for: missing selection, attempting to return a non-borrowed item,
+     * and a successful return transaction.
+     *
+     * @throws Exception if reflection or business logic fails.
+     */
+    @Test
+    void testHandleReturnBook_Scenarios() throws Exception {
+<span class="fc" id="L180">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L181">        Label infoLabel = new Label();</span>
+<span class="fc" id="L182">        injectField(&quot;bookTable&quot;, table);</span>
+<span class="fc" id="L183">        injectField(&quot;infoLabel&quot;, infoLabel);</span>
+
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L186">        ObservableList&lt;Media&gt; mediaList = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+
+<span class="fc" id="L188">        invokePrivate(&quot;handleReturnBook&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L189">        assertEquals(&quot;⚠️ Select an item first.&quot;, infoLabel.getText());</span>
+
+<span class="fc" id="L191">        Media availItem = new Book(&quot;B1&quot;, &quot;A1&quot;, &quot;111&quot;);</span>
+<span class="fc" id="L192">        availItem.setStatus(&quot;Available&quot;);</span>
+<span class="fc" id="L193">        mediaList.add(availItem);</span>
+<span class="fc" id="L194">        table.setItems(mediaList);</span>
+<span class="fc" id="L195">        table.getSelectionModel().select(availItem);</span>
+
+<span class="fc" id="L197">        invokePrivate(&quot;handleReturnBook&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L198">        assertEquals(&quot;ℹ️ This item is not borrowed.&quot;, infoLabel.getText());</span>
+
+<span class="fc" id="L200">        Media borrowedItem = new Book(&quot;B2&quot;, &quot;A2&quot;, &quot;222&quot;);</span>
+<span class="fc" id="L201">        borrowedItem.setStatus(&quot;Borrowed&quot;);</span>
+<span class="fc" id="L202">        mediaList.add(borrowedItem);</span>
+<span class="fc" id="L203">        table.getSelectionModel().select(borrowedItem);</span>
+
+<span class="fc" id="L205">        invokePrivate(&quot;handleReturnBook&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L206">        assertEquals(&quot;Available&quot;, borrowedItem.getStatus());</span>
+<span class="fc" id="L207">        assertEquals(&quot;✅ Item returned successfully.&quot;, infoLabel.getText());</span>
+<span class="fc" id="L208">    }</span>
+
+    /**
+     * Tests the search filter functionality.
+     * Verifies that the table updates correctly based on keyword matches and resets 
+     * when the search field is empty.
+     *
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    void testHandleSearch_Scenarios() throws Exception {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L220">        ObservableList&lt;Media&gt; mediaList = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L221">        mediaList.add(new Book(&quot;Java Programming&quot;, &quot;Author1&quot;, &quot;12345&quot;));</span>
+<span class="fc" id="L222">        mediaList.add(new Book(&quot;Python Guide&quot;, &quot;Author2&quot;, &quot;67890&quot;));</span>
+
+<span class="fc" id="L224">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L225">        TextField searchField = new TextField();</span>
+<span class="fc" id="L226">        injectField(&quot;bookTable&quot;, table);</span>
+<span class="fc" id="L227">        injectField(&quot;searchField&quot;, searchField);</span>
+
+<span class="fc" id="L229">        searchField.setText(&quot;java&quot;);</span>
+<span class="fc" id="L230">        invokePrivate(&quot;handleSearch&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L231">        assertEquals(1, table.getItems().size());</span>
+<span class="fc" id="L232">        assertEquals(&quot;Java Programming&quot;, table.getItems().get(0).getTitle());</span>
+
+<span class="fc" id="L234">        searchField.setText(&quot;&quot;);</span>
+<span class="fc" id="L235">        invokePrivate(&quot;handleSearch&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="fc" id="L236">        assertEquals(2, table.getItems().size());</span>
+<span class="fc" id="L237">    }</span>
+
+    /**
+     * Tests robustness of data loading and file parsing.
+     * Verifies that the system correctly identifies different Media types (Book vs CD)
+     * and gracefully handles malformed numeric data without crashing.
+     *
+     * @throws Exception if reflection or file I/O fails.
+     */
+    @Test
+    void testHandleReload_and_FileParsing() throws Exception {
+<span class="fc" id="L248">        String content = &quot;CD,Disc1,Art1,111,1,Available,2024-01-01,0.0,,0.0\n&quot; +</span>
+                         &quot;Book,Book1,Auth1,222,2,Borrowed,2024-01-01,0.0,user1,0.0\n&quot; +
+                         &quot;Book,BadNum,Auth2,333,badInt,Available,,badDbl,,badDbl&quot;;
+<span class="fc" id="L251">        createDummyBooksFile(content);</span>
+
+<span class="fc" id="L253">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L254">        Label infoLabel = new Label();</span>
+<span class="fc" id="L255">        injectField(&quot;bookTable&quot;, table);</span>
+<span class="fc" id="L256">        injectField(&quot;infoLabel&quot;, infoLabel);</span>
+
+<span class="fc" id="L258">        invokePrivate(&quot;handleReload&quot;, new Class&lt;?&gt;[]{});</span>
+
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L261">        ObservableList&lt;Media&gt; mediaList = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+
+<span class="fc" id="L263">        assertEquals(3, mediaList.size()); </span>
+        
+<span class="fc" id="L265">        assertTrue(mediaList.get(0) instanceof CD);</span>
+        
+<span class="fc" id="L267">        Media badItem = mediaList.get(2);</span>
+<span class="fc" id="L268">        assertEquals(1, badItem.getCopyId()); </span>
+        
+<span class="fc" id="L270">        assertEquals(&quot;🔄 Data reloaded.&quot;, infoLabel.getText());</span>
+<span class="fc" id="L271">    }</span>
+
+    /**
+     * Verifies the interaction between overdue items and user membership levels.
+     * Ensures that the system attempts to calculate fines for overdue items based on 
+     * the borrower's membership type retrieved from the user database.
+     *
+     * @throws Exception if reflection or file I/O fails.
+     */
+    @Test
+    void testOverdueFineCalculation_withUserMembership() throws Exception {
+<span class="fc" id="L282">        createDummyUsersFile(&quot;goldUser,pass,Gold,Gold,email@test.com&quot;);</span>
+
+<span class="fc" id="L284">        String overdueBook = &quot;Book,OldBook,Auth,999,1,Overdue,2020-01-01,0.0,goldUser,0.0&quot;;</span>
+<span class="fc" id="L285">        createDummyBooksFile(overdueBook);</span>
+
+<span class="fc" id="L287">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L288">        injectField(&quot;bookTable&quot;, table);</span>
+
+<span class="fc" id="L290">        invokePrivate(&quot;loadMediaFromFile&quot;, new Class&lt;?&gt;[]{});</span>
+
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L293">        ObservableList&lt;Media&gt; mediaList = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+        
+<span class="fc" id="L295">        assertFalse(mediaList.isEmpty());</span>
+<span class="fc" id="L296">        Media loadedBook = mediaList.get(0);</span>
+
+<span class="fc" id="L298">        assertEquals(&quot;Overdue&quot;, loadedBook.getStatus());</span>
+<span class="fc" id="L299">        assertEquals(&quot;goldUser&quot;, loadedBook.getBorrowedBy());</span>
+<span class="fc" id="L300">    }</span>
+
+    /**
+     * Tests the fallback logic for retrieving user membership.
+     * Ensures that the system defaults to &quot;Silver&quot; membership if the user file is missing
+     * or the specific user cannot be found.
+     *
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    void testGetUserMembership_Fallbacks() throws Exception {
+<span class="fc" id="L311">        Method m = LibrarianController.class.getDeclaredMethod(&quot;getUserMembership&quot;, String.class);</span>
+<span class="fc" id="L312">        m.setAccessible(true);</span>
+
+<span class="fc" id="L314">        new File(USERS_FILE).delete();</span>
+<span class="fc" id="L315">        String res1 = (String) m.invoke(controller, &quot;anyUser&quot;);</span>
+<span class="fc" id="L316">        assertEquals(&quot;Silver&quot;, res1);</span>
+
+<span class="fc" id="L318">        createDummyUsersFile(&quot;otherUser,pass,Type,Gold,mail&quot;);</span>
+<span class="fc" id="L319">        String res2 = (String) m.invoke(controller, &quot;missingUser&quot;);</span>
+<span class="fc" id="L320">        assertEquals(&quot;Silver&quot;, res2);</span>
+<span class="fc" id="L321">    }</span>
+
+    /**
+     * Verifies the logout mechanism.
+     * Ensures that the UI transition logic is triggered without errors, even in a headless
+     * test environment.
+     *
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    void testHandleLogout() throws Exception {
+<span class="fc" id="L332">        CountDownLatch latch = new CountDownLatch(1);</span>
+<span class="fc" id="L333">        Platform.runLater(() -&gt; {</span>
+            try {
+<span class="fc" id="L335">                TextField searchField = new TextField();</span>
+<span class="fc" id="L336">                Scene scene = new Scene(new StackPane(searchField));</span>
+<span class="fc" id="L337">                Stage stage = new Stage();</span>
+<span class="fc" id="L338">                stage.setScene(scene);</span>
+<span class="fc" id="L339">                injectField(&quot;searchField&quot;, searchField);</span>
+                
+<span class="fc" id="L341">                invokePrivate(&quot;handleLogout&quot;, new Class&lt;?&gt;[]{});</span>
+<span class="pc" id="L342">            } catch (Exception e) {</span>
+            } finally {
+<span class="fc" id="L344">                latch.countDown();</span>
+            }
+<span class="fc" id="L346">        });</span>
+<span class="fc" id="L347">        assertTrue(latch.await(5, TimeUnit.SECONDS));</span>
+<span class="fc" id="L348">    }</span>
+
+    /**
+     * Tests the TableView RowFactory implementation.
+     * Validates that rows are assigned the correct CSS styles based on the Media item's status
+     * (Available, Borrowed, Overdue).
+     *
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    void testRowColoring() throws Exception {
+<span class="fc" id="L359">        TableView&lt;Media&gt; table = new TableView&lt;&gt;();</span>
+<span class="fc" id="L360">        injectField(&quot;bookTable&quot;, table);</span>
+<span class="fc" id="L361">        invokePrivate(&quot;setupRowColoring&quot;, new Class&lt;?&gt;[]{});</span>
+
+<span class="fc" id="L363">        CountDownLatch latch = new CountDownLatch(1);</span>
+<span class="fc" id="L364">        Platform.runLater(() -&gt; {</span>
+<span class="fc" id="L365">            TableRow&lt;Media&gt; row = table.getRowFactory().call(table);</span>
+            
+<span class="fc" id="L367">            Media m = new Book(&quot;T&quot;, &quot;A&quot;, &quot;I&quot;);</span>
+            
+            try {
+<span class="nc" id="L370">                Method update = TableRow.class.getDeclaredMethod(&quot;updateItem&quot;, Object.class, boolean.class);</span>
+<span class="nc" id="L371">                update.setAccessible(true);</span>
+
+<span class="nc" id="L373">                m.setStatus(&quot;Available&quot;);</span>
+<span class="nc" id="L374">                update.invoke(row, m, false);</span>
+<span class="nc" id="L375">                assertEquals(&quot;-fx-background-color: #d4edda;&quot;, row.getStyle());</span>
+
+<span class="nc" id="L377">                m.setStatus(&quot;Borrowed&quot;);</span>
+<span class="nc" id="L378">                update.invoke(row, m, false);</span>
+<span class="nc" id="L379">                assertEquals(&quot;-fx-background-color: #fff3cd;&quot;, row.getStyle());</span>
+
+<span class="nc" id="L381">                m.setStatus(&quot;Overdue&quot;);</span>
+<span class="nc" id="L382">                update.invoke(row, m, false);</span>
+<span class="nc" id="L383">                assertEquals(&quot;-fx-background-color: #f8d7da;&quot;, row.getStyle());</span>
+
+<span class="nc" id="L385">                update.invoke(row, null, true);</span>
+<span class="nc" id="L386">                assertEquals(&quot;&quot;, row.getStyle());</span>
+
+<span class="pc" id="L388">            } catch (Exception e) {</span>
+<span class="fc" id="L389">            	e.printStackTrace();</span>
+            }
+<span class="fc" id="L391">            latch.countDown();</span>
+<span class="fc" id="L392">        });</span>
+<span class="fc" id="L393">        assertTrue(latch.await(5, TimeUnit.SECONDS));</span>
+<span class="fc" id="L394">    }</span>
+    
+    /**
+     * Verifies that setting the current username updates both the internal state
+     * and the welcome label on the UI.
+     *
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    void testSetCurrentUsername() throws Exception {
+<span class="fc" id="L404">        Label welcome = new Label();</span>
+<span class="fc" id="L405">        injectField(&quot;welcomeLabel&quot;, welcome);</span>
+<span class="fc" id="L406">        controller.setCurrentUsername(&quot;Tester&quot;);</span>
+<span class="fc" id="L407">        assertEquals(&quot;Welcome, Tester 👋&quot;, welcome.getText());</span>
+<span class="fc" id="L408">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FineStrategies.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">FineStrategies.java</span></div><h1>FineStrategies.java</h1><pre class="source lang-java linenums">
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+/**
+ * Interface defining the strategy for fine calculation.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+interface FineCalculationStrategy {
+	
+	/**
+     * Calculates the fine based on overdue days and daily rate.
+     * 
+     * @param overdueDays The number of days the item is overdue.
+     * @param dailyRate The standard daily fine rate.
+     * @return The calculated fine amount.
+     */
+	
+    double calculateFine(long overdueDays, double dailyRate);
+}
+
+/**
+ * Strategy for Silver members.
+ * Silver members pay the full fine amount without discount.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+<span class="fc" id="L33">class SilverFineStrategy implements FineCalculationStrategy {</span>
+    
+	/**
+     * Calculates the full fine amount.
+     * 
+     * @param overdueDays The number of days the item is overdue.
+     * @param dailyRate The standard daily fine rate.
+     * @return The total fine (days * rate).
+     */
+	
+	@Override
+    public double calculateFine(long overdueDays, double dailyRate) {
+<span class="fc" id="L45">        return overdueDays * dailyRate;</span>
+    }
+}
+
+/**
+ * Strategy for Gold members.
+ * Gold members receive a 50% discount on fines.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+<span class="fc" id="L57">class GoldFineStrategy implements FineCalculationStrategy {</span>
+    
+	/**
+     * Calculates the fine with a 50% discount.
+     * 
+     * @param overdueDays The number of days the item is overdue.
+     * @param dailyRate The standard daily fine rate.
+     * @return The discounted fine amount.
+     */
+	
+	@Override
+    public double calculateFine(long overdueDays, double dailyRate) {
+<span class="fc" id="L69">        return overdueDays * (dailyRate * 0.5);</span>
+    }
+}
+
+/**
+ * Context class that uses a strategy to calculate fines.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+<span class="fc" id="L80">class FineCalculator {</span>
+    private FineCalculationStrategy strategy;
+
+    /**
+     * Sets the strategy to be used for calculation.
+     * 
+     * @param strategy The strategy (Gold or Silver).
+     */
+    
+    public void setStrategy(FineCalculationStrategy strategy) {
+<span class="fc" id="L90">        this.strategy = strategy;</span>
+<span class="fc" id="L91">    }</span>
+
+    /**
+     * Executes the strategy to calculate the fine.
+     * 
+     * @param overdueDays The number of days overdue.
+     * @param dailyRate The daily rate.
+     * @return The final calculated fine.
+     */
+    
+    public double calculate(long overdueDays, double dailyRate) {
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (strategy == null) return 0.0;</span>
+<span class="fc" id="L103">        return strategy.calculateFine(overdueDays, dailyRate);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

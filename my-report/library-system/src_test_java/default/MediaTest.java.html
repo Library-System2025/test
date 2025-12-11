@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>MediaTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">MediaTest.java</span></div><h1>MediaTest.java</h1><pre class="source lang-java linenums">import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Unit tests for the abstract Media class logic.
+ * Covers borrow, return, overdue checks, and fine calculations using MockedStatic for time.
+ * 
+ * @author Zainab
+ * @version 1.1
+ */
+<span class="fc" id="L17">public class MediaTest {</span>
+
+<span class="fc" id="L19">    private static final DateTimeFormatter FMT =</span>
+<span class="fc" id="L20">            DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+
+
+    @Test
+    void testBorrow_setsBorrowedFieldsAndDueDate_withMockedTime() {
+
+<span class="fc" id="L26">        LocalDate fixedDate = LocalDate.of(2025, 1, 10);</span>
+
+<span class="fc" id="L28">        try (MockedStatic&lt;Media&gt; mocked = mockStatic(Media.class)) {</span>
+<span class="fc" id="L29">            mocked.when(Media::now).thenReturn(fixedDate);</span>
+
+<span class="fc" id="L31">            Book b = new Book(&quot;Clean Code&quot;, &quot;Robert Martin&quot;, &quot;111&quot;);</span>
+
+<span class="fc" id="L33">            b.borrow(&quot;u1&quot;);</span>
+
+<span class="fc" id="L35">            assertEquals(&quot;Borrowed&quot;, b.getStatus());</span>
+<span class="fc" id="L36">            assertEquals(&quot;u1&quot;, b.getBorrowedBy());</span>
+
+<span class="fc" id="L38">            String expectedDue = fixedDate.plusDays(b.getLoanPeriod()).format(FMT);</span>
+<span class="fc" id="L39">            assertEquals(expectedDue, b.getDueDate());</span>
+<span class="fc" id="L40">            assertEquals(0.0, b.getFineAmount());</span>
+<span class="fc" id="L41">            assertEquals(0.0, b.getAmountPaid());</span>
+
+<span class="fc" id="L43">            assertEquals(1, b.getCopyId());</span>
+        }
+<span class="fc" id="L45">    }</span>
+
+
+    @Test
+    void testReturnMedia_resetsAllState() {
+<span class="fc" id="L50">        Book b = new Book(&quot;Clean Code&quot;, &quot;Robert Martin&quot;, &quot;111&quot;);</span>
+<span class="fc" id="L51">        b.borrow(&quot;u1&quot;);</span>
+<span class="fc" id="L52">        b.setFineAmount(10.0);</span>
+<span class="fc" id="L53">        b.addPayment(3.0);</span>
+
+<span class="fc" id="L55">        b.returnMedia();</span>
+
+<span class="fc" id="L57">        assertEquals(&quot;Available&quot;, b.getStatus());</span>
+<span class="fc" id="L58">        assertEquals(&quot;&quot;, b.getBorrowedBy());</span>
+<span class="fc" id="L59">        assertEquals(&quot;&quot;, b.getDueDate());</span>
+<span class="fc" id="L60">        assertEquals(0.0, b.getFineAmount());</span>
+<span class="fc" id="L61">        assertEquals(0.0, b.getAmountPaid());</span>
+<span class="fc" id="L62">    }</span>
+
+
+    @Test
+    void testIsOverdue_withMockedTime() {
+
+<span class="fc" id="L68">        LocalDate fixedNow = LocalDate.of(2025, 1, 20);</span>
+
+<span class="fc" id="L70">        try (MockedStatic&lt;Media&gt; mocked = mockStatic(Media.class)) {</span>
+<span class="fc" id="L71">            mocked.when(Media::now).thenReturn(fixedNow);</span>
+
+<span class="fc" id="L73">            Book b = new Book(&quot;Clean Code&quot;, &quot;Robert Martin&quot;, &quot;111&quot;);</span>
+
+            
+<span class="fc" id="L76">            b.setDueDate(&quot;2025-01-25&quot;);</span>
+<span class="fc" id="L77">            assertFalse(b.isOverdue());</span>
+
+            
+<span class="fc" id="L80">            b.setDueDate(&quot;2025-01-10&quot;);</span>
+<span class="fc" id="L81">            assertTrue(b.isOverdue());</span>
+        }
+<span class="fc" id="L83">    }</span>
+
+
+    @Test
+    void testCalculateFine_notOverdue_setsZeroAndFixesStatus() {
+
+<span class="fc" id="L89">        LocalDate fixedNow = LocalDate.of(2025, 1, 10);</span>
+
+<span class="fc" id="L91">        try (MockedStatic&lt;Media&gt; mocked = mockStatic(Media.class)) {</span>
+<span class="fc" id="L92">            mocked.when(Media::now).thenReturn(fixedNow);</span>
+
+<span class="fc" id="L94">            Book b = new Book(&quot;Clean Code&quot;, &quot;Robert Martin&quot;, &quot;111&quot;);</span>
+
+<span class="fc" id="L96">            b.setStatus(&quot;Overdue&quot;);</span>
+<span class="fc" id="L97">            b.setFineAmount(15.0);</span>
+<span class="fc" id="L98">            b.setDueDate(&quot;2025-01-20&quot;); </span>
+
+<span class="fc" id="L100">            b.calculateFine(&quot;Silver&quot;);</span>
+
+<span class="fc" id="L102">            assertEquals(0.0, b.getFineAmount());</span>
+<span class="fc" id="L103">            assertEquals(&quot;Borrowed&quot;, b.getStatus());</span>
+        }
+<span class="fc" id="L105">    }</span>
+
+
+    @Test
+    void testCalculateFine_overdue_setsStatusOverdueAndNonNegativeFine() {
+
+<span class="fc" id="L111">        LocalDate fixedNow = LocalDate.of(2025, 1, 20);</span>
+
+<span class="fc" id="L113">        try (MockedStatic&lt;Media&gt; mocked = mockStatic(Media.class)) {</span>
+<span class="fc" id="L114">            mocked.when(Media::now).thenReturn(fixedNow);</span>
+
+<span class="fc" id="L116">            Book b = new Book(&quot;Clean Code&quot;, &quot;Robert Martin&quot;, &quot;111&quot;);</span>
+<span class="fc" id="L117">            b.setStatus(&quot;Borrowed&quot;);</span>
+<span class="fc" id="L118">            b.setDueDate(&quot;2025-01-10&quot;); </span>
+
+<span class="fc" id="L120">            b.calculateFine(&quot;Silver&quot;);</span>
+
+<span class="fc" id="L122">            assertEquals(&quot;Overdue&quot;, b.getStatus());</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">            assertTrue(b.getFineAmount() &gt;= 0.0);</span>
+        }
+<span class="fc" id="L125">    }</span>
+
+
+    @Test
+    void testCalculateFine_goldMembership_usesDiscountAndAmountPaid() {
+
+<span class="fc" id="L131">        LocalDate fixedNow = LocalDate.of(2025, 1, 20);</span>
+
+<span class="fc" id="L133">        try (MockedStatic&lt;Media&gt; mocked = mockStatic(Media.class)) {</span>
+<span class="fc" id="L134">            mocked.when(Media::now).thenReturn(fixedNow);</span>
+
+<span class="fc" id="L136">            Book b = new Book(</span>
+<span class="fc" id="L137">                    &quot;Clean Code&quot;,</span>
+<span class="fc" id="L138">                    &quot;Robert Martin&quot;,</span>
+<span class="fc" id="L139">                    &quot;111&quot;,</span>
+<span class="fc" id="L140">                    &quot;Borrowed&quot;,</span>
+<span class="fc" id="L141">                    &quot;2025-01-16&quot;,</span>
+<span class="fc" id="L142">                    0.0,</span>
+<span class="fc" id="L143">                    &quot;u1&quot;,</span>
+<span class="fc" id="L144">                    1.0,  </span>
+<span class="fc" id="L145">                    1     </span>
+            );
+
+<span class="fc" id="L148">            b.calculateFine(&quot;Gold&quot;);</span>
+
+<span class="fc" id="L150">            assertEquals(&quot;Overdue&quot;, b.getStatus());</span>
+<span class="fc" id="L151">            assertEquals(1.0, b.getFineAmount(), 0.0001);</span>
+        }
+<span class="fc" id="L153">    }</span>
+
+
+    @Test
+    void testToFileFormat_usesAllFieldsInCorrectOrder() {
+<span class="fc" id="L158">        Book b = new Book(</span>
+<span class="fc" id="L159">                &quot;Clean Code&quot;,</span>
+<span class="fc" id="L160">                &quot;Robert Martin&quot;,</span>
+<span class="fc" id="L161">                &quot;111&quot;,</span>
+<span class="fc" id="L162">                &quot;Borrowed&quot;,</span>
+<span class="fc" id="L163">                &quot;2025-12-20&quot;,</span>
+<span class="fc" id="L164">                3.5,</span>
+<span class="fc" id="L165">                &quot;u1&quot;,</span>
+<span class="fc" id="L166">                1.0,</span>
+<span class="fc" id="L167">                2     </span>
+        );
+
+<span class="fc" id="L170">        String expected = String.join(&quot;,&quot;,</span>
+<span class="fc" id="L171">                &quot;Book&quot;,             </span>
+<span class="fc" id="L172">                &quot;Clean Code&quot;,        </span>
+<span class="fc" id="L173">                &quot;Robert Martin&quot;,     </span>
+<span class="fc" id="L174">                &quot;111&quot;,               </span>
+<span class="fc" id="L175">                &quot;2&quot;,                  </span>
+<span class="fc" id="L176">                &quot;Borrowed&quot;,          </span>
+<span class="fc" id="L177">                &quot;2025-12-20&quot;,        </span>
+<span class="fc" id="L178">                &quot;3.5&quot;,               </span>
+<span class="fc" id="L179">                &quot;u1&quot;,                </span>
+<span class="fc" id="L180">                &quot;1.0&quot;                </span>
+        );
+
+<span class="fc" id="L183">        assertEquals(expected, b.toFileFormat());</span>
+<span class="fc" id="L184">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

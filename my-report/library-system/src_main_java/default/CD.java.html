@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CD.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">CD.java</span></div><h1>CD.java</h1><pre class="source lang-java linenums">
+
+/**
+ * Represents a CD item in the library.
+ * Extends the Media class with specific rules for CDs.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+public class CD extends Media {
+
+    /**
+     * Constructor to create a CD object with full details.
+     * Usually used when loading data from a file.
+     * 
+     * @param title The title of the CD.
+     * @param author The author/artist of the CD.
+     * @param isbn The ISBN/ID of the CD.
+     * @param status The current status (e.g., Available, Borrowed).
+     * @param dueDate The due date if borrowed.
+     * @param fineAmount The calculated fine amount.
+     * @param borrowedBy The user who borrowed the CD.
+     * @param amountPaid The amount paid for fines.
+     * @param copyId The unique copy identifier.
+     */
+    public CD(String title, String author, String isbn, String status, String dueDate,
+            double fineAmount, String borrowedBy, double amountPaid, int copyId) {
+<span class="fc" id="L28">        super(title, author, isbn, status, dueDate, fineAmount, borrowedBy, amountPaid, copyId);</span>
+<span class="fc" id="L29">    }</span>
+
+    /**
+     * Constructor to create a new CD with basic details and specific copy ID.
+     * Used when adding a new CD copy to the library.
+     * 
+     * @param title The title of the CD.
+     * @param author The author/artist of the CD.
+     * @param isbn The ISBN/ID of the CD.
+     * @param copyId The copy ID of the CD.
+     */
+    public CD(String title, String author, String isbn, int copyId) {
+<span class="fc" id="L41">        super(title, author, isbn, &quot;Available&quot;, &quot;&quot;, 0.0, &quot;&quot;, 0.0, copyId);</span>
+<span class="fc" id="L42">    }</span>
+
+    /**
+     * Constructor to create a new CD with basic details (Default copyId = 1).
+     * Used when adding a new CD to the library.
+     * 
+     * @param title The title of the CD.
+     * @param author The author/artist of the CD.
+     * @param isbn The ISBN/ID of the CD.
+     */
+    public CD(String title, String author, String isbn) {
+<span class="fc" id="L53">        this(title, author, isbn, 1);</span>
+<span class="fc" id="L54">    }</span>
+
+    /**
+     * Gets the loan period for a CD.
+     *
+     * @return The number of days a CD can be borrowed (7 days).
+     */
+    @Override
+    public int getLoanPeriod() {
+<span class="fc" id="L63">        return 7;</span>
+    }
+
+    /**
+     * Gets the daily fine for overdue CDs.
+     * 
+     * @return The fine amount per day (2.0).
+     */
+    @Override
+    public double getBaseDailyFine() {
+<span class="fc" id="L73">        return 2.0;</span>
+    }
+
+    /**
+     * Identifies the type of this media.
+     * 
+     * @return The string &quot;CD&quot;.
+     */
+    @Override
+    public String getMediaType() {
+<span class="fc" id="L83">        return &quot;CD&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

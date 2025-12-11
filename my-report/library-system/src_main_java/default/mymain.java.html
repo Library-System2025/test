@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>mymain.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">mymain.java</span></div><h1>mymain.java</h1><pre class="source lang-java linenums">import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+/**
+* Main entry point for the Library Application.
+ *
+ * @author Zainab
+ * @version 1.0
+ */
+
+<span class="nc" id="L14">public class mymain extends Application {</span>
+
+	
+    
+  /**
+   * @param primaryStage 
+     * @throws Exception 
+    */
+
+   @Override
+   public void start(Stage primaryStage) throws Exception {
+        
+<span class="nc" id="L26">        Parent root = FXMLLoader.load(getClass().getResource(&quot;/login.fxml&quot;)); </span>
+
+        
+<span class="nc" id="L29">       Scene scene = new Scene(root);</span>
+
+        
+<span class="nc" id="L32">        primaryStage.setTitle(&quot;Library Management - Login&quot;);</span>
+<span class="nc" id="L33">        primaryStage.setScene(scene);</span>
+<span class="nc" id="L34">        primaryStage.show();</span>
+<span class="nc" id="L35">    }</span>
+
+   /** 
+     * @param args 
+     */
+    
+    public static void main(String[] args) {
+<span class="nc" id="L42">        launch(args);</span>
+<span class="nc" id="L43">    }</span>
+    }
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

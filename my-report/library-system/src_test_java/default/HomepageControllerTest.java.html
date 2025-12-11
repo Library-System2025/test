@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>HomepageControllerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">HomepageControllerTest.java</span></div><h1>HomepageControllerTest.java</h1><pre class="source lang-java linenums">import static org.junit.jupiter.api.Assertions.*;
+
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.*;
+import javafx.util.Callback;
+
+import org.junit.jupiter.api.*;
+
+import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+
+/**
+ * Comprehensive Integration Test Suite for the {@link homepageController} class.
+ * &lt;p&gt;
+ * This class employs Java Reflection to perform white-box testing on the controller's
+ * private methods and internal state. It is designed to operate in a headless environment,
+ * simulating JavaFX UI interactions and file system operations to ensure high code coverage
+ * and logic reliability without requiring a physical display.
+ * &lt;/p&gt;
+ *
+ * @author Zainab
+ * @version 1.0
+ */
+public class HomepageControllerTest {
+
+    /** The controller instance under test. */
+    private homepageController controller;
+
+    /** Mock field for displaying messages. */
+    private Label addBookMessage;
+    /** Mock field for the welcome label. */
+    private Label welcomeLabel;
+    /** Mock field for title input. */
+    private TextField titleField;
+    /** Mock field for author input. */
+    private TextField authorField;
+    /** Mock field for ISBN input. */
+    private TextField isbnField;
+    /** Mock field for search input. */
+    private TextField searchField;
+    /** Mock combo box for media type selection. */
+    private ComboBox&lt;String&gt; typeCombo;
+    /** Mock combo box for search criteria. */
+    private ComboBox&lt;String&gt; searchByCombo;
+    /** Mock table view for search results. */
+    private TableView&lt;Media&gt; searchResultsTable;
+    /** Mock table column for media type. */
+    private TableColumn&lt;Media, String&gt; typeColumn;
+    /** Mock table column for title. */
+    private TableColumn&lt;Media, String&gt; titleColumn;
+    /** Mock table column for author. */
+    private TableColumn&lt;Media, String&gt; authorColumn;
+    /** Mock table column for ISBN. */
+    private TableColumn&lt;Media, String&gt; isbnColumn;
+    /** Mock table column for copy ID. */
+    private TableColumn&lt;Media, Integer&gt; copyIdColumn;
+    /** Mock table column for status. */
+    private TableColumn&lt;Media, String&gt; statusColumn;
+    /** Mock table column for due date. */
+    private TableColumn&lt;Media, String&gt; dueDateColumn;
+    /** Mock table column for fine amount. */
+    private TableColumn&lt;Media, Double&gt; fineColumn;
+    /** Mock table column for borrower name. */
+    private TableColumn&lt;Media, String&gt; borrowedByColumn;
+    /** Mock table view for users. */
+    private TableView&lt;User&gt; usersTable;
+    /** Mock table column for username. */
+    private TableColumn&lt;User, String&gt; colUsername;
+    /** Mock table column for role. */
+    private TableColumn&lt;User, String&gt; colRole;
+    /** Mock table column for membership. */
+    private TableColumn&lt;User, String&gt; colMembership;
+
+    /**
+     * Default constructor for the test class.
+     */
+<span class="fc" id="L83">    public HomepageControllerTest() {</span>
+        // Default constructor
+<span class="fc" id="L85">    }</span>
+
+    /**
+     * Initializes the JavaFX toolkit environment.
+     * &lt;p&gt;
+     * This static setup is required to instantiate JavaFX controls (like Labels and TableViews)
+     * safely outside of a standard JavaFX Application lifecycle.
+     * &lt;/p&gt;
+     */
+    @BeforeAll
+    static void initToolkit() {
+        try {
+<span class="nc" id="L97">            Platform.startup(() -&gt; {});</span>
+<span class="pc" id="L98">        } catch (IllegalStateException e) {</span>
+            // Toolkit already initialized
+        }
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * Sets up the test environment before each test method execution.
+     * &lt;p&gt;
+     * This method initializes a new instance of the controller, injects mock JavaFX components
+     * into private fields using reflection, and clears any existing data files to ensure test isolation.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @BeforeEach
+    void setUp() throws Exception {
+<span class="fc" id="L114">        controller = new homepageController();</span>
+
+<span class="fc" id="L116">        injectField(&quot;mediaList&quot;, FXCollections.observableArrayList());</span>
+<span class="fc" id="L117">        injectField(&quot;mediaMap&quot;, new java.util.HashMap&lt;String, Media&gt;());</span>
+<span class="fc" id="L118">        injectField(&quot;usersList&quot;, FXCollections.observableArrayList());</span>
+
+<span class="fc" id="L120">        addBookMessage = new Label();</span>
+<span class="fc" id="L121">        injectField(&quot;addBookMessage&quot;, addBookMessage);</span>
+        
+<span class="fc" id="L123">        welcomeLabel = new Label();</span>
+<span class="fc" id="L124">        injectField(&quot;welcomeLabel&quot;, welcomeLabel);</span>
+        
+<span class="fc" id="L126">        titleField = new TextField();</span>
+<span class="fc" id="L127">        injectField(&quot;titleField&quot;, titleField);</span>
+        
+<span class="fc" id="L129">        authorField = new TextField();</span>
+<span class="fc" id="L130">        injectField(&quot;authorField&quot;, authorField);</span>
+        
+<span class="fc" id="L132">        isbnField = new TextField();</span>
+<span class="fc" id="L133">        injectField(&quot;isbnField&quot;, isbnField);</span>
+        
+<span class="fc" id="L135">        searchField = new TextField();</span>
+<span class="fc" id="L136">        injectField(&quot;searchField&quot;, searchField);</span>
+
+<span class="fc" id="L138">        typeCombo = new ComboBox&lt;&gt;(FXCollections.observableArrayList(&quot;Book&quot;, &quot;CD&quot;));</span>
+<span class="fc" id="L139">        typeCombo.getSelectionModel().select(&quot;Book&quot;);</span>
+<span class="fc" id="L140">        injectField(&quot;typeCombo&quot;, typeCombo);</span>
+
+<span class="fc" id="L142">        searchByCombo = new ComboBox&lt;&gt;(FXCollections.observableArrayList(&quot;All&quot;, &quot;Title&quot;, &quot;Author&quot;, &quot;ISBN&quot;));</span>
+<span class="fc" id="L143">        searchByCombo.getSelectionModel().select(&quot;All&quot;);</span>
+<span class="fc" id="L144">        injectField(&quot;searchByCombo&quot;, searchByCombo);</span>
+
+<span class="fc" id="L146">        searchResultsTable = new TableView&lt;&gt;();</span>
+<span class="fc" id="L147">        injectField(&quot;searchResultsTable&quot;, searchResultsTable);</span>
+
+<span class="fc" id="L149">        typeColumn = new TableColumn&lt;&gt;(&quot;Type&quot;);</span>
+<span class="fc" id="L150">        injectField(&quot;typeColumn&quot;, typeColumn);</span>
+        
+<span class="fc" id="L152">        titleColumn = new TableColumn&lt;&gt;(&quot;Title&quot;);</span>
+<span class="fc" id="L153">        injectField(&quot;titleColumn&quot;, titleColumn);</span>
+        
+<span class="fc" id="L155">        authorColumn = new TableColumn&lt;&gt;(&quot;Author&quot;);</span>
+<span class="fc" id="L156">        injectField(&quot;authorColumn&quot;, authorColumn);</span>
+        
+<span class="fc" id="L158">        isbnColumn = new TableColumn&lt;&gt;(&quot;ISBN&quot;);</span>
+<span class="fc" id="L159">        injectField(&quot;isbnColumn&quot;, isbnColumn);</span>
+        
+<span class="fc" id="L161">        copyIdColumn = new TableColumn&lt;&gt;(&quot;CopyId&quot;);</span>
+<span class="fc" id="L162">        injectField(&quot;copyIdColumn&quot;, copyIdColumn);</span>
+        
+<span class="fc" id="L164">        statusColumn = new TableColumn&lt;&gt;(&quot;Status&quot;);</span>
+<span class="fc" id="L165">        injectField(&quot;statusColumn&quot;, statusColumn);</span>
+        
+<span class="fc" id="L167">        dueDateColumn = new TableColumn&lt;&gt;(&quot;Due&quot;);</span>
+<span class="fc" id="L168">        injectField(&quot;dueDateColumn&quot;, dueDateColumn);</span>
+        
+<span class="fc" id="L170">        fineColumn = new TableColumn&lt;&gt;(&quot;Fine&quot;);</span>
+<span class="fc" id="L171">        injectField(&quot;fineColumn&quot;, fineColumn);</span>
+        
+<span class="fc" id="L173">        borrowedByColumn = new TableColumn&lt;&gt;(&quot;By&quot;);</span>
+<span class="fc" id="L174">        injectField(&quot;borrowedByColumn&quot;, borrowedByColumn);</span>
+
+<span class="fc" id="L176">        usersTable = new TableView&lt;&gt;();</span>
+<span class="fc" id="L177">        injectField(&quot;usersTable&quot;, usersTable);</span>
+        
+<span class="fc" id="L179">        colUsername = new TableColumn&lt;&gt;(&quot;Username&quot;);</span>
+<span class="fc" id="L180">        injectField(&quot;colUsername&quot;, colUsername);</span>
+        
+<span class="fc" id="L182">        colRole = new TableColumn&lt;&gt;(&quot;Role&quot;);</span>
+<span class="fc" id="L183">        injectField(&quot;colRole&quot;, colRole);</span>
+        
+<span class="fc" id="L185">        colMembership = new TableColumn&lt;&gt;(&quot;Membership&quot;);</span>
+<span class="fc" id="L186">        injectField(&quot;colMembership&quot;, colMembership);</span>
+
+<span class="fc" id="L188">        Files.deleteIfExists(Paths.get(&quot;books.txt&quot;));</span>
+<span class="fc" id="L189">        Files.deleteIfExists(Paths.get(&quot;users.txt&quot;));</span>
+
+<span class="fc" id="L191">        controller.initialize();</span>
+<span class="fc" id="L192">    }</span>
+
+    /**
+     * Cleans up resources after each test method execution.
+     * &lt;p&gt;
+     * Ensures that temporary files created during testing ('books.txt', 'users.txt')
+     * are deleted to prevent data pollution between tests.
+     * &lt;/p&gt;
+     * 
+     * @throws IOException if file deletion fails.
+     */
+    @AfterEach
+    void tearDown() throws IOException {
+<span class="fc" id="L205">        Files.deleteIfExists(Paths.get(&quot;books.txt&quot;));</span>
+<span class="fc" id="L206">        Files.deleteIfExists(Paths.get(&quot;users.txt&quot;));</span>
+<span class="fc" id="L207">    }</span>
+
+    /**
+     * Verifies that the TableView RowFactory correctly styles rows based on media status.
+     * &lt;p&gt;
+     * Uses reflection to invoke the cell update logic and checks that:
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;&quot;Available&quot; items are styled green.&lt;/li&gt;
+     *   &lt;li&gt;&quot;Borrowed&quot; items are styled yellow.&lt;/li&gt;
+     *   &lt;li&gt;&quot;Overdue&quot; items are styled red.&lt;/li&gt;
+     * &lt;/ul&gt;
+     * 
+     * @throws Exception if reflection access to the Cell update method fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testRowFactory_ColoringLogic() throws Exception {
+<span class="fc" id="L225">        TableView&lt;Media&gt; table = (TableView&lt;Media&gt;) getPrivateField(&quot;searchResultsTable&quot;);</span>
+<span class="fc" id="L226">        Callback&lt;TableView&lt;Media&gt;, TableRow&lt;Media&gt;&gt; factory = table.getRowFactory();</span>
+<span class="fc" id="L227">        assertNotNull(factory);</span>
+
+<span class="fc" id="L229">        TableRow&lt;Media&gt; row = factory.call(table);</span>
+<span class="fc" id="L230">        Method updateItem = javafx.scene.control.Cell.class.getDeclaredMethod(&quot;updateItem&quot;, Object.class, boolean.class);</span>
+<span class="fc" id="L231">        updateItem.setAccessible(true);</span>
+
+<span class="fc" id="L233">        updateItem.invoke(row, new Book(&quot;T&quot;,&quot;A&quot;,&quot;1&quot;,&quot;Available&quot;,&quot;&quot;,0.0,&quot;&quot;,0.0,1), false);</span>
+<span class="fc" id="L234">        assertEquals(&quot;-fx-background-color: #d0f0c0;&quot;, row.getStyle());</span>
+
+<span class="fc" id="L236">        updateItem.invoke(row, new Book(&quot;T&quot;,&quot;A&quot;,&quot;1&quot;,&quot;Borrowed&quot;,&quot;&quot;,0.0,&quot;&quot;,0.0,1), false);</span>
+<span class="fc" id="L237">        assertEquals(&quot;-fx-background-color: #fff9c4;&quot;, row.getStyle());</span>
+
+<span class="fc" id="L239">        updateItem.invoke(row, new Book(&quot;T&quot;,&quot;A&quot;,&quot;1&quot;,&quot;Overdue&quot;,&quot;&quot;,0.0,&quot;&quot;,0.0,1), false);</span>
+<span class="fc" id="L240">        assertEquals(&quot;-fx-background-color: #ffcdd2;&quot;, row.getStyle());</span>
+
+<span class="fc" id="L242">        updateItem.invoke(row, new Book(&quot;T&quot;,&quot;A&quot;,&quot;1&quot;,&quot;Lost&quot;,&quot;&quot;,0.0,&quot;&quot;,0.0,1), false);</span>
+<span class="fc" id="L243">        assertEquals(&quot;&quot;, row.getStyle());</span>
+
+<span class="fc" id="L245">        updateItem.invoke(row, null, true);</span>
+<span class="fc" id="L246">        assertEquals(&quot;&quot;, row.getStyle());</span>
+<span class="fc" id="L247">    }</span>
+
+    /**
+     * Tests that the {@code handleAddBook} method validates input fields.
+     * &lt;p&gt;
+     * Ensures that if any required field is empty, the operation is aborted
+     * and an error message is displayed.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    void testHandleAddBook_EmptyFields() throws Exception {
+<span class="fc" id="L260">        titleField.setText(&quot;&quot;);</span>
+<span class="fc" id="L261">        controller.handleAddBook();</span>
+<span class="fc" id="L262">        Label msg = (Label) getPrivateField(&quot;addBookMessage&quot;);</span>
+<span class="fc" id="L263">        assertEquals(&quot;❗ Please fill all fields.&quot;, msg.getText());</span>
+<span class="fc" id="L264">    }</span>
+
+    /**
+     * Tests the successful addition of a new book to the inventory.
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleAddBook_Success() throws Exception {
+<span class="fc" id="L274">        setTextField(&quot;titleField&quot;, &quot;Java&quot;);</span>
+<span class="fc" id="L275">        setTextField(&quot;authorField&quot;, &quot;Gosling&quot;);</span>
+<span class="fc" id="L276">        setTextField(&quot;isbnField&quot;, &quot;999&quot;);</span>
+        
+<span class="fc" id="L278">        controller.handleAddBook();</span>
+
+<span class="fc" id="L280">        ObservableList&lt;Media&gt; list = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L281">        assertEquals(1, list.size());</span>
+<span class="fc" id="L282">        assertEquals(&quot;Java&quot;, list.get(0).getTitle());</span>
+<span class="fc" id="L283">    }</span>
+
+    /**
+     * Tests the logic for adding a new copy of an existing book.
+     * &lt;p&gt;
+     * Verifies that adding a book with an existing ISBN (and matching details)
+     * correctly increments the copy ID instead of creating a separate entry.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleAddBook_NewCopy() throws Exception {
+<span class="fc" id="L297">        setTextField(&quot;titleField&quot;, &quot;Java&quot;);</span>
+<span class="fc" id="L298">        setTextField(&quot;authorField&quot;, &quot;Gosling&quot;);</span>
+<span class="fc" id="L299">        setTextField(&quot;isbnField&quot;, &quot;999&quot;);</span>
+<span class="fc" id="L300">        controller.handleAddBook();</span>
+
+<span class="fc" id="L302">        setTextField(&quot;titleField&quot;, &quot;Java&quot;);</span>
+<span class="fc" id="L303">        setTextField(&quot;authorField&quot;, &quot;Gosling&quot;);</span>
+<span class="fc" id="L304">        setTextField(&quot;isbnField&quot;, &quot;999&quot;);</span>
+<span class="fc" id="L305">        controller.handleAddBook();</span>
+
+<span class="fc" id="L307">        ObservableList&lt;Media&gt; list = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L308">        assertEquals(2, list.size());</span>
+<span class="fc" id="L309">        assertEquals(2, list.get(1).getCopyId());</span>
+        
+<span class="fc" id="L311">        Label msg = (Label) getPrivateField(&quot;addBookMessage&quot;);</span>
+<span class="fc" id="L312">        assertTrue(msg.getText().contains(&quot;NEW COPY&quot;));</span>
+<span class="fc" id="L313">    }</span>
+
+    /**
+     * Tests validation against conflicting ISBN data.
+     * &lt;p&gt;
+     * Ensures that the system prevents adding a book with an existing ISBN
+     * if the title or author does not match the existing record.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleAddBook_Conflict() throws Exception {
+<span class="fc" id="L327">        ObservableList&lt;Media&gt; list = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L328">        Map&lt;String, Media&gt; map = (Map&lt;String, Media&gt;) getPrivateField(&quot;mediaMap&quot;);</span>
+<span class="fc" id="L329">        Media m1 = new Book(&quot;Original&quot;, &quot;Author&quot;, &quot;123&quot;, &quot;Available&quot;, &quot;&quot;, 0.0, &quot;&quot;, 0.0, 1);</span>
+<span class="fc" id="L330">        list.add(m1);</span>
+<span class="fc" id="L331">        map.put(&quot;123&quot;, m1);</span>
+
+<span class="fc" id="L333">        setTextField(&quot;titleField&quot;, &quot;Conflict Book&quot;);</span>
+<span class="fc" id="L334">        setTextField(&quot;authorField&quot;, &quot;Other Guy&quot;);</span>
+<span class="fc" id="L335">        setTextField(&quot;isbnField&quot;, &quot;123&quot;);</span>
+
+<span class="fc" id="L337">        controller.handleAddBook();</span>
+
+<span class="fc" id="L339">        Label msg = (Label) getPrivateField(&quot;addBookMessage&quot;);</span>
+<span class="fc" id="L340">        assertTrue(msg.getText().contains(&quot;ISBN already exists but with different title&quot;));</span>
+<span class="fc" id="L341">        assertEquals(1, list.size());</span>
+<span class="fc" id="L342">    }</span>
+
+    /**
+     * Tests the file parsing logic specifically for edge cases and malformed data.
+     * &lt;p&gt;
+     * Writes a temporary file containing valid lines, invalid number formats,
+     * short lines, and missing optional fields to verify the robustness of the
+     * parsing loop.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception if file I/O operations or reflection fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testLoadMedia_ParsingEdgeCases() throws Exception {
+<span class="fc" id="L357">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(&quot;books.txt&quot;))) {</span>
+<span class="fc" id="L358">            writer.write(&quot;Book,Good Title,Auth,100,1,Available,,0.0,,0.0\n&quot;);</span>
+<span class="fc" id="L359">            writer.write(&quot;CD,Bad Num,Auth,101,NotInt,Available,,NotDbl,,0.0\n&quot;);</span>
+<span class="fc" id="L360">            writer.write(&quot;Book,Short Line,Auth\n&quot;);</span>
+<span class="fc" id="L361">            writer.write(&quot;CD,Missing Opts,Auth,102,1\n&quot;);</span>
+<span class="fc" id="L362">            writer.write(&quot;Book,Borrowed,User,103,1,Borrowed,2025-01-01,5.0,ali,0.0\n&quot;);</span>
+        }
+        
+<span class="fc" id="L365">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(&quot;users.txt&quot;))) {</span>
+<span class="fc" id="L366">            writer.write(&quot;ali,123,User,Gold\n&quot;);</span>
+        }
+
+<span class="fc" id="L369">        controller.handleReload();</span>
+
+<span class="fc" id="L371">        ObservableList&lt;Media&gt; list = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+        
+<span class="fc" id="L373">        assertFalse(list.isEmpty());</span>
+        
+<span class="fc" id="L375">        assertTrue(list.stream().anyMatch(m -&gt; m.getIsbn().equals(&quot;100&quot;)));</span>
+        
+<span class="fc" id="L377">        Media badNum = list.stream().filter(m -&gt; m.getIsbn().equals(&quot;101&quot;)).findFirst().orElse(null);</span>
+<span class="fc" id="L378">        assertNotNull(badNum);</span>
+<span class="fc" id="L379">        assertEquals(1, badNum.getCopyId());</span>
+<span class="fc" id="L380">        assertEquals(0.0, badNum.getFineAmount());</span>
+        
+<span class="fc" id="L382">        assertFalse(list.stream().anyMatch(m -&gt; m.getTitle().equals(&quot;Short Line&quot;)));</span>
+<span class="fc" id="L383">    }</span>
+
+    /**
+     * Verifies the search functionality across all filtering criteria.
+     * &lt;p&gt;
+     * Tests filtering by:
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;Title&lt;/li&gt;
+     *   &lt;li&gt;Author&lt;/li&gt;
+     *   &lt;li&gt;ISBN&lt;/li&gt;
+     *   &lt;li&gt;All fields (default)&lt;/li&gt;
+     * &lt;/ul&gt;
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleSearch_AllCriteria() throws Exception {
+<span class="fc" id="L402">        ObservableList&lt;Media&gt; list = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L403">        list.add(new Book(&quot;Java&quot;, &quot;James&quot;, &quot;111&quot;, &quot;Available&quot;, &quot;&quot;, 0.0, &quot;&quot;, 0.0, 1));</span>
+<span class="fc" id="L404">        list.add(new Book(&quot;Python&quot;, &quot;Guido&quot;, &quot;222&quot;, &quot;Available&quot;, &quot;&quot;, 0.0, &quot;&quot;, 0.0, 1));</span>
+
+<span class="fc" id="L406">        searchField.setText(&quot;Java&quot;);</span>
+<span class="fc" id="L407">        searchByCombo.setValue(&quot;Title&quot;);</span>
+<span class="fc" id="L408">        controller.handleSearch();</span>
+<span class="fc" id="L409">        assertEquals(1, searchResultsTable.getItems().size());</span>
+
+<span class="fc" id="L411">        searchField.setText(&quot;Guido&quot;);</span>
+<span class="fc" id="L412">        searchByCombo.setValue(&quot;Author&quot;);</span>
+<span class="fc" id="L413">        controller.handleSearch();</span>
+<span class="fc" id="L414">        assertEquals(1, searchResultsTable.getItems().size());</span>
+
+<span class="fc" id="L416">        searchField.setText(&quot;111&quot;);</span>
+<span class="fc" id="L417">        searchByCombo.setValue(&quot;ISBN&quot;);</span>
+<span class="fc" id="L418">        controller.handleSearch();</span>
+<span class="fc" id="L419">        assertEquals(1, searchResultsTable.getItems().size());</span>
+
+<span class="fc" id="L421">        searchField.setText(&quot;222&quot;);</span>
+<span class="fc" id="L422">        searchByCombo.setValue(&quot;All&quot;);</span>
+<span class="fc" id="L423">        controller.handleSearch();</span>
+<span class="fc" id="L424">        assertEquals(1, searchResultsTable.getItems().size());</span>
+        
+<span class="fc" id="L426">        searchField.setText(&quot;&quot;);</span>
+<span class="fc" id="L427">        controller.handleSearch();</span>
+<span class="fc" id="L428">        assertEquals(2, searchResultsTable.getItems().size());</span>
+<span class="fc" id="L429">    }</span>
+
+    /**
+     * Tests that a user cannot be deleted if they currently hold borrowed items.
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleDeleteUser_WithLoans() throws Exception {
+<span class="fc" id="L439">        ObservableList&lt;User&gt; users = (ObservableList&lt;User&gt;) getPrivateField(&quot;usersList&quot;);</span>
+<span class="fc" id="L440">        User u = new User(&quot;loaner&quot;, &quot;1&quot;, &quot;User&quot;, &quot;Silver&quot;);</span>
+<span class="fc" id="L441">        users.add(u);</span>
+
+<span class="fc" id="L443">        ObservableList&lt;Media&gt; media = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L444">        media.add(new Book(&quot;B&quot;, &quot;A&quot;, &quot;I&quot;, &quot;Borrowed&quot;, &quot;&quot;, 0.0, &quot;loaner&quot;, 0.0, 1));</span>
+
+<span class="fc" id="L446">        usersTable.setItems(users);</span>
+<span class="fc" id="L447">        usersTable.getSelectionModel().select(u);</span>
+
+<span class="fc" id="L449">        controller.handleDeleteUser();</span>
+
+<span class="fc" id="L451">        assertEquals(1, users.size());</span>
+<span class="fc" id="L452">    }</span>
+
+    /**
+     * Tests the successful deletion of a user who has no active loans.
+     * 
+     * @throws Exception if reflection access to private fields fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleDeleteUser_Success() throws Exception {
+<span class="fc" id="L462">        ObservableList&lt;User&gt; users = (ObservableList&lt;User&gt;) getPrivateField(&quot;usersList&quot;);</span>
+<span class="fc" id="L463">        User u = new User(&quot;free&quot;, &quot;1&quot;, &quot;User&quot;, &quot;Silver&quot;);</span>
+<span class="fc" id="L464">        users.add(u);</span>
+
+<span class="fc" id="L466">        usersTable.setItems(users);</span>
+<span class="fc" id="L467">        usersTable.getSelectionModel().select(u);</span>
+
+<span class="fc" id="L469">        controller.handleDeleteUser();</span>
+
+<span class="fc" id="L471">        assertTrue(users.isEmpty());</span>
+<span class="fc" id="L472">    }</span>
+
+    /**
+     * Tests the entire flow of sending an overdue reminder email.
+     * &lt;p&gt;
+     * This integration test verifies that the system:
+     * &lt;/p&gt;
+     * &lt;ol&gt;
+     *   &lt;li&gt;Identifies a user with overdue items.&lt;/li&gt;
+     *   &lt;li&gt;Retrieves the user's email from the file.&lt;/li&gt;
+     *   &lt;li&gt;Triggers the publisher notification mechanism.&lt;/li&gt;
+     * &lt;/ol&gt;
+     * 
+     * @throws Exception if reflection or mock setup fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleSendReminder_Logic() throws Exception {
+<span class="fc" id="L490">        ObservableList&lt;User&gt; users = (ObservableList&lt;User&gt;) getPrivateField(&quot;usersList&quot;);</span>
+<span class="fc" id="L491">        User u = new User(&quot;lateUser&quot;, &quot;1&quot;, &quot;User&quot;, &quot;Gold&quot;);</span>
+<span class="fc" id="L492">        users.add(u);</span>
+        
+<span class="fc" id="L494">        usersTable.setItems(users);</span>
+<span class="fc" id="L495">        usersTable.getSelectionModel().select(u);</span>
+        
+<span class="fc" id="L497">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(&quot;users.txt&quot;))) {</span>
+<span class="fc" id="L498">            writer.write(&quot;lateUser,1,User,Gold,test@mail.com\n&quot;);</span>
+        }
+
+<span class="fc" id="L501">        ObservableList&lt;Media&gt; media = (ObservableList&lt;Media&gt;) getPrivateField(&quot;mediaList&quot;);</span>
+<span class="fc" id="L502">        media.add(new Book(&quot;Late&quot;, &quot;Auth&quot;, &quot;999&quot;, &quot;Overdue&quot;, &quot;2020-01-01&quot;, 10.0, &quot;lateUser&quot;, 0.0, 1));</span>
+
+<span class="fc" id="L504">        mockOverdueSubscriber();</span>
+
+<span class="fc" id="L506">        assertDoesNotThrow(() -&gt; controller.handleSendReminder());</span>
+<span class="fc" id="L507">    }</span>
+
+    /**
+     * Tests the behavior when attempting to send a reminder to a user without a registered email.
+     * 
+     * @throws Exception if reflection or file I/O fails.
+     */
+    @Test
+    @SuppressWarnings(&quot;unchecked&quot;)
+    void testHandleSendReminder_NoEmail() throws Exception {
+<span class="fc" id="L517">        ObservableList&lt;User&gt; users = (ObservableList&lt;User&gt;) getPrivateField(&quot;usersList&quot;);</span>
+<span class="fc" id="L518">        User u = new User(&quot;noEmail&quot;, &quot;1&quot;, &quot;User&quot;, &quot;Gold&quot;);</span>
+<span class="fc" id="L519">        users.add(u);</span>
+        
+<span class="fc" id="L521">        usersTable.setItems(users);</span>
+<span class="fc" id="L522">        usersTable.getSelectionModel().select(u);</span>
+        
+<span class="fc" id="L524">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(&quot;users.txt&quot;))) {</span>
+<span class="fc" id="L525">            writer.write(&quot;noEmail,1,User,Gold\n&quot;);</span>
+        }
+
+<span class="fc" id="L528">        assertDoesNotThrow(() -&gt; controller.handleSendReminder());</span>
+<span class="fc" id="L529">    }</span>
+
+    /**
+     * Injects a value into a private field of the controller instance using Reflection.
+     * 
+     * @param name  The name of the private field.
+     * @param value The object value to inject.
+     * @throws Exception If the field is not found or inaccessible.
+     */
+    private void injectField(String name, Object value) throws Exception {
+<span class="fc" id="L539">        Field f = homepageController.class.getDeclaredField(name);</span>
+<span class="fc" id="L540">        f.setAccessible(true);</span>
+<span class="fc" id="L541">        f.set(controller, value);</span>
+<span class="fc" id="L542">    }</span>
+
+    /**
+     * Retrieves the value of a private field from the controller instance using Reflection.
+     * 
+     * @param name The name of the private field.
+     * @return The value of the field.
+     * @throws Exception If the field is not found or inaccessible.
+     */
+    private Object getPrivateField(String name) throws Exception {
+<span class="fc" id="L552">        Field f = homepageController.class.getDeclaredField(name);</span>
+<span class="fc" id="L553">        f.setAccessible(true);</span>
+<span class="fc" id="L554">        return f.get(controller);</span>
+    }
+    
+    /**
+     * Helper method to set text on a private TextField within the controller.
+     * 
+     * @param fieldName The name of the TextField field.
+     * @param value     The string value to set.
+     * @throws Exception If reflection access fails.
+     */
+    private void setTextField(String fieldName, String value) throws Exception {
+<span class="fc" id="L565">        ((TextField) getPrivateField(fieldName)).setText(value);</span>
+<span class="fc" id="L566">    }</span>
+
+    /**
+     * Replaces the real OverduePublisher subscribers with a mock subscriber.
+     * &lt;p&gt;
+     * This prevents actual network calls or email sending attempts during testing.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception If reflection access to the publisher or its list fails.
+     */
+    private void mockOverdueSubscriber() throws Exception {
+<span class="fc" id="L577">        Field pubField = homepageController.class.getDeclaredField(&quot;overduePublisher&quot;);</span>
+<span class="fc" id="L578">        pubField.setAccessible(true);</span>
+<span class="fc" id="L579">        OverduePublisher publisher = (OverduePublisher) pubField.get(null);</span>
+
+<span class="fc" id="L581">        Field subsField = OverduePublisher.class.getDeclaredField(&quot;subscribers&quot;);</span>
+<span class="fc" id="L582">        subsField.setAccessible(true);</span>
+<span class="fc" id="L583">        java.util.List&lt;OverdueSubscriber&gt; subs = (java.util.List&lt;OverdueSubscriber&gt;) subsField.get(publisher);</span>
+
+<span class="fc" id="L585">        subs.clear();</span>
+<span class="fc" id="L586">        subs.add((username, email, overdueList) -&gt; {</span>
+<span class="fc" id="L587">        });</span>
+<span class="fc" id="L588">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>
