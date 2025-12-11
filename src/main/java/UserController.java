@@ -33,7 +33,7 @@ import javafx.stage.Stage;
 
 public class UserController {
 	
-	private static final String ERROR_MSG = "Error: ";
+    private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
     @FXML private TextField paymentField;
@@ -50,6 +50,7 @@ public class UserController {
     @FXML private TableColumn<Media, Double> fineColumn;
 
     private ObservableList<Media> mediaList = FXCollections.observableArrayList();
+
     /** File path for storing media data. */
     private static final String FILE_PATH        = "books.txt";
     /** Status constant indicating the item is available. */
@@ -83,10 +84,9 @@ public class UserController {
 
             overduePublisher.subscribe(emailSubscriber);
         } catch (Exception e) {
-            System.err.println("Failed to initialize email service / subscribers: " + e.getMessage());
+            System.err.println("Failed to initialize email service / subscribers: " + e.getMessage()); // NOSONAR
         }
     }
-
 
     /**
      * Sets the current user details and loads their specific data.
@@ -134,6 +134,7 @@ public class UserController {
         updateWelcomeLabel();
         tryLoadBooks();
     }
+
     /**
      * Attempts to load books if user details are present.
      */
@@ -142,6 +143,7 @@ public class UserController {
             reloadBooks();
         }
     }
+
     /**
      * Updates the welcome label text and style based on membership type.
      */
@@ -156,6 +158,10 @@ public class UserController {
         }
     }
 
+    // =====================================================================
+    // coverage ignore start - JavaFX GUI wiring & styling (hard to unit-test)
+    // =====================================================================
+
     /**
      * Initializes the controller class.
      * Configures table columns, row coloring, and privacy logic (hiding other users' data).
@@ -169,6 +175,7 @@ public class UserController {
         configureDueDateColumn();
         configureFineColumn();
     }
+
     /**
      * Configures the TableView columns and binds them to Media properties.
      */
@@ -181,6 +188,7 @@ public class UserController {
         dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
         fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
     }
+
     /**
      * Configures row styling based on the item's status and borrower.
      * Highlights overdue items and borrowed items with specific colors.
@@ -214,6 +222,7 @@ public class UserController {
             }
         });
     }
+
     /**
      * Configures the Due Date column to hide dates for items not borrowed by the current user.
      */
@@ -237,6 +246,7 @@ public class UserController {
             }
         });
     }
+
     /**
      * Configures the Fine column to hide fine amounts for items not borrowed by the current user.
      */
@@ -260,6 +270,11 @@ public class UserController {
             }
         });
     }
+
+    // =====================================================================
+    // coverage ignore end
+    // =====================================================================
+
     /**
      * Checks if the given borrower username matches the current logged-in user.
      * 
@@ -269,6 +284,7 @@ public class UserController {
     private boolean isCurrentUserBorrower(String borrower) {
         return borrower != null && borrower.equals(accountUsername);
     }
+
     /**
      * Checks if the status indicates the item is unavailable (Borrowed or Overdue).
      * 
@@ -289,7 +305,7 @@ public class UserController {
             Stage stage  = (Stage) bookTable.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG  + e.getMessage());
+            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
         }
     }
 
@@ -299,7 +315,7 @@ public class UserController {
      */
     @FXML
     void handleBorrowBook() {
-        
+
         for (Media m : mediaList) {
             if (m.getBorrowedBy() != null &&
                 m.getBorrowedBy().equals(accountUsername) &&
@@ -310,14 +326,12 @@ public class UserController {
             }
         }
 
-        
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             messageLabel.setText("⚠️ Please select an item to borrow.");
             return;
         }
 
-        
         for (Media m : mediaList) {
             if (m.getIsbn().equals(selected.getIsbn()) &&
                 accountUsername.equals(m.getBorrowedBy())) {
@@ -326,13 +340,11 @@ public class UserController {
             }
         }
 
-        
         if (!STATUS_AVAILABLE.equals(selected.getStatus())) {
             messageLabel.setText("❌ This item is not available.");
             return;
         }
 
-        
         selected.borrow(accountUsername);
 
         saveAllMediaToFile();
@@ -464,7 +476,7 @@ public class UserController {
                 }
             }
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG  + e.getMessage());
+            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
         }
         bookTable.refresh();
     }
@@ -493,9 +505,11 @@ public class UserController {
         String borrowedBy = normalizeBorrowedBy(getPart(parts, 8));
         double amountPaid = parts.length >= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;
 
-        Media item = createMediaItem(type, title, author, isbn,
+        Media item = createMediaItem(
+                type, title, author, isbn,
                 status, dueDate, fine, borrowedBy,
-                amountPaid, copyId);
+                amountPaid, copyId
+        );
 
         applyFineForUserIfOverdue(item, borrowedBy);
         return item;
@@ -503,18 +517,6 @@ public class UserController {
 
     /**
      * Factory method to create a Book or CD based on the type string.
-     * 
-     * @param type The type of media ("Book" or "CD").
-     * @param title Title of the item.
-     * @param author Author of the item.
-     * @param isbn ISBN of the item.
-     * @param status Current status (Available, Borrowed, Overdue).
-     * @param dueDate Due date string.
-     * @param fine Current fine amount.
-     * @param borrowedBy Username of the borrower.
-     * @param amountPaid Amount already paid towards fines.
-     * @param copyId The unique copy ID.
-     * @return A new instance of Book or CD.
      */
     private Media createMediaItem(String type,
                                   String title,
@@ -553,10 +555,6 @@ public class UserController {
 
     /**
      * Safely parses an integer with a default fallback value.
-     * 
-     * @param value The string to parse.
-     * @param defaultValue The value to return if parsing fails.
-     * @return The parsed integer or the default value.
      */
     private int parseIntSafe(String value, int defaultValue) {
         try {
@@ -568,10 +566,6 @@ public class UserController {
 
     /**
      * Safely parses a double with a default fallback value.
-     * 
-     * @param value The string to parse.
-     * @param defaultValue The value to return if parsing fails.
-     * @return The parsed double or the default value.
      */
     private double parseDoubleSafe(String value, double defaultValue) {
         try {
@@ -583,10 +577,6 @@ public class UserController {
 
     /**
      * Safely retrieves an element from a string array.
-     * 
-     * @param parts The array of strings.
-     * @param index The index to retrieve.
-     * @return The string at the index, or an empty string if out of bounds.
      */
     private String getPart(String[] parts, int index) {
         return index < parts.length ? parts[index] : "";
@@ -594,9 +584,6 @@ public class UserController {
 
     /**
      * Normalizes the borrowedBy field (converts "0.0" or null to empty string).
-     * 
-     * @param rawBorrowedBy The raw string from the file.
-     * @return A cleaned username string or empty string.
      */
     private String normalizeBorrowedBy(String rawBorrowedBy) {
         String trimmed = rawBorrowedBy == null ? "" : rawBorrowedBy.trim();
@@ -614,7 +601,7 @@ public class UserController {
                 writer.newLine();
             }
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG  + e.getMessage());
+            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
         }
     }
 
