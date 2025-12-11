@@ -1,3 +1,4 @@
+// Refactored for SonarQube
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -158,10 +159,7 @@ public class UserController {
         }
     }
 
-    // =====================================================================
-    // coverage ignore start - JavaFX GUI wiring & styling (hard to unit-test)
-    // =====================================================================
-
+    
     /**
      * Initializes the controller class.
      * Configures table columns, row coloring, and privacy logic (hiding other users' data).
@@ -217,7 +215,7 @@ public class UserController {
                 }
 
                 if (isBorrowedOrOverdue(status)) {
-                    setStyle("-fx-background-color: #fff3cd;"); // أصفر
+                    setStyle("-fx-background-color: #fff3cd;"); 
                 }
             }
         });
@@ -271,10 +269,7 @@ public class UserController {
         });
     }
 
-    // =====================================================================
-    // coverage ignore end
-    // =====================================================================
-
+    
     /**
      * Checks if the given borrower username matches the current logged-in user.
      * 
@@ -476,7 +471,7 @@ public class UserController {
                 }
             }
         } catch (IOException e) {
-            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR
+            System.err.println(ERROR_MSG + e.getMessage()); 
         }
         bookTable.refresh();
     }
