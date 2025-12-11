@@ -164,8 +164,10 @@ class UserControllerTest {
             TableView<Media> table = getField("bookTable");
             if (!table.getItems().isEmpty()) {
                 Media item = table.getItems().get(0);
-                item.setQuantity(5);
-                item.setAvailability("Available"); 
+                // Use reflection to set fields since setters are missing
+                setInternalState(item, "quantity", 5);
+                setInternalState(item, "availability", "Available");
+                
                 table.getSelectionModel().select(0);
                 controller.handleBorrowBook();
             }
@@ -427,6 +429,26 @@ class UserControllerTest {
     }
 
     /**
+     * Sets a private field on an object via reflection.
+     * Handles class hierarchy.
+     */
+    private void setInternalState(Object target, String fieldName, Object value) {
+        Class<?> clazz = target.getClass();
+        while (clazz != null) {
+            try {
+                Field f = clazz.getDeclaredField(fieldName);
+                f.setAccessible(true);
+                f.set(target, value);
+                return;
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            } catch (Exception e) {
+                throw new RuntimeException("Error setting " + fieldName, e);
+            }
+        }
+    }
+
+    /**
      * Injects mock controls.
      * 
      * @throws Exception if injection fails.
@@ -452,7 +474,7 @@ class UserControllerTest {
     }
 
     /**
-     * Sets a private field value.
+     * Sets a private field value on the controller.
      * 
      * @param name Field name.
      * @param val Value to set.
