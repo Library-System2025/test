@@ -1,3 +1,4 @@
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.collections.FXCollections;
@@ -15,7 +16,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.logging.Logger;
+
 
 /**
  * Controller class for the Librarian Dashboard.
@@ -32,8 +33,6 @@ import java.util.logging.Logger;
  * @version 1.0
  */
 public class LibrarianController {
-
-    private static final Logger LOGGER = Logger.getLogger(LibrarianController.class.getName());
 
     @FXML private Label welcomeLabel;
     @FXML private TextField searchField;
@@ -199,7 +198,7 @@ public class LibrarianController {
             Stage stage = (Stage) searchField.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
-            LOGGER.severe("Error loading login screen: " + e.getMessage());
+            System.err.println("Error loading login screen: " + e.getMessage());
         }
     }
 
@@ -233,6 +232,7 @@ public class LibrarianController {
         showInfo("🔄 Data reloaded.");
     }
 
+    
     private void reloadBooks() {
         loadMediaFromFile();
         bookTable.refresh();
@@ -253,7 +253,7 @@ public class LibrarianController {
                 if (item != null) mediaList.add(item);
             }
         } catch (IOException e) {
-            LOGGER.severe("Error reading file: " + e.getMessage());
+            System.err.println("Error reading file: " + e.getMessage());
         }
         
         if (bookTable != null) bookTable.refresh();
@@ -335,7 +335,7 @@ public class LibrarianController {
                 writer.newLine();
             }
         } catch (IOException e) {
-            LOGGER.severe("Error processing file: " + e.getMessage());
+        	System.err.println("Error processing file: " + e.getMessage());
         }
     }
 
@@ -368,8 +368,7 @@ public class LibrarianController {
                 }
             }
         } catch (IOException e) {
-            LOGGER.warning("Error reading users file while getting membership for: " 
-                           + username + " - " + e.getMessage());
+            
         }
         return "Silver";
     }
