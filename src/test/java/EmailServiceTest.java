@@ -4,16 +4,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import jakarta.mail.Message;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Transport;
+import jakarta.mail.MessagingException;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 /**
- * Unit tests for the {@link EmailService} class.
+ * Comprehensive Unit Test suite for the {@link EmailService} class.
  * <p>
- * This class validates the interaction with the JavaMail API. It uses {@link MockedStatic} 
+ * This class validates the interaction with the Jakarta Mail API. It uses {@link MockedStatic} 
  * to mock the static {@link Transport#send(Message)} method, ensuring that actual emails 
- * are not sent during testing.
+ * are not sent during testing, while verifying proper method delegation and error handling.
  * </p>
  *
  * @author Zainab
@@ -21,7 +22,13 @@ import org.mockito.MockedStatic;
  */
 public class EmailServiceTest {
 
-	/**
+    /**
+     * Default constructor for EmailServiceTest.
+     */
+    public EmailServiceTest() {
+    }
+
+    /**
      * Verifies that {@link EmailService#sendEmail} successfully invokes the static 
      * {@link Transport#send} method when valid parameters are provided.
      *
@@ -29,11 +36,9 @@ public class EmailServiceTest {
      */
     @Test
     void testSendEmail_invokesTransportSend() throws Exception {
-
         EmailService emailService = new EmailService("sender@gmail.com", "pass123");
 
         try (MockedStatic<Transport> mockedTransport = mockStatic(Transport.class)) {
-
             emailService.sendEmail(
                     "target@mail.com",
                     "Test Subject",
@@ -48,7 +53,7 @@ public class EmailServiceTest {
     }
 
     /**
-     * Verifies that {@link EmailService#sendEmail} wraps checked {@link jakarta.mail.MessagingException}
+     * Verifies that {@link EmailService#sendEmail} wraps checked {@link MessagingException}
      * into a runtime exception, allowing the application to handle failures gracefully.
      *
      * @throws Exception if mocking fails.
@@ -58,9 +63,8 @@ public class EmailServiceTest {
         EmailService emailService = new EmailService("sender@gmail.com", "pass123");
 
         try (MockedStatic<Transport> mockedTransport = mockStatic(Transport.class)) {
-
             mockedTransport.when(() -> Transport.send(any(Message.class)))
-                    .thenThrow(new jakarta.mail.MessagingException("fail"));
+                    .thenThrow(new MessagingException("fail"));
 
             RuntimeException ex = assertThrows(
                     RuntimeException.class,
@@ -77,10 +81,8 @@ public class EmailServiceTest {
      */
     @Test
     void testSendReminder_delegatesToSendEmail() {
-
         EmailService spyService = spy(new EmailService("sender@gmail.com", "pass123"));
 
-        
         doNothing().when(spyService).sendEmail(anyString(), anyString(), anyString());
 
         spyService.sendReminder("user@mail.com", "Reminder", "Body here");
@@ -92,13 +94,9 @@ public class EmailServiceTest {
     /**
      * Verifies that {@code createPasswordAuthentication} correctly encapsulates 
      * the username and password provided during initialization.
-     * <p>
-     * This ensures the Authenticator uses the correct credentials.
-     * </p>
      */
     @Test
     void testCreatePasswordAuthentication_usesGivenUsernameAndPassword() {
-
         String user = "sender@gmail.com";
         String pass = "appPassword123";
 
@@ -107,6 +105,6 @@ public class EmailServiceTest {
         PasswordAuthentication pa = service.createPasswordAuthentication();
 
         assertEquals(user, pa.getUserName());
-        assertEquals(pass, new String(pa.getPassword()));
+        assertEquals(pass, pa.getPassword());
     }
 }
