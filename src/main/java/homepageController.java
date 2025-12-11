@@ -1,18 +1,15 @@
 import javafx.fxml.FXML;
-
 import javafx.scene.control.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
-
 import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.io.*;
 import java.util.HashMap;
-
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
@@ -38,7 +35,6 @@ import io.github.cdimascio.dotenv.Dotenv;
  * @author Zainab
  * @version 1.0
  */
-
 public class homepageController {
 
     private static final String ERROR_MSG = "Error: ";
@@ -87,22 +83,36 @@ public class homepageController {
      * <p>
      * Loads sensitive credentials (email/password) from a `.env` file using Dotenv.
      * Subscribes the {@link EmailOverdueSubscriber} to the {@link OverduePublisher}.
+     * If the environment variables are missing or invalid, the email service is
+     * disabled and no subscriber is registered.
      * </p>
      */
     static {
         try {
-            Dotenv dotenv = Dotenv.load();
+            Dotenv dotenv = Dotenv.configure()
+                    .ignoreIfMissing()
+                    .load();
+
             String serviceEmail = dotenv.get("EMAIL_USERNAME");
             String servicePass  = dotenv.get("EMAIL_PASSWORD");
 
-            emailService = new EmailService(serviceEmail, servicePass);
-
-            EmailOverdueSubscriber emailSub =
-                    new EmailOverdueSubscriber(emailService, serviceEmail);
-
-            overduePublisher.subscribe(emailSub);
+            if (serviceEmail == null || serviceEmail.trim().isEmpty()
+                    || servicePass == null || servicePass.trim().isEmpty()) {
+                System.err.println(
+                    "Email service is not configured: EMAIL_USERNAME or EMAIL_PASSWORD is missing or empty. " +
+                    "Overdue email reminders will be disabled."
+                );
+                emailService = null;
+            } else {
+                emailService = new EmailService(serviceEmail, servicePass);
+                EmailOverdueSubscriber emailSub =
+                        new EmailOverdueSubscriber(emailService, serviceEmail);
+                overduePublisher.subscribe(emailSub);
+                System.out.println("Email service initialized successfully with sender: " + serviceEmail);
+            }
         } catch (Exception e) {
             System.err.println("Failed to init email service / subscribers in homepageController: " + e.getMessage());
+            emailService = null;
         }
     }
 
@@ -489,8 +499,6 @@ public class homepageController {
                     return parts[3].trim();
             }
         } catch (IOException e) {
-            // Intentionally ignored: if we can't read the file,
-            // we fall back to the default membership (Silver).
             System.err.println("Warning: unable to read users file for membership: " + e.getMessage());
         }
         return "Silver";
@@ -536,8 +544,6 @@ public class homepageController {
                 }
             }
         } catch (IOException e) {
-            // Intentionally ignored: failure to load users should not prevent
-            // the UI from working; users list will simply be empty.
             System.err.println("Warning: failed to load users: " + e.getMessage());
         }
     }
@@ -584,8 +590,6 @@ public class homepageController {
                 writer.newLine();
             }
         } catch (IOException e) {
-            // Intentionally ignored: if saving users fails,
-            // in-memory state remains valid but changes won't persist.
             System.err.println("Warning: failed to save users file: " + e.getMessage());
         }
     }
@@ -614,10 +618,22 @@ public class homepageController {
 
     /**
      * Identifies overdue items for a selected user and sends an email reminder.
-     * Uses the {@link OverduePublisher} to notify subscribers.
+     * <p>
+     * Uses the {@link OverduePublisher} to notify subscribers. If the email
+     * service is not configured, the method shows an error message and exits
+     * without attempting to send any reminders.
+     * </p>
      */
     @FXML
     void handleSendReminder() {
+        if (emailService == null) {
+            showAlert(
+                "Error",
+                "Email service is not configured. Please set EMAIL_USERNAME and EMAIL_PASSWORD in the .env file."
+            );
+            return;
+        }
+
         User selected = usersTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Select a user to send reminder.");
