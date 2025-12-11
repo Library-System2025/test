@@ -46,6 +46,7 @@ class UserControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
+            // JavaFX platform already initialized; safe to ignore in tests.
         }
         System.setProperty("EMAIL_USERNAME", "mock_user");
         System.setProperty("EMAIL_" + "PASSWORD", "mock_cred");
@@ -378,7 +379,11 @@ class UserControllerTest {
 
         runOnFxThreadAndWait(() -> {
             table.getSelectionModel().select(item);
-            try { controller.handleReturnBook(); } catch (Exception e) {}
+            try {
+                controller.handleReturnBook();
+            } catch (Exception e) {
+                fail("Exception during return with fine: " + e.getMessage());
+            }
         });
 
         if (item.getFineAmount() > 0) {
@@ -443,7 +448,7 @@ class UserControllerTest {
         Method normalize = UserController.class.getDeclaredMethod("normalizeBorrowedBy", String.class);
         normalize.setAccessible(true);
         assertEquals("", normalize.invoke(controller, "0.0"));
-        assertEquals("", normalize.invoke(controller, (Object)null));
+        assertEquals("", normalize.invoke(controller, (Object) null));
         assertEquals("User", normalize.invoke(controller, "User"));
     }
 
@@ -466,7 +471,9 @@ class UserControllerTest {
             updateItem.invoke(row, new Book("B", "A", "1", "Overdue", "2000-01-01", 10.0, "TestUser", 0, 1), false);
             updateItem.invoke(row, new Book("B", "A", "2", "Borrowed", "2099-01-01", 0.0, "TestUser", 0, 1), false);
             updateItem.invoke(row, new Book("B", "A", "3", "Borrowed", "2099-01-01", 0.0, "Other", 0, 1), false);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            fail("Exception while testing row factory styling: " + e.getMessage());
+        }
     }
 
     /**
@@ -501,7 +508,9 @@ class UserControllerTest {
             
             injectTableRow(fineCell, createRow(myItem));
             updateItemDouble.invoke(fineCell, 10.0, false);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            fail("Exception while testing cell factory rendering: " + e.getMessage());
+        }
     }
 
     /**
@@ -568,7 +577,11 @@ class UserControllerTest {
     @Test
     void testLogout() throws InterruptedException {
         runOnFxThreadAndWait(() -> {
-            try { controller.handleLogout(); } catch (Exception e) {}
+            try {
+                controller.handleLogout();
+            } catch (Exception e) {
+                fail("Exception during logout: " + e.getMessage());
+            }
         });
     }
 
@@ -580,7 +593,7 @@ class UserControllerTest {
     @Test
     void testSaveFileException() throws Exception {
         File file = new File(TEST_FILE);
-        if(file.exists()) file.delete();
+        if (file.exists()) file.delete();
         file.mkdir();
         
         Media item = new Book("A", "B", "C", "Avail", "date", 0, "user", 0, 1);
