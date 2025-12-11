@@ -24,13 +24,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Comprehensive JUnit Test suite for the {@link UserController} class.
- * <p>
- * This suite guarantees high Code Coverage via Reflection and Logic testing,
- * ensuring robust error handling and adherence to quality gates.
- * </p>
+ * Comprehensive JUnit Test suite for the UserController class.
+ * This suite guarantees high Code Coverage via Reflection and Logic testing.
  * 
- * @author Zainab
  * @version 1.0 
  */
 class UserControllerTest {
@@ -39,7 +35,7 @@ class UserControllerTest {
     private static final String TEST_FILE = "books.txt";
 
     /**
-     * Initializes the JavaFX Platform and sets up mock environment variables.
+     * Initializes the JavaFX Platform.
      */
     @BeforeAll
     static void initJfxAndEnv() {
@@ -48,17 +44,11 @@ class UserControllerTest {
         } catch (IllegalStateException e) {
         }
         System.setProperty("EMAIL_USERNAME", "mock_user");
-        System.setProperty("EMAIL_" + "PASSWORD", "mock_cred");
+        System.setProperty("EMAIL_PASSWORD", "mock_cred");
     }
 
     /**
-     * Default constructor for the test class.
-     */
-    public UserControllerTest() {
-    }
-
-    /**
-     * Sets up the test environment before each test execution.
+     * Sets up the test environment.
      * 
      * @throws Exception If setup fails.
      */
@@ -72,7 +62,7 @@ class UserControllerTest {
     }
 
     /**
-     * Cleans up temporary files after each test.
+     * Cleans up temporary files.
      */
     @AfterEach
     void tearDown() {
@@ -83,47 +73,7 @@ class UserControllerTest {
     }
 
     /**
-     * Injects mock UI components into the controller.
-     * 
-     * @throws Exception If reflection fails.
-     */
-    private void initializeUIComponents() throws Exception {
-        injectField(controller, "welcomeLabel", new Label());
-        injectField(controller, "paymentField", new TextField());
-        injectField(controller, "infoLabel", new Label());
-        injectField(controller, "messageLabel", new Label());
-
-        TableView<Media> table = new TableView<>();
-        injectField(controller, "bookTable", table);
-        injectField(controller, "typeColumn", new TableColumn<Media, String>());
-        injectField(controller, "titleColumn", new TableColumn<Media, String>());
-        injectField(controller, "authorColumn", new TableColumn<Media, String>());
-        injectField(controller, "isbnColumn", new TableColumn<Media, String>());
-        injectField(controller, "statusColumn", new TableColumn<Media, String>());
-        injectField(controller, "dueDateColumn", new TableColumn<Media, String>());
-        injectField(controller, "fineColumn", new TableColumn<Media, Double>());
-    }
-
-    /**
-     * Runs a runnable on the JavaFX thread and awaits completion.
-     * 
-     * @param action The action to run.
-     * @throws InterruptedException If interrupted.
-     */
-    private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
-            try {
-                action.run();
-            } finally {
-                latch.countDown();
-            }
-        });
-        latch.await(5, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Tests table initialization.
+     * Tests the initialization of the table view.
      */
     @Test
     void testInitialize() {
@@ -133,7 +83,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests user context setting.
+     * Tests setting the current user details.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -145,7 +95,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests legacy setters.
+     * Tests legacy setters for membership and username.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -161,7 +111,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests successful borrowing.
+     * Tests successful book borrowing.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -173,7 +123,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrow failure when nothing is selected.
+     * Tests borrowing failure when no item is selected.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -189,7 +139,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrow failure due to existing fines.
+     * Tests borrowing failure when user has unpaid fines.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -207,7 +157,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests borrow failure if already borrowed.
+     * Tests borrowing failure when the item is already borrowed by the user.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -221,7 +171,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests borrow failure if unavailable.
+     * Tests borrowing failure when the item is unavailable.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -235,7 +185,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests partial payment.
+     * Tests partial payment of a fine.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -247,7 +197,6 @@ class UserControllerTest {
         item.borrow("TestUser");
         item.setStatus("Overdue");
         item.setDueDate("2000-01-01");
-        
         item.calculateFine("Gold");
 
         performPayment(item, "1.0");
@@ -257,7 +206,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests full payment.
+     * Tests full payment of a fine.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -280,7 +229,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests validation of payment input.
+     * Tests validation logic for payment input.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -308,7 +257,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests pay failure with no selection.
+     * Tests payment failure when no item is selected.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -324,7 +273,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests pay failure for wrong user.
+     * Tests payment failure when trying to pay for another user's item.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -342,7 +291,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests successful return.
+     * Tests successful book return.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -363,12 +312,11 @@ class UserControllerTest {
     }
 
     /**
-     * Tests return failure due to fines.
+     * Tests return failure when the item has unpaid fines.
      * 
      * @throws InterruptedException If interrupted.
      */
     @Test
-    @SuppressWarnings("unchecked")
     void testReturnBookFailWithFine() throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
         Media item = table.getItems().get(1);
@@ -388,12 +336,11 @@ class UserControllerTest {
     }
     
     /**
-     * Tests return validation for other users.
+     * Tests return failure when trying to return another user's book.
      * 
      * @throws InterruptedException If interrupted.
      */
     @Test
-    @SuppressWarnings("unchecked")
     void testValidationNotBorrower() throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
         Media item = table.getItems().get(1);
@@ -408,7 +355,7 @@ class UserControllerTest {
     }
     
     /**
-     * Tests return with no selection.
+     * Tests return failure when no item is selected.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -424,9 +371,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests private helper methods via Reflection to maximize coverage.
+     * Tests private helper methods using reflection.
      * 
-     * @throws Exception If reflection fails.
+     * @throws Exception If reflection call fails.
      */
     @Test
     void testPrivateHelpersViaReflection() throws Exception {
@@ -448,7 +395,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests UI row styling via reflection.
+     * Tests the TableRow factory logic for row styling.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -470,7 +417,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests UI cell rendering via reflection.
+     * Tests the Cell factory logic for custom rendering.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -505,9 +452,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests file parsing with corrupted data.
+     * Tests parsing logic with corrupted data lines in the file.
      * 
-     * @throws IOException If write fails.
+     * @throws IOException If file writing fails.
      * @throws InterruptedException If interrupted.
      */
     @Test
@@ -524,12 +471,11 @@ class UserControllerTest {
     }
     
     /**
-     * Tests notification when email is null.
+     * Tests overdue notification logic when user email is null.
      * 
      * @throws InterruptedException If interrupted.
      */
     @Test
-    @SuppressWarnings("unchecked")
     void testOverdueNotificationNullEmail() throws InterruptedException {
         runOnFxThreadAndWait(() -> controller.setCurrentUser("TestUser", "Gold", null));
         
@@ -549,7 +495,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests reload.
+     * Tests the reload functionality.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -561,7 +507,7 @@ class UserControllerTest {
     }
 
     /**
-     * Tests logout (Headless check).
+     * Tests the logout handler.
      * 
      * @throws InterruptedException If interrupted.
      */
@@ -573,9 +519,9 @@ class UserControllerTest {
     }
 
     /**
-     * Tests file save exceptions.
+     * Tests file saving exceptions.
      * 
-     * @throws Exception If failure occurs.
+     * @throws Exception If logic fails.
      */
     @Test
     void testSaveFileException() throws Exception {
@@ -591,12 +537,6 @@ class UserControllerTest {
         file.delete();
     }
 
-    /**
-     * Helper to perform borrow.
-     * 
-     * @param index The index to select.
-     * @throws InterruptedException If interrupted.
-     */
     private void performBorrow(int index) throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
         runOnFxThreadAndWait(() -> {
@@ -605,13 +545,6 @@ class UserControllerTest {
         });
     }
 
-    /**
-     * Helper to perform payment.
-     * 
-     * @param item The item to pay for.
-     * @param amount The amount to pay.
-     * @throws InterruptedException If interrupted.
-     */
     private void performPayment(Media item, String amount) throws InterruptedException {
         TableView<Media> table = getField(controller, "bookTable");
         TextField payField = getField(controller, "paymentField");
@@ -622,36 +555,47 @@ class UserControllerTest {
         });
     }
 
-    /**
-     * Helper to create row.
-     * 
-     * @param item The item to set in the row.
-     * @return The created row.
-     */
+    private void initializeUIComponents() throws Exception {
+        injectField(controller, "welcomeLabel", new Label());
+        injectField(controller, "paymentField", new TextField());
+        injectField(controller, "infoLabel", new Label());
+        injectField(controller, "messageLabel", new Label());
+
+        TableView<Media> table = new TableView<>();
+        injectField(controller, "bookTable", table);
+        injectField(controller, "typeColumn", new TableColumn<Media, String>());
+        injectField(controller, "titleColumn", new TableColumn<Media, String>());
+        injectField(controller, "authorColumn", new TableColumn<Media, String>());
+        injectField(controller, "isbnColumn", new TableColumn<Media, String>());
+        injectField(controller, "statusColumn", new TableColumn<Media, String>());
+        injectField(controller, "dueDateColumn", new TableColumn<Media, String>());
+        injectField(controller, "fineColumn", new TableColumn<Media, Double>());
+    }
+
+    private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                action.run();
+            } finally {
+                latch.countDown();
+            }
+        });
+        latch.await(5, TimeUnit.SECONDS);
+    }
+
     private TableRow<Media> createRow(Media item) {
         TableRow<Media> row = new TableRow<>();
         row.setItem(item);
         return row;
     }
 
-    /**
-     * Helper to inject row.
-     * 
-     * @param cell The cell to inject into.
-     * @param row The row to inject.
-     * @throws Exception If reflection fails.
-     */
     private void injectTableRow(TableCell<?, ?> cell, TableRow<?> row) throws Exception {
         Field rowField = javafx.scene.control.Cell.class.getDeclaredField("tableRow");
         rowField.setAccessible(true);
         rowField.set(cell, row);
     }
 
-    /**
-     * Helper to create file.
-     * 
-     * @throws IOException If write fails.
-     */
     private void createTestFile() throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(TEST_FILE))) {
             writer.write("Book,Java Programming,Author A,12345,1,Available,2025-12-31,0.0,0.0,0.0");
@@ -661,28 +605,12 @@ class UserControllerTest {
         }
     }
 
-    /**
-     * Helper to inject field.
-     * 
-     * @param target The target object.
-     * @param fieldName The field name.
-     * @param value The value to inject.
-     * @throws Exception If reflection fails.
-     */
     private void injectField(Object target, String fieldName, Object value) throws Exception {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);
     }
 
-    /**
-     * Helper to get field.
-     * 
-     * @param <T> The type of the field.
-     * @param target The target object.
-     * @param fieldName The field name.
-     * @return The field value.
-     */
     @SuppressWarnings("unchecked")
     private <T> T getField(Object target, String fieldName) {
         try {
