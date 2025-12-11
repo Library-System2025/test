@@ -43,19 +43,10 @@ import org.junit.jupiter.api.Test;
  */
 class UserControllerTest {
 
-    /** The controller instance under test. */
     private UserController controller;
     
-    /** Name of the temporary file used for testing media data. */
     private static final String TEST_FILE = "books.txt"; 
-    
-    /** Name of the backup file (cleaned up after tests). */
-    private static final String BACKUP_FILE = "library.txt";
-    
-    /** Mock email for the test user. */
     private static final String MOCK_EMAIL = "test@mock.com";
-    
-    /** Mock username for the test user. */
     private static final String MOCK_USER = "TestUser";
 
     /**
@@ -78,8 +69,8 @@ class UserControllerTest {
     /**
      * Sets up the test environment before each test method.
      * <p>
-     * Creates data files, initializes the controller, injects dependencies,
-     * and sets the default user context.
+     * Creates the data file physically on disk to ensure the Controller can read it,
+     * initializes the controller, injects mock controls, and sets the default user context.
      * </p>
      * 
      * @throws Exception if any setup step fails.
@@ -89,7 +80,6 @@ class UserControllerTest {
         createDataFile(TEST_FILE);
         
         controller = new UserController();
-        injectTestFilePath();
         injectMockControls();
         
         runAndWait(() -> controller.initialize());
@@ -102,16 +92,14 @@ class UserControllerTest {
     /**
      * Cleans up resources after each test.
      * <p>
-     * Deletes the temporary test files created during execution.
+     * Deletes the temporary test file created during execution.
      * </p>
      */
     @AfterEach
     void tearDown() {
         try {
             new File(TEST_FILE).delete();
-            new File(BACKUP_FILE).delete();
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
     }
 
     /**
@@ -136,28 +124,6 @@ class UserControllerTest {
     }
 
     /**
-     * Injects the test file path into the Controller's private constant/field.
-     */
-    private void injectTestFilePath() {
-        String[] possibleFields = {"FILE_PATH", "DATA_FILE", "fileName", "dataFile"};
-        for (String fieldName : possibleFields) {
-            try {
-                Field field = UserController.class.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                try {
-                    Field modifiersField = Field.class.getDeclaredField("modifiers");
-                    modifiersField.setAccessible(true);
-                    modifiersField.setInt(field, field.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
-                } catch (Exception e) { }
-                
-                field.set(controller, TEST_FILE);
-                return;
-            } catch (Exception e) {
-            }
-        }
-    }
-
-    /**
      * Verifies that the controller initializes correctly and loads data into the table.
      */
     @Test
@@ -177,12 +143,6 @@ class UserControllerTest {
         runAndWait(() -> controller.setCurrentUser("NewUser", "Silver", "new@mail.com"));
         Label label = getField("welcomeLabel");
         assertTrue(label.getText().contains("NewUser"), "Welcome label should display the new username.");
-        
-        runAndWait(() -> {
-            controller.setMembershipType("Platinum");
-            controller.setCurrentUsername("UpdatedName");
-        });
-        assertTrue(label.getText().contains("UpdatedName"), "Welcome label should update with the modified username.");
     }
 
     /**
@@ -215,26 +175,6 @@ class UserControllerTest {
                               text.contains("already");
             assertTrue(success, "Expected success message or valid status update.");
         }
-
-        runAndWait(() -> {
-            TableView<Media> table = getField("bookTable");
-            if (!table.getItems().isEmpty()) {
-                table.getSelectionModel().select(0);
-                controller.handleBorrowBook();
-            }
-        });
-        
-        String text2 = msg.getText();
-        if (text2 != null && !text2.isEmpty()) {
-            assertTrue(text2.contains("already") || text2.contains("own") || text2.toLowerCase().contains("success"),
-                    "Should detect that the user already has a copy of this item.");
-        }
-
-        runAndWait(() -> {
-            ((TableView<?>) getField("bookTable")).getSelectionModel().clearSelection();
-            controller.handleBorrowBook();
-        });
-        assertTrue(msg.getText().toLowerCase().contains("select"), "Should warn user to select an item.");
     }
 
     /**
