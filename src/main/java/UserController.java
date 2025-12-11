@@ -30,10 +30,9 @@ import javafx.stage.Stage;
  * @author Zainab
  * @version 1.0
  */
-
 public class UserController {
-	
-	private static final String ERROR_MSG = "Error: ";
+
+    private static final String ERROR_MSG = "Error: ";
 
     @FXML private Label welcomeLabel;
     @FXML private TextField paymentField;
@@ -67,6 +66,24 @@ public class UserController {
     private static EmailService emailService;
 
     /**
+     * Simple error logger.
+     * Printing is enabled only when system property APP_DEBUG=true.
+     */
+    private static void logError(String context, Exception e) {
+        // إذا ما في DEBUG، ما نطبع إشي (مفيد للـ CI والتستات).
+        if (!Boolean.getBoolean("APP_DEBUG")) {
+            return;
+        }
+
+        String base = ERROR_MSG + (context != null ? context : "Unexpected error");
+        if (e != null && e.getMessage() != null) {
+            System.err.println(base + " - " + e.getMessage());
+        } else {
+            System.err.println(base);
+        }
+    }
+
+    /**
      * Static block to initialize the email service and subscribers.
      * Loads credentials from environment variables using Dotenv.
      */
@@ -83,7 +100,7 @@ public class UserController {
 
             overduePublisher.subscribe(emailSubscriber);
         } catch (Exception e) {
-            System.err.println("Failed to initialize email service / subscribers: " + e.getMessage());
+            logError("Failed to initialize email service / subscribers", e);
         }
     }
 
@@ -133,6 +150,7 @@ public class UserController {
         updateWelcomeLabel();
         tryLoadBooks();
     }
+
     /**
      * Attempts to load books if user details are present.
      */
@@ -141,6 +159,7 @@ public class UserController {
             reloadBooks();
         }
     }
+
     /**
      * Updates the welcome label text and style based on membership type.
      */
@@ -168,6 +187,7 @@ public class UserController {
         configureDueDateColumn();
         configureFineColumn();
     }
+
     /**
      * Configures the TableView columns and binds them to Media properties.
      */
@@ -180,6 +200,7 @@ public class UserController {
         dueDateColumn.setCellValueFactory(new PropertyValueFactory<>("dueDate"));
         fineColumn.setCellValueFactory(new PropertyValueFactory<>("fineAmount"));
     }
+
     /**
      * Configures row styling based on the item's status and borrower.
      * Highlights overdue items and borrowed items with specific colors.
@@ -213,6 +234,7 @@ public class UserController {
             }
         });
     }
+
     /**
      * Configures the Due Date column to hide dates for items not borrowed by the current user.
      */
@@ -236,6 +258,7 @@ public class UserController {
             }
         });
     }
+
     /**
      * Configures the Fine column to hide fine amounts for items not borrowed by the current user.
      */
@@ -259,6 +282,7 @@ public class UserController {
             }
         });
     }
+
     /**
      * Checks if the given borrower username matches the current logged-in user.
      * 
@@ -268,6 +292,7 @@ public class UserController {
     private boolean isCurrentUserBorrower(String borrower) {
         return borrower != null && borrower.equals(accountUsername);
     }
+
     /**
      * Checks if the status indicates the item is unavailable (Borrowed or Overdue).
      * 
@@ -288,7 +313,7 @@ public class UserController {
             Stage stage  = (Stage) bookTable.getScene().getWindow();
             stage.setScene(new Scene(login));
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG  + e.getMessage());
+            logError("handleLogout failed", e);
         }
     }
 
@@ -298,7 +323,7 @@ public class UserController {
      */
     @FXML
     void handleBorrowBook() {
-        
+
         for (Media m : mediaList) {
             if (m.getBorrowedBy() != null &&
                 m.getBorrowedBy().equals(accountUsername) &&
@@ -309,14 +334,12 @@ public class UserController {
             }
         }
 
-        
         Media selected = bookTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             messageLabel.setText("⚠️ Please select an item to borrow.");
             return;
         }
 
-        
         for (Media m : mediaList) {
             if (m.getIsbn().equals(selected.getIsbn()) &&
                 accountUsername.equals(m.getBorrowedBy())) {
@@ -325,13 +348,11 @@ public class UserController {
             }
         }
 
-        
         if (!STATUS_AVAILABLE.equals(selected.getStatus())) {
             messageLabel.setText("❌ This item is not available.");
             return;
         }
 
-        
         selected.borrow(accountUsername);
 
         saveAllMediaToFile();
@@ -463,16 +484,13 @@ public class UserController {
                 }
             }
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG  + e.getMessage());
+            logError("loadMediaFromFile failed", e);
         }
         bookTable.refresh();
     }
 
     /**
      * Parses a single line from the text file for the current user context.
-     * 
-     * @param line The CSV formatted string from the file.
-     * @return A Media object if parsing is successful, or null if the line is invalid.
      */
     private Media parseMediaLineForUser(String line) {
         String[] parts = line.split(",", 10);
@@ -500,21 +518,6 @@ public class UserController {
         return item;
     }
 
-    /**
-     * Factory method to create a Book or CD based on the type string.
-     * 
-     * @param type The type of media ("Book" or "CD").
-     * @param title Title of the item.
-     * @param author Author of the item.
-     * @param isbn ISBN of the item.
-     * @param status Current status (Available, Borrowed, Overdue).
-     * @param dueDate Due date string.
-     * @param fine Current fine amount.
-     * @param borrowedBy Username of the borrower.
-     * @param amountPaid Amount already paid towards fines.
-     * @param copyId The unique copy ID.
-     * @return A new instance of Book or CD.
-     */
     private Media createMediaItem(String type,
                                   String title,
                                   String author,
@@ -532,10 +535,6 @@ public class UserController {
         return new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);
     }
 
-    /**
-     * Applies the appropriate fine logic if the item is overdue.
-     * Uses the current user's membership type if they are the borrower.
-     */
     private void applyFineForUserIfOverdue(Media item, String borrowedBy) {
         if (!item.isOverdue()) {
             return;
@@ -550,13 +549,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Safely parses an integer with a default fallback value.
-     * 
-     * @param value The string to parse.
-     * @param defaultValue The value to return if parsing fails.
-     * @return The parsed integer or the default value.
-     */
     private int parseIntSafe(String value, int defaultValue) {
         try {
             return Integer.parseInt(value.trim());
@@ -565,13 +557,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Safely parses a double with a default fallback value.
-     * 
-     * @param value The string to parse.
-     * @param defaultValue The value to return if parsing fails.
-     * @return The parsed double or the default value.
-     */
     private double parseDoubleSafe(String value, double defaultValue) {
         try {
             return Double.parseDouble(value.trim());
@@ -580,23 +565,10 @@ public class UserController {
         }
     }
 
-    /**
-     * Safely retrieves an element from a string array.
-     * 
-     * @param parts The array of strings.
-     * @param index The index to retrieve.
-     * @return The string at the index, or an empty string if out of bounds.
-     */
     private String getPart(String[] parts, int index) {
         return index < parts.length ? parts[index] : "";
     }
 
-    /**
-     * Normalizes the borrowedBy field (converts "0.0" or null to empty string).
-     * 
-     * @param rawBorrowedBy The raw string from the file.
-     * @return A cleaned username string or empty string.
-     */
     private String normalizeBorrowedBy(String rawBorrowedBy) {
         String trimmed = rawBorrowedBy == null ? "" : rawBorrowedBy.trim();
         return "0.0".equals(trimmed) ? "" : trimmed;
@@ -613,7 +585,7 @@ public class UserController {
                 writer.newLine();
             }
         } catch (IOException e) {
-        	System.err.println(ERROR_MSG  + e.getMessage());
+            logError("saveAllMediaToFile failed", e);
         }
     }
 
