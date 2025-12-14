@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  * </p>
  * 
  * @author Zainab
- * @version 1.0 
+ * @version 1.0
  */
 class UserControllerTest {
 
@@ -46,7 +46,7 @@ class UserControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // JavaFX platform already initialized
+            
         }
         System.setProperty("EMAIL_USERNAME", "mock_user");
         System.setProperty("EMAIL_PASSWORD", "mock_cred");
@@ -448,16 +448,18 @@ class UserControllerTest {
 
     /**
      * Tests UI row styling via reflection.
+     * Uses assertDoesNotThrow to satisfy SonarQube blocker rules.
      */
     @Test
     @SuppressWarnings("unchecked")
     void testRowFactoryStyling() {
-        TableView<Media> table = getField(controller, "bookTable");
-        Callback<TableView<Media>, TableRow<Media>> rowFactory = table.getRowFactory();
-        assertNotNull(rowFactory);
+        assertDoesNotThrow(() -> {
+            TableView<Media> table = getField(controller, "bookTable");
+            Callback<TableView<Media>, TableRow<Media>> rowFactory = table.getRowFactory();
+            assertNotNull(rowFactory);
 
-        TableRow<Media> row = rowFactory.call(table);
-        try {
+            TableRow<Media> row = rowFactory.call(table);
+            
             Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
             updateItem.setAccessible(true);
 
@@ -474,29 +476,28 @@ class UserControllerTest {
 
             updateItem.invoke(row, new Book("B", "A", "4", "Available", "2099-01-01",
                     0.0, "Other", 0, 1), false);
-        } catch (Exception e) {
-            // Ignored to prevent test failure on headless environments
-        }
+        });
     }
 
     /**
      * Tests UI cell rendering via reflection.
+     * Uses assertDoesNotThrow to satisfy SonarQube blocker rules.
      */
     @Test
     @SuppressWarnings("unchecked")
     void testCellFactoryRendering() {
-        TableColumn<Media, String> dueCol = getField(controller, "dueDateColumn");
-        TableColumn<Media, Double> fineCol = getField(controller, "fineColumn");
-        
-        TableCell<Media, String> dueCell = dueCol.getCellFactory().call(dueCol);
-        TableCell<Media, Double> fineCell = fineCol.getCellFactory().call(fineCol);
-        
-        Media myItem = new Book("My Book", "Me", "111",
-                "Borrowed", "2025-01-01", 10.0, "TestUser", 0, 1);
-        Media otherItem = new Book("Other Book", "Me", "222",
-                "Borrowed", "2025-01-01", 10.0, "Other", 0, 1);
+        assertDoesNotThrow(() -> {
+            TableColumn<Media, String> dueCol = getField(controller, "dueDateColumn");
+            TableColumn<Media, Double> fineCol = getField(controller, "fineColumn");
+            
+            TableCell<Media, String> dueCell = dueCol.getCellFactory().call(dueCol);
+            TableCell<Media, Double> fineCell = fineCol.getCellFactory().call(fineCol);
+            
+            Media myItem = new Book("My Book", "Me", "111",
+                    "Borrowed", "2025-01-01", 10.0, "TestUser", 0, 1);
+            Media otherItem = new Book("Other Book", "Me", "222",
+                    "Borrowed", "2025-01-01", 10.0, "Other", 0, 1);
 
-        try {
             Method updateItemString = TableCell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
             updateItemString.setAccessible(true);
             
@@ -513,9 +514,7 @@ class UserControllerTest {
             
             injectTableRow(fineCell, createRow(myItem));
             updateItemDouble.invoke(fineCell, 10.0, false);
-        } catch (Exception e) {
-            // Ignored to prevent test failure on headless environments
-        }
+        });
     }
 
     /**
