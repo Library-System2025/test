@@ -17,10 +17,8 @@ import java.util.concurrent.TimeUnit;
  * Comprehensive Integration Test Suite for the LibrarianController class.
  * <p>
  * This suite verifies the core functionality of the Librarian Dashboard, including
- * transaction management (borrow/return), file persistence, data parsing, 
- * user membership validation, and UI visual states.
- * It utilizes Java Reflection to inspect private state and invoke private methods, 
- * ensuring maximum code coverage.
+ * transaction management, file persistence, data parsing, and UI states.
+ * It utilizes Java Reflection to inspect private state and ensure maximum coverage.
  *
  * @author Zainab
  * @version 1.0
@@ -33,7 +31,6 @@ public class LibrarianControllerTest {
 
     /**
      * Initializes the JavaFX Toolkit required for testing UI components.
-     * This method ensures the toolkit is started only once for the entire test execution.
      */
     @BeforeAll
     static void initToolkit() {
@@ -45,7 +42,6 @@ public class LibrarianControllerTest {
 
     /**
      * Sets up the test environment before each test case.
-     * Initializes the controller instance and ensures a clean file system state.
      *
      * @throws Exception if reflection or file operations fail.
      */
@@ -56,7 +52,7 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Cleans up external resources and temporary files after each test execution.
+     * Cleans up external resources after each test execution.
      */
     @AfterEach
     void tearDown() {
@@ -100,7 +96,6 @@ public class LibrarianControllerTest {
 
     /**
      * Verifies the complete initialization flow.
-     * Ensures that table columns are bound correctly and data is loaded from the file system.
      *
      * @throws Exception if reflection or initialization logic fails.
      */
@@ -127,9 +122,7 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Validates the borrowing transaction logic.
-     * Covers scenarios for: missing selection, attempting to borrow an already borrowed item,
-     * and a successful borrowing transaction.
+     * Validates the borrowing transaction logic scenarios.
      *
      * @throws Exception if reflection or business logic fails.
      */
@@ -169,9 +162,7 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Validates the return transaction logic.
-     * Covers scenarios for: missing selection, attempting to return a non-borrowed item,
-     * and a successful return transaction.
+     * Validates the return transaction logic scenarios.
      *
      * @throws Exception if reflection or business logic fails.
      */
@@ -209,8 +200,6 @@ public class LibrarianControllerTest {
 
     /**
      * Tests the search filter functionality.
-     * Verifies that the table updates correctly based on keyword matches and resets 
-     * when the search field is empty.
      *
      * @throws Exception if reflection fails.
      */
@@ -238,8 +227,6 @@ public class LibrarianControllerTest {
 
     /**
      * Tests robustness of data loading and file parsing.
-     * Verifies that the system correctly identifies different Media types (Book vs CD)
-     * and gracefully handles malformed numeric data without crashing.
      *
      * @throws Exception if reflection or file I/O fails.
      */
@@ -247,7 +234,8 @@ public class LibrarianControllerTest {
     void testHandleReload_and_FileParsing() throws Exception {
         String content = "CD,Disc1,Art1,111,1,Available,2024-01-01,0.0,,0.0\n" +
                          "Book,Book1,Auth1,222,2,Borrowed,2024-01-01,0.0,user1,0.0\n" +
-                         "Book,BadNum,Auth2,333,badInt,Available,,badDbl,,badDbl";
+                         "Book,BadNum,Auth2,333,badInt,Available,,badDbl,,badDbl\n" + 
+                         "InvalidLine\n";
         createDummyBooksFile(content);
 
         TableView<Media> table = new TableView<>();
@@ -271,9 +259,7 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Verifies the interaction between overdue items and user membership levels.
-     * Ensures that the system attempts to calculate fines for overdue items based on 
-     * the borrower's membership type retrieved from the user database.
+     * Verifies overdue fine calculation with user membership.
      *
      * @throws Exception if reflection or file I/O fails.
      */
@@ -301,8 +287,6 @@ public class LibrarianControllerTest {
 
     /**
      * Tests the fallback logic for retrieving user membership.
-     * Ensures that the system defaults to "Silver" membership if the user file is missing
-     * or the specific user cannot be found.
      *
      * @throws Exception if reflection fails.
      */
@@ -322,8 +306,6 @@ public class LibrarianControllerTest {
 
     /**
      * Verifies the logout mechanism.
-     * Ensures that the UI transition logic is triggered without errors, even in a headless
-     * test environment.
      *
      * @throws Exception if reflection fails.
      */
@@ -348,9 +330,7 @@ public class LibrarianControllerTest {
     }
 
     /**
-     * Tests the TableView RowFactory implementation.
-     * Validates that rows are assigned the correct CSS styles based on the Media item's status
-     * (Available, Borrowed, Overdue).
+     * Tests the TableView RowFactory implementation for correct styling.
      *
      * @throws Exception if reflection fails.
      */
@@ -386,7 +366,6 @@ public class LibrarianControllerTest {
                 assertEquals("", row.getStyle());
 
             } catch (Exception e) {
-            	e.printStackTrace();
             }
             latch.countDown();
         });
@@ -394,8 +373,7 @@ public class LibrarianControllerTest {
     }
     
     /**
-     * Verifies that setting the current username updates both the internal state
-     * and the welcome label on the UI.
+     * Verifies that setting the current username updates the UI.
      *
      * @throws Exception if reflection fails.
      */

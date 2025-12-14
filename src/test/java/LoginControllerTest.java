@@ -25,16 +25,13 @@ import org.junit.jupiter.api.Test;
  * Comprehensive Unit Test suite for the {@link LoginController} class.
  * <p>
  * This suite ensures high code coverage and reliability by verifying:
- * </p>
  * <ul>
- *   <li>Input validation logic (empty fields).</li>
- *   <li>File I/O operations (file existence, parsing logic).</li>
- *   <li>Authentication mechanisms (valid/invalid credentials).</li>
- *   <li>Role-based redirection logic (Admin, Librarian, User).</li>
+ *   <li>Input validation logic.</li>
+ *   <li>File I/O operations and parsing resilience.</li>
+ *   <li>Authentication mechanisms.</li>
+ *   <li>Role-based redirection logic.</li>
  * </ul>
- * <p>
- * It utilizes JavaFX Platform tools to simulate UI interactions safely without requiring a physical display.
- * </p>
+ * It utilizes JavaFX Platform tools to simulate UI interactions safely.
  *
  * @author Zainab
  * @version 1.0
@@ -48,31 +45,18 @@ public class LoginControllerTest {
     private static final String USERS_FILE = "users.txt";
 
     /**
-     * Default constructor for LoginControllerTest.
-     */
-    public LoginControllerTest() {
-        // Default constructor
-    }
-
-    /**
      * Initializes the JavaFX Toolkit once before all tests execution.
-     * This prevents "Toolkit not initialized" errors during UI component instantiation.
      */
     @BeforeAll
     static void initToolkit() {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // Toolkit already initialized
         }
     }
 
     /**
      * Sets up the test environment before each test method.
-     * <p>
-     * Instantiates the controller and injects mock JavaFX components using reflection
-     * to bypass FXML injection requirements.
-     * </p>
      * 
      * @throws Exception if reflection access fails.
      */
@@ -93,7 +77,6 @@ public class LoginControllerTest {
 
     /**
      * Cleans up resources after each test method.
-     * Removes the temporary users file to ensure test isolation.
      * 
      * @throws IOException if file deletion fails.
      */
@@ -153,14 +136,6 @@ public class LoginControllerTest {
 
     /**
      * Verifies the robustness of the file parsing logic.
-     * <p>
-     * Ensures the parser correctly handles:
-     * </p>
-     * <ul>
-     *   <li>Empty lines.</li>
-     *   <li>Lines with whitespace only.</li>
-     *   <li>Malformed data formats.</li>
-     * </ul>
      * 
      * @throws IOException if creating the test file fails.
      * @throws InterruptedException if the JavaFX thread is interrupted.
@@ -197,10 +172,9 @@ public class LoginControllerTest {
 
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
 
-        boolean isSuccess = errorMessage.getText().contains("opened successfully");
-        boolean isError = errorMessage.getText().contains("Error loading page");
-        
-        assertTrue(isSuccess || isError);
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("opened successfully") || msg.contains("Error loading page"), 
+                   "Should attempt to load Admin page");
     }
 
     /**
@@ -217,13 +191,13 @@ public class LoginControllerTest {
 
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertTrue(errorMessage.getText().contains("opened successfully") 
-                || errorMessage.getText().contains("Error loading page"));
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("opened successfully") || msg.contains("Error loading page"),
+                   "Should attempt to load Librarian page");
     }
 
     /**
      * Verifies the authentication and redirection flow for a standard User.
-     * Also tests the default values logic when optional fields are missing.
      * 
      * @throws IOException if creating the test file fails.
      * @throws InterruptedException if the JavaFX thread is interrupted.
@@ -236,26 +210,39 @@ public class LoginControllerTest {
 
         runOnFxThreadAndWait(() -> controller.handleLogin(new ActionEvent()));
         
-        assertTrue(errorMessage.getText().contains("User window") 
-                || errorMessage.getText().contains("Error loading page"));
+        String msg = errorMessage.getText();
+        assertTrue(msg.contains("opened successfully") || msg.contains("Error loading page"),
+                   "Should attempt to load User page");
     }
 
+    /**
+     * Injects mock objects into private fields using reflection.
+     */
     private void injectField(String fieldName, Object value) throws Exception {
         Field field = LoginController.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(controller, value);
     }
 
+    /**
+     * Creates a dummy users file with specified content.
+     */
     private void createUsersFile(String content) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {
             writer.write(content);
         }
     }
     
+    /**
+     * Deletes the dummy users file.
+     */
     private void cleanupFile() throws IOException {
         Files.deleteIfExists(Paths.get(USERS_FILE));
     }
 
+    /**
+     * Runs the given runnable on the JavaFX thread and waits for it to complete.
+     */
     private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         Platform.runLater(() -> {
