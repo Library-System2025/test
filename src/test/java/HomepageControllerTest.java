@@ -55,11 +55,6 @@ public class HomepageControllerTest {
     private TableColumn<User, String> colRole;
     private TableColumn<User, String> colMembership;
 
-    /**
-     * Default constructor for the test class.
-     */
-    public HomepageControllerTest() {
-    }
 
     /**
      * Initializes the JavaFX toolkit environment.
