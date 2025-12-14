@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Media.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">Media.java</span></div><h1>Media.java</h1><pre class="source lang-java linenums">import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+
+/**
+ * Abstract class representing a generic media item in the library.
+ * &lt;p&gt;
+ * This class serves as the base for specific media types like {@link Book} and {@link CD}.
+ * It encapsulates common properties such as title, author, ISBN, and borrowing status,
+ * as well as business logic for borrowing, returning, and fine calculation.
+ * &lt;/p&gt;
+ *
+ * @author Zainab
+ * @version 1.0
+ */
+
+public abstract class Media {
+
+    protected String title;
+    protected String author;
+    protected String isbn;
+    protected String status;
+    protected String dueDate;
+    protected double fineAmount;   
+    protected String borrowedBy;
+    protected double amountPaid;   
+    protected int copyId; 
+
+    /**
+     * Gets the current date. 
+     * This method is used to allow mocking of the current date during testing.
+     * 
+     * @return The current {@link LocalDate}.
+     */
+    
+    protected static LocalDate now() {
+<span class="fc" id="L39">        return LocalDate.now();</span>
+    }
+
+    /**
+     * Constructor to initialize a Media object with full details.
+     *
+     * @param title The title of the item.
+     * @param author The author of the item.
+     * @param isbn The ISBN or unique ID of the item.
+     * @param status The current status (e.g., Available, Borrowed).
+     * @param dueDate The due date if borrowed.
+     * @param fineAmount The current fine amount.
+     * @param borrowedBy The username of the borrower.
+     * @param amountPaid The amount already paid towards the fine.
+     */
+    
+<span class="fc" id="L55">    public Media(String title, String author, String isbn, String status,</span>
+            String dueDate, double fineAmount, String borrowedBy, double amountPaid,
+            int copyId) {
+<span class="fc" id="L58">   this.title = title;</span>
+<span class="fc" id="L59">   this.author = author;</span>
+<span class="fc" id="L60">   this.isbn = isbn;</span>
+<span class="fc" id="L61">   this.status = status;</span>
+<span class="fc" id="L62">   this.dueDate = dueDate;</span>
+<span class="fc" id="L63">   this.fineAmount = fineAmount;</span>
+<span class="fc" id="L64">   this.borrowedBy = borrowedBy;</span>
+<span class="fc" id="L65">   this.amountPaid = amountPaid;</span>
+<span class="fc" id="L66">   this.copyId = copyId;</span>
+<span class="fc" id="L67">}</span>
+
+
+    /**
+     * Returns the loan period for this specific media type.
+     * @return The number of days the item can be borrowed.
+     */
+    public abstract int getLoanPeriod();
+
+    /**
+     * Returns the daily fine rate for this specific media type.
+     * @return The fine amount per day.
+     */
+    public abstract double getBaseDailyFine();
+
+    /**
+     * Returns the type of media as a string (e.g., &quot;Book&quot;, &quot;CD&quot;).
+     * @return The media type identifier.
+     */
+    public abstract String getMediaType();
+
+    
+
+<span class="fc" id="L90">    public String getTitle()      { return title; }</span>
+<span class="fc" id="L91">    public String getAuthor()     { return author; }</span>
+<span class="fc" id="L92">    public String getIsbn()       { return isbn; }</span>
+<span class="fc" id="L93">    public String getStatus()     { return status; }</span>
+<span class="fc" id="L94">    public String getDueDate()    { return dueDate; }</span>
+<span class="fc" id="L95">    public double getFineAmount() { return fineAmount; }</span>
+<span class="fc" id="L96">    public String getBorrowedBy() { return borrowedBy; }</span>
+<span class="fc" id="L97">    public double getAmountPaid() { return amountPaid; }</span>
+<span class="fc" id="L98">    public int getCopyId()        { return copyId;}</span>
+
+
+<span class="fc" id="L101">    public void setStatus(String status)           { this.status = status; }</span>
+<span class="fc" id="L102">    public void setDueDate(String dueDate)         { this.dueDate = dueDate; }</span>
+<span class="fc" id="L103">    public void setFineAmount(double fineAmount)   { this.fineAmount = fineAmount; }</span>
+<span class="nc" id="L104">    public void setBorrowedBy(String borrowedBy)   { this.borrowedBy = borrowedBy; }</span>
+<span class="fc" id="L105">    public void addPayment(double amount)          { this.amountPaid += amount; }</span>
+
+    /**
+     * Gets the current fine amount.
+     * @return The fine amount.
+     */
+    
+    public double getFine() {
+<span class="nc" id="L113">        return fineAmount;</span>
+    }
+
+    /**
+     * Sets the fine amount.
+     * @param fine The new fine amount.
+     */
+    
+    public void setFine(double fine) {
+<span class="nc" id="L122">        this.fineAmount = fine;</span>
+<span class="nc" id="L123">    }</span>
+
+    /**
+     * Gets the amount paid towards overdue fines.
+     * @return The paid amount.
+     */
+    
+    public double getOverdueFine() {
+<span class="nc" id="L131">        return amountPaid;</span>
+    }
+    
+    /**
+     * Sets the amount paid towards overdue fines.
+     * @param overdueFine The paid amount.
+     */
+
+    public void setOverdueFine(double overdueFine) {
+<span class="nc" id="L140">        this.amountPaid = overdueFine;</span>
+<span class="nc" id="L141">    }</span>
+
+    /**
+     * Borrows the item for a specific user.
+     * Sets the status to &quot;Borrowed&quot;, records the borrower, and calculates the due date.
+     *
+     * @param username The username of the borrower.
+     */    
+
+    public void borrow(String username) {
+<span class="fc" id="L151">        this.status = &quot;Borrowed&quot;;</span>
+<span class="fc" id="L152">        this.borrowedBy = username;</span>
+
+<span class="fc" id="L154">        LocalDate due = Media.now().plusDays(getLoanPeriod());</span>
+<span class="fc" id="L155">        this.dueDate = due.format(DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;));</span>
+
+<span class="fc" id="L157">        this.fineAmount = 0.0;</span>
+<span class="fc" id="L158">        this.amountPaid = 0.0;</span>
+<span class="fc" id="L159">    }</span>
+
+    /**
+     * Returns the item to the library.
+     * Resets status to &quot;Available&quot; and clears borrower and fine information.
+     */
+    
+    public void returnMedia() {
+<span class="fc" id="L167">        this.status = &quot;Available&quot;;</span>
+<span class="fc" id="L168">        this.borrowedBy = &quot;&quot;;</span>
+<span class="fc" id="L169">        this.dueDate = &quot;&quot;;</span>
+<span class="fc" id="L170">        this.fineAmount = 0.0;</span>
+<span class="fc" id="L171">        this.amountPaid = 0.0;</span>
+<span class="fc" id="L172">    }</span>
+
+    /**
+     * Checks if the item is currently overdue.
+     *
+     * @return true if the current date is after the due date, false otherwise.
+     */
+    
+    public boolean isOverdue() {
+<span class="pc bpc" id="L181" title="1 of 4 branches missed.">        if (dueDate == null || dueDate.isEmpty()) return false;</span>
+
+<span class="fc" id="L183">        DateTimeFormatter formatter = new DateTimeFormatterBuilder()</span>
+<span class="fc" id="L184">                .appendValue(ChronoField.YEAR, 4).appendLiteral('-')</span>
+<span class="fc" id="L185">                .appendValue(ChronoField.MONTH_OF_YEAR).appendLiteral('-')</span>
+<span class="fc" id="L186">                .appendValue(ChronoField.DAY_OF_MONTH).toFormatter();</span>
+
+<span class="fc" id="L188">        LocalDate due = LocalDate.parse(dueDate, formatter);</span>
+<span class="fc" id="L189">        return Media.now().isAfter(due);</span>
+    }
+
+    /**
+     * Calculates the fine based on overdue days and user membership.
+     * Uses the {@link FineCalculator} strategy pattern.
+     *
+     * @param membershipType The user's membership type (e.g., &quot;Gold&quot;, &quot;Silver&quot;).
+     */
+    
+    public void calculateFine(String membershipType) {
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        if (!isOverdue()) {</span>
+<span class="fc" id="L201">            fineAmount = 0.0;</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">            if (&quot;Overdue&quot;.equals(status)) status = &quot;Borrowed&quot;;</span>
+<span class="fc" id="L203">            return;</span>
+        }
+
+<span class="fc" id="L206">        DateTimeFormatter formatter = new DateTimeFormatterBuilder()</span>
+<span class="fc" id="L207">                .appendValue(ChronoField.YEAR, 4).appendLiteral('-')</span>
+<span class="fc" id="L208">                .appendValue(ChronoField.MONTH_OF_YEAR).appendLiteral('-')</span>
+<span class="fc" id="L209">                .appendValue(ChronoField.DAY_OF_MONTH).toFormatter();</span>
+
+<span class="fc" id="L211">        LocalDate due = LocalDate.parse(dueDate, formatter);</span>
+<span class="fc" id="L212">        long daysOverdue = ChronoUnit.DAYS.between(due, Media.now());</span>
+
+<span class="fc" id="L214">        FineCalculator calculator = new FineCalculator();</span>
+<span class="pc bpc" id="L215" title="1 of 4 branches missed.">        if (membershipType != null &amp;&amp; membershipType.equalsIgnoreCase(&quot;Gold&quot;)) {</span>
+<span class="fc" id="L216">            calculator.setStrategy(new GoldFineStrategy());</span>
+<span class="fc" id="L217">        } else {</span>
+<span class="fc" id="L218">            calculator.setStrategy(new SilverFineStrategy());</span>
+        }
+
+<span class="fc" id="L221">        double totalDebt = calculator.calculate(daysOverdue, getBaseDailyFine());</span>
+
+<span class="fc" id="L223">        this.fineAmount = totalDebt - this.amountPaid;</span>
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (this.fineAmount &lt; 0) this.fineAmount = 0.0;</span>
+<span class="fc" id="L225">        this.status = &quot;Overdue&quot;;</span>
+<span class="fc" id="L226">    }</span>
+
+    /**
+     * Converts the media object to a CSV-formatted string for file storage.
+     *
+     * @return A comma-separated string containing media details.
+     */
+    
+    public String toFileFormat() {
+<span class="fc" id="L235">        return String.join(&quot;,&quot;,</span>
+<span class="fc" id="L236">                getMediaType(),</span>
+<span class="fc" id="L237">                title,</span>
+<span class="fc" id="L238">                author,</span>
+<span class="fc" id="L239">                isbn,</span>
+<span class="fc" id="L240">                String.valueOf(copyId),  </span>
+<span class="fc" id="L241">                status,</span>
+<span class="fc" id="L242">                dueDate,</span>
+<span class="fc" id="L243">                String.valueOf(fineAmount),</span>
+<span class="fc" id="L244">                borrowedBy,</span>
+<span class="fc" id="L245">                String.valueOf(amountPaid)</span>
+        );
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

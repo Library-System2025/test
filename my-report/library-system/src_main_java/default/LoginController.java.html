@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LoginController.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">LoginController.java</span></div><h1>LoginController.java</h1><pre class="source lang-java linenums">import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.logging.Logger;
+
+/**
+ * Controller class for the Login Screen.
+ * &lt;p&gt;
+ * Handles user authentication by verifying credentials against the local data file.
+ * Redirects the user to the specific dashboard (Admin, Librarian, or User) based on their role.
+ * &lt;/p&gt;
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+<span class="fc" id="L26">public class LoginController {</span>
+
+<span class="fc" id="L28">    private static final Logger LOGGER = Logger.getLogger(LoginController.class.getName());</span>
+
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+    @FXML private Label errorMessage;
+
+<span class="fc" id="L34">    private static final String USERS_FILE = &quot;users.txt&quot;;</span>
+
+    /**
+     * Private static inner class to hold authenticated user details.
+     */
+    private static class UserInfo {
+        String role;
+        String membership;
+        String email;
+
+<span class="fc" id="L44">        UserInfo(String role, String membership, String email) {</span>
+<span class="fc" id="L45">            this.role = role;</span>
+<span class="fc" id="L46">            this.membership = membership;</span>
+<span class="fc" id="L47">            this.email = email;</span>
+<span class="fc" id="L48">        }</span>
+    }
+
+    /**
+     * Handles the login button click action.
+     * &lt;p&gt;
+     * 1. Validates that fields are not empty.&lt;br&gt;
+     * 2. Checks credentials against `users.txt`.&lt;br&gt;
+     * 3. Loads the appropriate FXML dashboard based on the user's role.&lt;br&gt;
+     * 4. Passes session data (username, membership) to the next controller.
+     * &lt;/p&gt;
+     * 
+     * @param event The button click event.
+     */
+
+    @FXML
+    void handleLogin(ActionEvent event) {
+<span class="fc" id="L65">        String username = usernameField.getText().trim();</span>
+<span class="fc" id="L66">        String password = passwordField.getText().trim();</span>
+
+<span class="pc bpc" id="L68" title="1 of 4 branches missed.">        if (username.isEmpty() || password.isEmpty()) {</span>
+<span class="fc" id="L69">            errorMessage.setText(&quot;⚠️ Please fill in all fields.&quot;);</span>
+<span class="fc" id="L70">            return;</span>
+        }
+
+<span class="fc" id="L73">        UserInfo userInfo = validateCredentials(username, password);</span>
+
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (userInfo == null) {</span>
+<span class="fc" id="L76">            errorMessage.setText(&quot;❌ Invalid username or password.&quot;);</span>
+<span class="fc" id="L77">            passwordField.clear();</span>
+<span class="fc" id="L78">            return;</span>
+        }
+
+<span class="fc" id="L81">        String role = userInfo.role;</span>
+<span class="fc" id="L82">        String membership = userInfo.membership;</span>
+<span class="fc" id="L83">        String email = userInfo.email;</span>
+
+        String fxmlToLoad;
+<span class="fc bfc" id="L86" title="All 3 branches covered.">        switch (role) {</span>
+            case &quot;Admin&quot;:
+<span class="fc" id="L88">                fxmlToLoad = &quot;admin_home.fxml&quot;;</span>
+<span class="fc" id="L89">                break;</span>
+            case &quot;Librarian&quot;:
+<span class="fc" id="L91">                fxmlToLoad = &quot;librarian_home.fxml&quot;;</span>
+<span class="fc" id="L92">                break;</span>
+            default:
+<span class="fc" id="L94">                fxmlToLoad = &quot;user_home.fxml&quot;;</span>
+                break;
+        }
+
+        try {
+<span class="fc" id="L99">            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlToLoad));</span>
+<span class="fc" id="L100">            Parent dashboard = loader.load();</span>
+
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            if (&quot;User&quot;.equals(role)) {</span>
+<span class="fc" id="L103">                UserController controller = loader.getController();</span>
+<span class="fc" id="L104">                controller.setCurrentUser(username, membership, email);</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            } else if (&quot;Admin&quot;.equals(role)) {</span>
+<span class="fc" id="L106">                homepageController controller = loader.getController();</span>
+<span class="fc" id="L107">                controller.setCurrentUsername(username);</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">            } else if (&quot;Librarian&quot;.equals(role)) {</span>
+<span class="fc" id="L109">                LibrarianController controller = loader.getController();</span>
+<span class="fc" id="L110">                controller.setCurrentUsername(username);</span>
+            }
+
+<span class="fc" id="L113">            Stage newStage = new Stage();</span>
+<span class="fc" id="L114">            newStage.setTitle(role + &quot; Dashboard&quot;);</span>
+<span class="fc" id="L115">            newStage.setScene(new Scene(dashboard));</span>
+<span class="fc" id="L116">            newStage.show();</span>
+
+<span class="fc" id="L118">            usernameField.clear();</span>
+<span class="fc" id="L119">            passwordField.clear();</span>
+<span class="fc" id="L120">            errorMessage.setText(&quot;✅ &quot; + role + &quot; window opened successfully!&quot;);</span>
+
+<span class="pc" id="L122">        } catch (IOException e) {</span>
+<span class="nc" id="L123">            LOGGER.severe(&quot;Error loading page: &quot; + e.getMessage());</span>
+<span class="nc" id="L124">            errorMessage.setText(&quot;⚠️ Error loading page.&quot;);</span>
+        }
+<span class="fc" id="L126">    }</span>
+
+    /**
+     * Validates user credentials by parsing the 'users.txt' file.
+     * &lt;p&gt;
+     * Expected File Format: {@code username,password,role,[membership],[email]}
+     * &lt;/p&gt;
+     * 
+     * @param username The entered username.
+     * @param password The entered password.
+     * @return A {@link UserInfo} object if credentials match; otherwise null.
+     */
+    
+    private UserInfo validateCredentials(String username, String password) {
+<span class="fc" id="L140">        File file = new File(USERS_FILE);</span>
+<span class="fc bfc" id="L141" title="All 2 branches covered.">        if (!file.exists()) {</span>
+<span class="fc" id="L142">            errorMessage.setText(&quot;⚠️ Users file not found!&quot;);</span>
+<span class="fc" id="L143">            return null;</span>
+        }
+
+<span class="fc" id="L146">        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {</span>
+            String line;
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            while ((line = reader.readLine()) != null) {</span>
+<span class="fc" id="L149">                line = line.trim();</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">                if (line.isEmpty()) continue;</span>
+
+<span class="fc" id="L152">                String[] parts = line.split(&quot;,&quot;, 5);</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">                if (parts.length &lt; 3) continue;</span>
+
+<span class="fc" id="L155">                String fileUser = parts[0].trim();</span>
+<span class="fc" id="L156">                String filePass = parts[1].trim();</span>
+<span class="fc" id="L157">                String fileRole = parts[2].trim();</span>
+
+<span class="pc bpc" id="L159" title="1 of 4 branches missed.">                String membership = (parts.length &gt;= 4 &amp;&amp; !parts[3].trim().isEmpty())</span>
+<span class="fc" id="L160">                        ? parts[3].trim()</span>
+<span class="fc" id="L161">                        : &quot;Silver&quot;;</span>
+
+<span class="fc bfc" id="L163" title="All 2 branches covered.">                String email = (parts.length == 5) ? parts[4].trim() : &quot;&quot;;</span>
+
+<span class="pc bpc" id="L165" title="1 of 4 branches missed.">                if (username.equals(fileUser) &amp;&amp; password.equals(filePass)) {</span>
+<span class="fc" id="L166">                    LOGGER.info(&quot;Login matched user: &quot; + username);</span>
+<span class="fc" id="L167">                    return new UserInfo(fileRole, membership, email);</span>
+                }
+            }
+<span class="nc" id="L170">        } catch (IOException e) {</span>
+<span class="nc" id="L171">            LOGGER.severe(&quot;Error reading users file: &quot; + e.getMessage());</span>
+        }
+
+<span class="fc" id="L174">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

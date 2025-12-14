@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>EmailOverdueSubscriber.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">EmailOverdueSubscriber.java</span></div><h1>EmailOverdueSubscriber.java</h1><pre class="source lang-java linenums">
+
+/**
+ * Implementation of the {@link OverdueSubscriber} interface that handles email notifications.
+ * &lt;p&gt;
+ * This class follows the Observer design pattern. When notified about overdue items,
+ * it constructs a formatted email containing details of the books and fines, 
+ * then delegates the sending process to the {@link EmailService}.
+ * &lt;/p&gt;
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+public class EmailOverdueSubscriber implements OverdueSubscriber {
+
+    private final EmailService emailService;
+    private final String fromEmail;
+    
+    /**
+     * Constructs a new EmailOverdueSubscriber.
+     *
+     * @param emailService The service instance used to send the actual emails.
+     * @param fromEmail    The email address from which notifications will be sent.
+     */
+
+<span class="fc" id="L27">    public EmailOverdueSubscriber(EmailService emailService, String fromEmail) {</span>
+<span class="fc" id="L28">        this.emailService = emailService;</span>
+<span class="fc" id="L29">        this.fromEmail = fromEmail;</span>
+<span class="fc" id="L30">    }</span>
+    
+    /**
+     * Receives an update about a user with overdue items and triggers an email notification.
+     * &lt;p&gt;
+     * Constructs a detailed message body listing the title, due date, and fine for each overdue item,
+     * along with the total fine amount.
+     * &lt;/p&gt;
+     *
+     * @param username     The name of the user with overdue items.
+     * @param email        The recipient email address of the user.
+     * @param overdueItems The list of {@link Media} items that are overdue.
+     */
+
+    @Override
+    public void update(String username, String email, java.util.List&lt;Media&gt; overdueItems) {
+
+<span class="fc" id="L47">        String subject = &quot;Library Overdue Notice&quot;;</span>
+
+<span class="fc" id="L49">        StringBuilder body = new StringBuilder();</span>
+<span class="fc" id="L50">        body.append(String.format(&quot;Dear %s,\n\n&quot;, username));</span>
+<span class="fc" id="L51">        body.append(String.format(&quot;You have %d overdue book(s):\n\n&quot;, overdueItems.size()));</span>
+
+<span class="fc" id="L53">        double totalFine = 0;</span>
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (Media m : overdueItems) {</span>
+<span class="fc" id="L56">            body.append(&quot;📘 Title: &quot;).append(m.getTitle()).append(&quot;\n&quot;);</span>
+<span class="fc" id="L57">            body.append(&quot;📅 Due date: &quot;).append(m.getDueDate()).append(&quot;\n&quot;);</span>
+<span class="fc" id="L58">            body.append(&quot;⏳ Fine: $&quot;).append(String.format(&quot;%.2f&quot;, m.getFineAmount())).append(&quot;\n\n&quot;);</span>
+
+<span class="fc" id="L60">            totalFine += m.getFineAmount();</span>
+        }
+
+<span class="fc" id="L63">        body.append(&quot;-------------------------\n&quot;);</span>
+<span class="fc" id="L64">        body.append(String.format(&quot;Total fine: $%.2f\n\n&quot;, totalFine));</span>
+<span class="fc" id="L65">        body.append(&quot;Best regards,\nAn-Najah Library System&quot;);</span>
+
+<span class="fc" id="L67">        emailService.sendEmail(email, subject, body.toString());</span>
+<span class="fc" id="L68">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

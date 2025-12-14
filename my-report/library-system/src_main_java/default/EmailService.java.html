@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>EmailService.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">EmailService.java</span></div><h1>EmailService.java</h1><pre class="source lang-java linenums">import java.util.Properties;
+
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+
+/**
+ * Service class responsible for sending emails using the Jakarta Mail API.
+ * &lt;p&gt;
+ * This class encapsulates the SMTP configuration (specifically for Gmail) and 
+ * handles the authentication and message transmission logic.
+ * &lt;/p&gt;
+ *
+ * @author Zainab
+ * @version 1.0
+ */
+
+public class EmailService {
+
+    private final String username;
+    private final String password;
+
+    /**
+     * Constructs an EmailService with specific credentials.
+     *
+     * @param username The SMTP username (sender's email address).
+     * @param password The SMTP password or App Password.
+     */
+    
+<span class="fc" id="L35">    public EmailService(String username, String password) {</span>
+<span class="fc" id="L36">        this.username = username;</span>
+<span class="fc" id="L37">        this.password = password;</span>
+<span class="fc" id="L38">    }</span>
+
+    /**
+     * Creates a PasswordAuthentication object.
+     * &lt;p&gt;
+     * This method is package-private to facilitate unit testing by allowing 
+     * this logic to be overridden or mocked if necessary.
+     * &lt;/p&gt;
+     *
+     * @return A new {@link PasswordAuthentication} instance with the stored credentials.
+     */
+    
+    PasswordAuthentication createPasswordAuthentication() {
+<span class="fc" id="L51">        return new PasswordAuthentication(username, password);</span>
+    }
+    
+    /**
+     * Sends an email to a specified recipient.
+     * &lt;p&gt;
+     * Configures SMTP properties for Gmail (TLS, port 587) and initiates a session.
+     * Catches {@link MessagingException} and wraps it in a {@link RuntimeException}.
+     * &lt;/p&gt;
+     *
+     * @param to      The recipient's email address.
+     * @param subject The subject line of the email.
+     * @param body    The body text of the email.
+     * @throws RuntimeException if the email fails to send due to authentication or connection issues.
+     */
+
+    public void sendEmail(String to, String subject, String body) {
+
+<span class="fc" id="L69">        Properties props = new Properties();</span>
+<span class="fc" id="L70">        props.put(&quot;mail.smtp.auth&quot;, &quot;true&quot;);</span>
+<span class="fc" id="L71">        props.put(&quot;mail.smtp.starttls.enable&quot;, &quot;true&quot;);</span>
+<span class="fc" id="L72">        props.put(&quot;mail.smtp.host&quot;, &quot;smtp.gmail.com&quot;);</span>
+<span class="fc" id="L73">        props.put(&quot;mail.smtp.port&quot;, &quot;587&quot;);</span>
+
+<span class="fc" id="L75">        Session session = Session.getInstance(props, new Authenticator() {</span>
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+               
+<span class="nc" id="L79">                return createPasswordAuthentication();</span>
+            }
+        });
+
+        try {
+<span class="fc" id="L84">            Message message = new MimeMessage(session);</span>
+<span class="fc" id="L85">            message.setFrom(new InternetAddress(username));</span>
+<span class="fc" id="L86">            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));</span>
+<span class="fc" id="L87">            message.setSubject(subject);</span>
+<span class="fc" id="L88">            message.setText(body);</span>
+
+<span class="fc" id="L90">            Transport.send(message);</span>
+<span class="fc" id="L91">            System.out.println(&quot;📧 Email sent successfully to: &quot; + to);</span>
+
+<span class="fc" id="L93">        } catch (MessagingException e) {</span>
+<span class="fc" id="L94">        	System.err.println(&quot;Error: &quot; + e.getMessage());</span>
+<span class="fc" id="L95">            throw new RuntimeException(&quot;Failed to send email&quot;, e);</span>
+        }
+<span class="fc" id="L97">    }</span>
+    
+    /**
+     * Sends a reminder email. 
+     * &lt;p&gt;
+     * This is a convenience wrapper around {@link #sendEmail(String, String, String)}.
+     * &lt;/p&gt;
+     *
+     * @param to      The recipient's email address.
+     * @param subject The subject of the reminder.
+     * @param body    The content of the reminder.
+     */
+
+    public void sendReminder(String to, String subject, String body) {
+<span class="fc" id="L111">        sendEmail(to, subject, body);</span>
+<span class="fc" id="L112">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>EmailServiceTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">EmailServiceTest.java</span></div><h1>EmailServiceTest.java</h1><pre class="source lang-java linenums">import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Transport;
+import jakarta.mail.MessagingException;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+/**
+ * Unit Test for EmailService.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+public class EmailServiceTest {
+
+    /**
+     * Default Constructor.
+     */
+<span class="fc" id="L23">    public EmailServiceTest() {}</span>
+
+    /**
+     * Tests sending email successfully (Mocked).
+     * @throws Exception If fails.
+     */
+    @Test
+    void testSendEmail_invokesTransportSend() throws Exception {
+<span class="fc" id="L31">        EmailService emailService = new EmailService(&quot;sender@gmail.com&quot;, &quot;pass123&quot;);</span>
+
+<span class="fc" id="L33">        try (MockedStatic&lt;Transport&gt; mockedTransport = mockStatic(Transport.class)) {</span>
+<span class="fc" id="L34">            emailService.sendEmail(&quot;target@mail.com&quot;, &quot;Test&quot;, &quot;Body&quot;);</span>
+
+<span class="fc" id="L36">            mockedTransport.verify(</span>
+<span class="fc" id="L37">                    () -&gt; Transport.send(any(Message.class)),</span>
+<span class="fc" id="L38">                    times(1)</span>
+            );
+        }
+<span class="fc" id="L41">    }</span>
+
+    /**
+     * Tests handling of MessagingException.
+     * @throws Exception If fails.
+     */
+    @Test
+    void testSendEmail_Exception() throws Exception {
+<span class="fc" id="L49">        EmailService emailService = new EmailService(&quot;sender@gmail.com&quot;, &quot;pass123&quot;);</span>
+
+<span class="fc" id="L51">        try (MockedStatic&lt;Transport&gt; mockedTransport = mockStatic(Transport.class)) {</span>
+<span class="fc" id="L52">            mockedTransport.when(() -&gt; Transport.send(any(Message.class)))</span>
+<span class="fc" id="L53">                    .thenThrow(new MessagingException(&quot;fail&quot;));</span>
+
+<span class="fc" id="L55">            assertThrows(RuntimeException.class, () -&gt; </span>
+<span class="nc" id="L56">                emailService.sendEmail(&quot;x@mail.com&quot;, &quot;sub&quot;, &quot;body&quot;)</span>
+            );
+        }
+<span class="fc" id="L59">    }</span>
+
+    /**
+     * Tests authentication object creation.
+     */
+    @Test
+    void testAuth() {
+<span class="fc" id="L66">        EmailService s = new EmailService(&quot;u&quot;, &quot;p&quot;);</span>
+<span class="fc" id="L67">        PasswordAuthentication pa = s.createPasswordAuthentication();</span>
+<span class="fc" id="L68">        assertEquals(&quot;u&quot;, pa.getUserName());</span>
+<span class="fc" id="L69">        assertEquals(&quot;p&quot;, pa.getPassword());</span>
+<span class="fc" id="L70">    }</span>
+    
+    /**
+     * Tests reminder delegation.
+     */
+    @Test
+    void testReminder() {
+<span class="fc" id="L77">        EmailService s = spy(new EmailService(&quot;u&quot;, &quot;p&quot;));</span>
+<span class="fc" id="L78">        doNothing().when(s).sendEmail(any(), any(), any());</span>
+<span class="fc" id="L79">        s.sendReminder(&quot;to&quot;, &quot;sub&quot;, &quot;body&quot;);</span>
+<span class="fc" id="L80">        verify(s, times(1)).sendEmail(&quot;to&quot;, &quot;sub&quot;, &quot;body&quot;);</span>
+<span class="fc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

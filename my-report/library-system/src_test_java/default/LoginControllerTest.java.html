@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LoginControllerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">LoginControllerTest.java</span></div><h1>LoginControllerTest.java</h1><pre class="source lang-java linenums">import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Comprehensive Unit Test suite for the {@link LoginController} class.
+ * &lt;p&gt;
+ * This suite ensures high code coverage and reliability by verifying:
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *   &lt;li&gt;Input validation logic (empty fields).&lt;/li&gt;
+ *   &lt;li&gt;File I/O operations (file existence, parsing logic).&lt;/li&gt;
+ *   &lt;li&gt;Authentication mechanisms (valid/invalid credentials).&lt;/li&gt;
+ *   &lt;li&gt;Role-based redirection logic (Admin, Librarian, User).&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;p&gt;
+ * It utilizes JavaFX Platform tools to simulate UI interactions safely without requiring a physical display.
+ * &lt;/p&gt;
+ *
+ * @author Zainab
+ * @version 1.0
+ */
+public class LoginControllerTest {
+
+    private LoginController controller;
+    private TextField usernameField;
+    private PasswordField passwordField;
+    private Label errorMessage;
+    private static final String USERS_FILE = &quot;users.txt&quot;;
+
+    /**
+     * Default constructor for LoginControllerTest.
+     */
+<span class="fc" id="L53">    public LoginControllerTest() {</span>
+        // Default constructor
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * Initializes the JavaFX Toolkit once before all tests execution.
+     * This prevents &quot;Toolkit not initialized&quot; errors during UI component instantiation.
+     */
+    @BeforeAll
+    static void initToolkit() {
+        try {
+<span class="nc" id="L64">            Platform.startup(() -&gt; {});</span>
+<span class="pc" id="L65">        } catch (IllegalStateException e) {</span>
+            // Toolkit already initialized
+        }
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * Sets up the test environment before each test method.
+     * &lt;p&gt;
+     * Instantiates the controller and injects mock JavaFX components using reflection
+     * to bypass FXML injection requirements.
+     * &lt;/p&gt;
+     * 
+     * @throws Exception if reflection access fails.
+     */
+    @BeforeEach
+    void setUp() throws Exception {
+<span class="fc" id="L81">        controller = new LoginController();</span>
+        
+<span class="fc" id="L83">        usernameField = new TextField();</span>
+<span class="fc" id="L84">        passwordField = new PasswordField();</span>
+<span class="fc" id="L85">        errorMessage = new Label();</span>
+
+<span class="fc" id="L87">        injectField(&quot;usernameField&quot;, usernameField);</span>
+<span class="fc" id="L88">        injectField(&quot;passwordField&quot;, passwordField);</span>
+<span class="fc" id="L89">        injectField(&quot;errorMessage&quot;, errorMessage);</span>
+
+<span class="fc" id="L91">        cleanupFile();</span>
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Cleans up resources after each test method.
+     * Removes the temporary users file to ensure test isolation.
+     * 
+     * @throws IOException if file deletion fails.
+     */
+    @AfterEach
+    void tearDown() throws IOException {
+<span class="fc" id="L102">        cleanupFile();</span>
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Verifies that the login handler rejects empty username or password fields.
+     * 
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testHandleLogin_EmptyFields() throws InterruptedException {
+<span class="fc" id="L112">        usernameField.setText(&quot;&quot;);</span>
+<span class="fc" id="L113">        passwordField.setText(&quot;&quot;);</span>
+        
+<span class="fc" id="L115">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+        
+<span class="fc" id="L117">        assertEquals(&quot;⚠️ Please fill in all fields.&quot;, errorMessage.getText());</span>
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * Verifies behavior when the user database file does not exist.
+     * 
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testHandleLogin_FileNotFound() throws InterruptedException {
+<span class="fc" id="L127">        usernameField.setText(&quot;user&quot;);</span>
+<span class="fc" id="L128">        passwordField.setText(&quot;pass&quot;);</span>
+        
+<span class="fc" id="L130">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+        
+<span class="fc" id="L132">        assertEquals(&quot;❌ Invalid username or password.&quot;, errorMessage.getText());</span>
+<span class="fc" id="L133">    }</span>
+
+    /**
+     * Verifies that valid inputs but incorrect credentials result in a failure message.
+     * 
+     * @throws IOException if creating the test file fails.
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testHandleLogin_InvalidCredentials() throws IOException, InterruptedException {
+<span class="fc" id="L143">        createUsersFile(&quot;admin,123,Admin&quot;);</span>
+        
+<span class="fc" id="L145">        usernameField.setText(&quot;admin&quot;);</span>
+<span class="fc" id="L146">        passwordField.setText(&quot;WrongPass&quot;);</span>
+        
+<span class="fc" id="L148">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+        
+<span class="fc" id="L150">        assertEquals(&quot;❌ Invalid username or password.&quot;, errorMessage.getText());</span>
+<span class="fc" id="L151">        assertEquals(&quot;&quot;, passwordField.getText());</span>
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * Verifies the robustness of the file parsing logic.
+     * &lt;p&gt;
+     * Ensures the parser correctly handles:
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;Empty lines.&lt;/li&gt;
+     *   &lt;li&gt;Lines with whitespace only.&lt;/li&gt;
+     *   &lt;li&gt;Malformed data formats.&lt;/li&gt;
+     * &lt;/ul&gt;
+     * 
+     * @throws IOException if creating the test file fails.
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testValidateCredentials_ParsingEdgeCases() throws IOException, InterruptedException {
+<span class="fc" id="L170">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L171">        sb.append(&quot;\n&quot;);</span>
+<span class="fc" id="L172">        sb.append(&quot;   \n&quot;);</span>
+<span class="fc" id="L173">        sb.append(&quot;bad_line_no_comma\n&quot;);</span>
+<span class="fc" id="L174">        sb.append(&quot;user,pass\n&quot;);</span>
+<span class="fc" id="L175">        sb.append(&quot;realUser,123,User\n&quot;);</span>
+<span class="fc" id="L176">        createUsersFile(sb.toString());</span>
+        
+<span class="fc" id="L178">        usernameField.setText(&quot;realUser&quot;);</span>
+<span class="fc" id="L179">        passwordField.setText(&quot;123&quot;);</span>
+        
+<span class="fc" id="L181">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+        
+<span class="fc" id="L183">        assertNotEquals(&quot;❌ Invalid username or password.&quot;, errorMessage.getText());</span>
+<span class="fc" id="L184">    }</span>
+
+    /**
+     * Verifies the authentication and redirection flow for an Admin user.
+     * 
+     * @throws IOException if creating the test file fails.
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testRoleFlow_Admin() throws IOException, InterruptedException {
+<span class="fc" id="L194">        createUsersFile(&quot;admin,123,Admin,Gold,admin@test.com&quot;);</span>
+<span class="fc" id="L195">        usernameField.setText(&quot;admin&quot;);</span>
+<span class="fc" id="L196">        passwordField.setText(&quot;123&quot;);</span>
+
+<span class="fc" id="L198">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+
+<span class="fc" id="L200">        boolean isSuccess = errorMessage.getText().contains(&quot;opened successfully&quot;);</span>
+<span class="fc" id="L201">        boolean isError = errorMessage.getText().contains(&quot;Error loading page&quot;);</span>
+        
+<span class="pc bpc" id="L203" title="3 of 4 branches missed.">        assertTrue(isSuccess || isError);</span>
+<span class="fc" id="L204">    }</span>
+
+    /**
+     * Verifies the authentication and redirection flow for a Librarian user.
+     * 
+     * @throws IOException if creating the test file fails.
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testRoleFlow_Librarian() throws IOException, InterruptedException {
+<span class="fc" id="L214">        createUsersFile(&quot;lib,123,Librarian&quot;);</span>
+<span class="fc" id="L215">        usernameField.setText(&quot;lib&quot;);</span>
+<span class="fc" id="L216">        passwordField.setText(&quot;123&quot;);</span>
+
+<span class="fc" id="L218">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+        
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">        assertTrue(errorMessage.getText().contains(&quot;opened successfully&quot;) </span>
+<span class="pc bnc" id="L221" title="All 2 branches missed.">                || errorMessage.getText().contains(&quot;Error loading page&quot;));</span>
+<span class="fc" id="L222">    }</span>
+
+    /**
+     * Verifies the authentication and redirection flow for a standard User.
+     * Also tests the default values logic when optional fields are missing.
+     * 
+     * @throws IOException if creating the test file fails.
+     * @throws InterruptedException if the JavaFX thread is interrupted.
+     */
+    @Test
+    void testRoleFlow_User_Defaults() throws IOException, InterruptedException {
+<span class="fc" id="L233">        createUsersFile(&quot;simpleUser,123,User&quot;); </span>
+<span class="fc" id="L234">        usernameField.setText(&quot;simpleUser&quot;);</span>
+<span class="fc" id="L235">        passwordField.setText(&quot;123&quot;);</span>
+
+<span class="fc" id="L237">        runOnFxThreadAndWait(() -&gt; controller.handleLogin(new ActionEvent()));</span>
+        
+<span class="pc bpc" id="L239" title="1 of 2 branches missed.">        assertTrue(errorMessage.getText().contains(&quot;User window&quot;) </span>
+<span class="pc bnc" id="L240" title="All 2 branches missed.">                || errorMessage.getText().contains(&quot;Error loading page&quot;));</span>
+<span class="fc" id="L241">    }</span>
+
+    private void injectField(String fieldName, Object value) throws Exception {
+<span class="fc" id="L244">        Field field = LoginController.class.getDeclaredField(fieldName);</span>
+<span class="fc" id="L245">        field.setAccessible(true);</span>
+<span class="fc" id="L246">        field.set(controller, value);</span>
+<span class="fc" id="L247">    }</span>
+
+    private void createUsersFile(String content) throws IOException {
+<span class="fc" id="L250">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {</span>
+<span class="fc" id="L251">            writer.write(content);</span>
+        }
+<span class="fc" id="L253">    }</span>
+    
+    private void cleanupFile() throws IOException {
+<span class="fc" id="L256">        Files.deleteIfExists(Paths.get(USERS_FILE));</span>
+<span class="fc" id="L257">    }</span>
+
+    private void runOnFxThreadAndWait(Runnable action) throws InterruptedException {
+<span class="fc" id="L260">        CountDownLatch latch = new CountDownLatch(1);</span>
+<span class="fc" id="L261">        Platform.runLater(() -&gt; {</span>
+            try {
+<span class="fc" id="L263">                action.run();</span>
+<span class="fc" id="L264">            } finally {</span>
+<span class="fc" id="L265">                latch.countDown();</span>
+            }
+<span class="fc" id="L267">        });</span>
+<span class="fc" id="L268">        latch.await(5, TimeUnit.SECONDS);</span>
+<span class="fc" id="L269">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>

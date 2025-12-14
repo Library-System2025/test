@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">library-system (Dec 11, 2025 10:17:32 PM)</a> &gt; <a href="../../index.html" class="el_group">library-system</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">// Refactored for SonarQube
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
+
+import io.github.cdimascio.dotenv.Dotenv;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
+
+/**
+ * Controller class for the User Dashboard.
+ * Handles borrowing, returning, paying fines, and viewing borrowed items.
+ * 
+ * @author Zainab
+ * @version 1.0
+ */
+
+<span class="fc" id="L35">public class UserController {</span>
+	
+    private static final String ERROR_MSG = &quot;Error: &quot;;
+
+    @FXML private Label welcomeLabel;
+    @FXML private TextField paymentField;
+    @FXML private Label infoLabel;
+    @FXML private Label messageLabel;
+
+    @FXML private TableView&lt;Media&gt; bookTable;
+    @FXML private TableColumn&lt;Media, String&gt; typeColumn;
+    @FXML private TableColumn&lt;Media, String&gt; titleColumn;
+    @FXML private TableColumn&lt;Media, String&gt; authorColumn;
+    @FXML private TableColumn&lt;Media, String&gt; isbnColumn;
+    @FXML private TableColumn&lt;Media, String&gt; statusColumn;
+    @FXML private TableColumn&lt;Media, String&gt; dueDateColumn;
+    @FXML private TableColumn&lt;Media, Double&gt; fineColumn;
+
+<span class="fc" id="L53">    private ObservableList&lt;Media&gt; mediaList = FXCollections.observableArrayList();</span>
+
+    /** File path for storing media data. */
+    private static final String FILE_PATH        = &quot;books.txt&quot;;
+    /** Status constant indicating the item is available. */
+    private static final String STATUS_AVAILABLE = &quot;Available&quot;;
+    /** Status constant indicating the item is borrowed. */
+    private static final String STATUS_BORROWED  = &quot;Borrowed&quot;;
+    /** Status constant indicating the item is overdue. */
+    private static final String STATUS_OVERDUE   = &quot;Overdue&quot;;
+
+    private String accountUsername;
+    private String membershipType;
+    private String accountEmail;
+
+<span class="fc" id="L68">    private static final OverduePublisher overduePublisher = new OverduePublisher();</span>
+    private static EmailService emailService;
+
+    /**
+     * Static block to initialize the email service and subscribers.
+     * Loads credentials from environment variables using Dotenv.
+     */
+    static {
+        try {
+<span class="fc" id="L77">            Dotenv dotenv = Dotenv.load();</span>
+<span class="fc" id="L78">            String username = dotenv.get(&quot;EMAIL_USERNAME&quot;);</span>
+<span class="fc" id="L79">            String password = dotenv.get(&quot;EMAIL_PASSWORD&quot;);</span>
+
+<span class="fc" id="L81">            emailService = new EmailService(username, password);</span>
+
+<span class="fc" id="L83">            EmailOverdueSubscriber emailSubscriber =</span>
+<span class="fc" id="L84">                    new EmailOverdueSubscriber(emailService, username);</span>
+
+<span class="fc" id="L86">            overduePublisher.subscribe(emailSubscriber);</span>
+<span class="pc" id="L87">        } catch (Exception e) {</span>
+<span class="nc" id="L88">            System.err.println(&quot;Failed to initialize email service / subscribers: &quot; + e.getMessage()); // NOSONAR</span>
+        }
+<span class="fc" id="L90">    }</span>
+
+    /**
+     * Sets the current user details and loads their specific data.
+     *
+     * @param username       The username.
+     * @param membershipType The membership type (Gold/Silver).
+     * @param email          The user's email address.
+     */
+    public void setCurrentUser(String username, String membershipType, String email) {
+<span class="fc" id="L100">        this.accountUsername = username;</span>
+<span class="fc" id="L101">        this.membershipType  = membershipType;</span>
+<span class="fc" id="L102">        this.accountEmail    = email;</span>
+<span class="fc" id="L103">        updateWelcomeLabel();</span>
+<span class="fc" id="L104">        tryLoadBooks();</span>
+<span class="fc" id="L105">    }</span>
+
+    /**
+     * Sets the membership type and refreshes the view.
+     * @param membershipType The membership type.
+     */
+    public void setMembershipType(String membershipType) {
+<span class="fc" id="L112">        this.membershipType = membershipType;</span>
+<span class="fc" id="L113">        updateWelcomeLabel();</span>
+<span class="fc" id="L114">        tryLoadBooks();</span>
+<span class="fc" id="L115">    }</span>
+
+    /**
+     * Sets the username and refreshes the view.
+     * @param username The username.
+     */
+    public void setCurrentUsername(String username) {
+<span class="fc" id="L122">        this.accountUsername = username;</span>
+<span class="fc" id="L123">        updateWelcomeLabel();</span>
+<span class="fc" id="L124">        tryLoadBooks();</span>
+<span class="fc" id="L125">    }</span>
+
+    /**
+     * Sets user credentials (legacy method) and refreshes the view.
+     * @param username The username.
+     * @param email    The email.
+     */
+    public void setCurrentUser(String username, String email) {
+<span class="fc" id="L133">        this.accountUsername = username;</span>
+<span class="fc" id="L134">        this.accountEmail    = email;</span>
+<span class="fc" id="L135">        updateWelcomeLabel();</span>
+<span class="fc" id="L136">        tryLoadBooks();</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Attempts to load books if user details are present.
+     */
+    private void tryLoadBooks() {
+<span class="pc bpc" id="L143" title="2 of 4 branches missed.">        if (accountUsername != null &amp;&amp; membershipType != null) {</span>
+<span class="fc" id="L144">            reloadBooks();</span>
+        }
+<span class="fc" id="L146">    }</span>
+
+    /**
+     * Updates the welcome label text and style based on membership type.
+     */
+    private void updateWelcomeLabel() {
+<span class="pc bpc" id="L152" title="3 of 6 branches missed.">        if (welcomeLabel != null &amp;&amp; accountUsername != null &amp;&amp; membershipType != null) {</span>
+<span class="fc" id="L153">            welcomeLabel.setText(&quot;Welcome, &quot; + accountUsername + &quot; (&quot; + membershipType + &quot;) 👋&quot;);</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">            if (membershipType.equalsIgnoreCase(&quot;Gold&quot;)) {</span>
+<span class="fc" id="L155">                welcomeLabel.setStyle(&quot;-fx-text-fill: gold; -fx-font-weight: bold;&quot;);</span>
+<span class="fc" id="L156">            } else {</span>
+<span class="fc" id="L157">                welcomeLabel.setStyle(&quot;-fx-text-fill: silver; -fx-font-weight: bold;&quot;);</span>
+            }
+        }
+<span class="fc" id="L160">    }</span>
+
+    
+    /**
+     * Initializes the controller class.
+     * Configures table columns, row coloring, and privacy logic (hiding other users' data).
+     * Called automatically after the FXML file has been loaded.
+     */
+    @FXML
+    public void initialize() {
+<span class="fc" id="L170">        configureTableColumns();</span>
+<span class="fc" id="L171">        bookTable.setItems(mediaList);</span>
+<span class="fc" id="L172">        configureRowColors();</span>
+<span class="fc" id="L173">        configureDueDateColumn();</span>
+<span class="fc" id="L174">        configureFineColumn();</span>
+<span class="fc" id="L175">    }</span>
+
+    /**
+     * Configures the TableView columns and binds them to Media properties.
+     */
+    private void configureTableColumns() {
+<span class="fc" id="L181">        typeColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;mediaType&quot;));</span>
+<span class="fc" id="L182">        titleColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;title&quot;));</span>
+<span class="fc" id="L183">        authorColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;author&quot;));</span>
+<span class="fc" id="L184">        isbnColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;isbn&quot;));</span>
+<span class="fc" id="L185">        statusColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;status&quot;));</span>
+<span class="fc" id="L186">        dueDateColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;dueDate&quot;));</span>
+<span class="fc" id="L187">        fineColumn.setCellValueFactory(new PropertyValueFactory&lt;&gt;(&quot;fineAmount&quot;));</span>
+<span class="fc" id="L188">    }</span>
+
+    /**
+     * Configures row styling based on the item's status and borrower.
+     * Highlights overdue items and borrowed items with specific colors.
+     */
+    private void configureRowColors() {
+<span class="fc" id="L195">        bookTable.setRowFactory(tv -&gt; new TableRow&lt;Media&gt;() {</span>
+            @Override
+            protected void updateItem(Media item, boolean empty) {
+<span class="nc" id="L198">                super.updateItem(item, empty);</span>
+<span class="nc" id="L199">                setStyle(&quot;&quot;);</span>
+
+<span class="nc bnc" id="L201" title="All 4 branches missed.">                if (empty || item == null) {</span>
+<span class="nc" id="L202">                    return;</span>
+                }
+
+<span class="nc" id="L205">                String borrower = item.getBorrowedBy();</span>
+<span class="nc" id="L206">                String status   = item.getStatus();</span>
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">                if (isCurrentUserBorrower(borrower)) {</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">                    if (STATUS_OVERDUE.equals(status)) {</span>
+<span class="nc" id="L210">                        setStyle(&quot;-fx-background-color: #ffcccc;&quot;);</span>
+<span class="nc" id="L211">                    } else {</span>
+<span class="nc" id="L212">                        setStyle(&quot;-fx-background-color: #c8f7c5;&quot;);</span>
+                    }
+<span class="nc" id="L214">                    return;</span>
+                }
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">                if (isBorrowedOrOverdue(status)) {</span>
+<span class="nc" id="L218">                    setStyle(&quot;-fx-background-color: #fff3cd;&quot;); </span>
+                }
+<span class="nc" id="L220">            }</span>
+<span class="fc" id="L221">        });</span>
+<span class="fc" id="L222">    }</span>
+
+    /**
+     * Configures the Due Date column to hide dates for items not borrowed by the current user.
+     */
+    private void configureDueDateColumn() {
+<span class="fc" id="L228">        dueDateColumn.setCellFactory(col -&gt; new TableCell&lt;Media, String&gt;() {</span>
+            @Override
+            protected void updateItem(String item, boolean empty) {
+<span class="nc" id="L231">                super.updateItem(item, empty);</span>
+
+<span class="nc bnc" id="L233" title="All 2 branches missed.">                Media m = (getTableRow() != null) ? getTableRow().getItem() : null;</span>
+<span class="nc bnc" id="L234" title="All 4 branches missed.">                if (empty || m == null) {</span>
+<span class="nc" id="L235">                    setText(null);</span>
+<span class="nc" id="L236">                    return;</span>
+                }
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">                if (isCurrentUserBorrower(m.getBorrowedBy())) {</span>
+<span class="nc" id="L240">                    setText(m.getDueDate());</span>
+<span class="nc" id="L241">                } else {</span>
+<span class="nc" id="L242">                    setText(&quot;&quot;);</span>
+                }
+<span class="nc" id="L244">            }</span>
+<span class="fc" id="L245">        });</span>
+<span class="fc" id="L246">    }</span>
+
+    /**
+     * Configures the Fine column to hide fine amounts for items not borrowed by the current user.
+     */
+    private void configureFineColumn() {
+<span class="fc" id="L252">        fineColumn.setCellFactory(col -&gt; new TableCell&lt;Media, Double&gt;() {</span>
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+<span class="nc" id="L255">                super.updateItem(item, empty);</span>
+
+<span class="nc bnc" id="L257" title="All 2 branches missed.">                Media m = (getTableRow() != null) ? getTableRow().getItem() : null;</span>
+<span class="nc bnc" id="L258" title="All 4 branches missed.">                if (empty || m == null) {</span>
+<span class="nc" id="L259">                    setText(null);</span>
+<span class="nc" id="L260">                    return;</span>
+                }
+
+<span class="nc bnc" id="L263" title="All 2 branches missed.">                if (isCurrentUserBorrower(m.getBorrowedBy())) {</span>
+<span class="nc" id="L264">                    setText(String.format(&quot;$%.2f&quot;, m.getFineAmount()));</span>
+<span class="nc" id="L265">                } else {</span>
+<span class="nc" id="L266">                    setText(&quot;&quot;);</span>
+                }
+<span class="nc" id="L268">            }</span>
+<span class="fc" id="L269">        });</span>
+<span class="fc" id="L270">    }</span>
+
+    
+    /**
+     * Checks if the given borrower username matches the current logged-in user.
+     * 
+     * @param borrower The username recorded on the item.
+     * @return true if the borrower matches the current user, false otherwise.
+     */
+    private boolean isCurrentUserBorrower(String borrower) {
+<span class="nc bnc" id="L280" title="All 4 branches missed.">        return borrower != null &amp;&amp; borrower.equals(accountUsername);</span>
+    }
+
+    /**
+     * Checks if the status indicates the item is unavailable (Borrowed or Overdue).
+     * 
+     * @param status The status string of the item.
+     * @return true if the item is not available.
+     */
+    private boolean isBorrowedOrOverdue(String status) {
+<span class="nc bnc" id="L290" title="All 4 branches missed.">        return STATUS_BORROWED.equals(status) || STATUS_OVERDUE.equals(status);</span>
+    }
+
+    /**
+     * Handles logout action and redirects to the login screen.
+     */
+    @FXML
+    void handleLogout() {
+        try {
+<span class="fc" id="L299">            Parent login = FXMLLoader.load(getClass().getResource(&quot;login.fxml&quot;));</span>
+<span class="nc" id="L300">            Stage stage  = (Stage) bookTable.getScene().getWindow();</span>
+<span class="nc" id="L301">            stage.setScene(new Scene(login));</span>
+<span class="nc" id="L302">        } catch (IOException e) {</span>
+<span class="nc" id="L303">            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR</span>
+        }
+<span class="nc" id="L305">    }</span>
+
+    /**
+     * Handles borrowing a book.
+     * Checks for existing fines, existing copies, and item availability before processing.
+     */
+    @FXML
+    void handleBorrowBook() {
+
+<span class="fc bfc" id="L314" title="All 2 branches covered.">        for (Media m : mediaList) {</span>
+<span class="pc bpc" id="L315" title="1 of 2 branches missed.">            if (m.getBorrowedBy() != null &amp;&amp;</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">                m.getBorrowedBy().equals(accountUsername) &amp;&amp;</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">                m.getFineAmount() &gt; 0) {</span>
+
+<span class="fc" id="L319">                messageLabel.setText(&quot;❌ You have unpaid fines! Pay them first.&quot;);</span>
+<span class="fc" id="L320">                return;</span>
+            }
+        }
+
+<span class="fc" id="L324">        Media selected = bookTable.getSelectionModel().getSelectedItem();</span>
+<span class="fc bfc" id="L325" title="All 2 branches covered.">        if (selected == null) {</span>
+<span class="fc" id="L326">            messageLabel.setText(&quot;⚠️ Please select an item to borrow.&quot;);</span>
+<span class="fc" id="L327">            return;</span>
+        }
+
+<span class="fc bfc" id="L330" title="All 2 branches covered.">        for (Media m : mediaList) {</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">            if (m.getIsbn().equals(selected.getIsbn()) &amp;&amp;</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">                accountUsername.equals(m.getBorrowedBy())) {</span>
+<span class="fc" id="L333">                messageLabel.setText(&quot;❌ You already borrowed a copy of this item.&quot;);</span>
+<span class="fc" id="L334">                return;</span>
+            }
+        }
+
+<span class="fc bfc" id="L338" title="All 2 branches covered.">        if (!STATUS_AVAILABLE.equals(selected.getStatus())) {</span>
+<span class="fc" id="L339">            messageLabel.setText(&quot;❌ This item is not available.&quot;);</span>
+<span class="fc" id="L340">            return;</span>
+        }
+
+<span class="fc" id="L343">        selected.borrow(accountUsername);</span>
+
+<span class="fc" id="L345">        saveAllMediaToFile();</span>
+<span class="fc" id="L346">        reloadBooks();</span>
+<span class="fc" id="L347">        messageLabel.setText(&quot;✅ Borrowed successfully! Due date: &quot; + selected.getDueDate());</span>
+<span class="fc" id="L348">    }</span>
+
+    /**
+     * Handles fine payment.
+     * Validates payment amount, updates the fine status, and returns the book if fine is cleared.
+     */
+    @FXML
+    void handlePayFine() {
+<span class="fc" id="L356">        Media selected = bookTable.getSelectionModel().getSelectedItem();</span>
+<span class="fc bfc" id="L357" title="All 2 branches covered.">        if (selected == null) {</span>
+<span class="fc" id="L358">            infoLabel.setText(&quot;⚠️ Select an item.&quot;);</span>
+<span class="fc" id="L359">            return;</span>
+        }
+
+<span class="fc bfc" id="L362" title="All 2 branches covered.">        if (!selected.getBorrowedBy().equals(accountUsername)) {</span>
+<span class="fc" id="L363">            infoLabel.setText(&quot;❌ Select one of YOUR borrowed items.&quot;);</span>
+<span class="fc" id="L364">            return;</span>
+        }
+
+        double amountToPay;
+        try {
+<span class="fc" id="L369">            amountToPay = Double.parseDouble(paymentField.getText());</span>
+<span class="fc" id="L370">        } catch (NumberFormatException e) {</span>
+<span class="fc" id="L371">            infoLabel.setText(&quot;❌ Invalid number.&quot;);</span>
+<span class="fc" id="L372">            return;</span>
+        }
+
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        if (amountToPay &lt;= 0) {</span>
+<span class="fc" id="L376">            infoLabel.setText(&quot;❌ Amount must be positive.&quot;);</span>
+<span class="fc" id="L377">            return;</span>
+        }
+
+<span class="fc bfc" id="L380" title="All 2 branches covered.">        if (amountToPay &gt; selected.getFineAmount()) {</span>
+<span class="fc" id="L381">            infoLabel.setText(&quot;❌ Payment exceeds fine amount!&quot;);</span>
+<span class="fc" id="L382">            return;</span>
+        }
+
+<span class="fc" id="L385">        selected.addPayment(amountToPay);</span>
+<span class="fc" id="L386">        selected.calculateFine(membershipType);</span>
+
+<span class="fc bfc" id="L388" title="All 2 branches covered.">        if (selected.getFineAmount() &lt;= 0) {</span>
+<span class="fc" id="L389">            selected.returnMedia();</span>
+<span class="fc" id="L390">            infoLabel.setText(&quot;✅ Fine fully paid. Item returned.&quot;);</span>
+<span class="fc" id="L391">        } else {</span>
+<span class="fc" id="L392">            infoLabel.setText(&quot;💰 Partial payment accepted. Remaining: $&quot; +</span>
+<span class="fc" id="L393">                    String.format(&quot;%.2f&quot;, selected.getFineAmount()));</span>
+        }
+
+<span class="fc" id="L396">        saveAllMediaToFile();</span>
+<span class="fc" id="L397">        bookTable.refresh();</span>
+<span class="fc" id="L398">        paymentField.clear();</span>
+<span class="fc" id="L399">    }</span>
+
+    /**
+     * Handles returning a book.
+     * Ensures no fines are pending before returning. If fines exist, notifies the user via email.
+     */
+    @FXML
+    void handleReturnBook() {
+<span class="fc" id="L407">        Media selected = bookTable.getSelectionModel().getSelectedItem();</span>
+<span class="fc bfc" id="L408" title="All 2 branches covered.">        if (selected == null) {</span>
+<span class="fc" id="L409">            messageLabel.setText(&quot;⚠️ Select an item to return.&quot;);</span>
+<span class="fc" id="L410">            return;</span>
+        }
+
+<span class="fc bfc" id="L413" title="All 2 branches covered.">        if (!selected.getBorrowedBy().equals(accountUsername)) {</span>
+<span class="fc" id="L414">            messageLabel.setText(&quot;❌ You can only return your own items.&quot;);</span>
+<span class="fc" id="L415">            return;</span>
+        }
+
+<span class="fc" id="L418">        selected.calculateFine(membershipType);</span>
+
+<span class="fc bfc" id="L420" title="All 2 branches covered.">        if (selected.getFineAmount() &gt; 0) {</span>
+<span class="fc" id="L421">            selected.setStatus(STATUS_OVERDUE);</span>
+<span class="fc" id="L422">            messageLabel.setText(&quot;⚠️ Cannot return. Pay the fine first.&quot;);</span>
+
+<span class="pc bpc" id="L424" title="1 of 4 branches missed.">            if (accountEmail != null &amp;&amp; !accountEmail.isEmpty()) {</span>
+
+<span class="fc" id="L426">                List&lt;Media&gt; singleList = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L427">                singleList.add(selected);</span>
+
+<span class="pc" id="L429">                overduePublisher.notifySubscribers(</span>
+<span class="fc" id="L430">                        accountUsername,</span>
+<span class="fc" id="L431">                        accountEmail,</span>
+<span class="fc" id="L432">                        singleList</span>
+                );
+            }
+
+<span class="nc" id="L436">        } else {</span>
+<span class="fc" id="L437">            selected.returnMedia();</span>
+<span class="fc" id="L438">            messageLabel.setText(&quot;✅ Returned successfully!&quot;);</span>
+        }
+
+<span class="fc" id="L441">        saveAllMediaToFile();</span>
+<span class="fc" id="L442">        reloadBooks();</span>
+<span class="fc" id="L443">    }</span>
+
+    /**
+     * Reloads data from the file and refreshes the table.
+     */
+    @FXML
+    void handleReload() {
+<span class="fc" id="L450">        reloadBooks();</span>
+<span class="fc" id="L451">        infoLabel.setText(&quot;🔄 Data reloaded.&quot;);</span>
+<span class="fc" id="L452">    }</span>
+
+    /**
+     * Loads media data from 'books.txt'.
+     * Catches and logs IOExceptions if the file cannot be read.
+     */
+    void loadMediaFromFile() {
+<span class="fc" id="L459">        mediaList.clear();</span>
+<span class="fc" id="L460">        File file = new File(FILE_PATH);</span>
+<span class="fc bfc" id="L461" title="All 2 branches covered.">        if (!file.exists()) {</span>
+<span class="fc" id="L462">            return;</span>
+        }
+
+<span class="fc" id="L465">        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {</span>
+            String line;
+<span class="fc bfc" id="L467" title="All 2 branches covered.">            while ((line = reader.readLine()) != null) {</span>
+<span class="fc" id="L468">                Media item = parseMediaLineForUser(line);</span>
+<span class="fc bfc" id="L469" title="All 2 branches covered.">                if (item != null) {</span>
+<span class="fc" id="L470">                    mediaList.add(item);</span>
+                }
+            }
+<span class="nc" id="L473">        } catch (IOException e) {</span>
+<span class="nc" id="L474">            System.err.println(ERROR_MSG + e.getMessage()); </span>
+        }
+<span class="fc" id="L476">        bookTable.refresh();</span>
+<span class="fc" id="L477">    }</span>
+
+    /**
+     * Parses a single line from the text file for the current user context.
+     * 
+     * @param line The CSV formatted string from the file.
+     * @return A Media object if parsing is successful, or null if the line is invalid.
+     */
+    private Media parseMediaLineForUser(String line) {
+<span class="fc" id="L486">        String[] parts = line.split(&quot;,&quot;, 10);</span>
+<span class="fc bfc" id="L487" title="All 2 branches covered.">        if (parts.length &lt; 5) {</span>
+<span class="fc" id="L488">            return null;</span>
+        }
+
+<span class="fc" id="L491">        String type   = parts[0].trim();</span>
+<span class="fc" id="L492">        String title  = parts[1].trim();</span>
+<span class="fc" id="L493">        String author = parts[2].trim();</span>
+<span class="fc" id="L494">        String isbn   = parts[3].trim();</span>
+
+<span class="fc" id="L496">        int copyId        = parseIntSafe(getPart(parts, 4), 1);</span>
+<span class="pc bpc" id="L497" title="1 of 2 branches missed.">        String status     = parts.length &gt;= 6 ? parts[5].trim() : STATUS_AVAILABLE;</span>
+<span class="pc bpc" id="L498" title="1 of 2 branches missed.">        String dueDate    = parts.length &gt;= 7 ? parts[6].trim() : &quot;&quot;;</span>
+<span class="pc bpc" id="L499" title="1 of 2 branches missed.">        double fine       = parts.length &gt;= 8 ? parseDoubleSafe(parts[7], 0.0) : 0.0;</span>
+<span class="fc" id="L500">        String borrowedBy = normalizeBorrowedBy(getPart(parts, 8));</span>
+<span class="pc bpc" id="L501" title="1 of 2 branches missed.">        double amountPaid = parts.length &gt;= 10 ? parseDoubleSafe(parts[9], 0.0) : 0.0;</span>
+
+<span class="fc" id="L503">        Media item = createMediaItem(</span>
+<span class="fc" id="L504">                type, title, author, isbn,</span>
+<span class="fc" id="L505">                status, dueDate, fine, borrowedBy,</span>
+<span class="fc" id="L506">                amountPaid, copyId</span>
+        );
+
+<span class="fc" id="L509">        applyFineForUserIfOverdue(item, borrowedBy);</span>
+<span class="fc" id="L510">        return item;</span>
+    }
+
+    /**
+     * Factory method to create a Book or CD based on the type string.
+     */
+    private Media createMediaItem(String type,
+                                  String title,
+                                  String author,
+                                  String isbn,
+                                  String status,
+                                  String dueDate,
+                                  double fine,
+                                  String borrowedBy,
+                                  double amountPaid,
+                                  int copyId) {
+
+<span class="fc bfc" id="L527" title="All 2 branches covered.">        if (&quot;CD&quot;.equalsIgnoreCase(type)) {</span>
+<span class="fc" id="L528">            return new CD(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);</span>
+        }
+<span class="fc" id="L530">        return new Book(title, author, isbn, status, dueDate, fine, borrowedBy, amountPaid, copyId);</span>
+    }
+
+    /**
+     * Applies the appropriate fine logic if the item is overdue.
+     * Uses the current user's membership type if they are the borrower.
+     */
+    private void applyFineForUserIfOverdue(Media item, String borrowedBy) {
+<span class="fc bfc" id="L538" title="All 2 branches covered.">        if (!item.isOverdue()) {</span>
+<span class="fc" id="L539">            return;</span>
+        }
+
+<span class="pc bpc" id="L542" title="1 of 2 branches missed.">        if (borrowedBy != null &amp;&amp;</span>
+<span class="fc bfc" id="L543" title="All 2 branches covered.">            borrowedBy.equals(accountUsername) &amp;&amp;</span>
+<span class="pc bpc" id="L544" title="1 of 2 branches missed.">            membershipType != null) {</span>
+<span class="fc" id="L545">            item.calculateFine(membershipType);</span>
+<span class="fc" id="L546">        } else {</span>
+<span class="fc" id="L547">            item.calculateFine(&quot;Silver&quot;);</span>
+        }
+<span class="fc" id="L549">    }</span>
+
+    /**
+     * Safely parses an integer with a default fallback value.
+     */
+    private int parseIntSafe(String value, int defaultValue) {
+        try {
+<span class="fc" id="L556">            return Integer.parseInt(value.trim());</span>
+<span class="fc" id="L557">        } catch (Exception e) {</span>
+<span class="fc" id="L558">            return defaultValue;</span>
+        }
+    }
+
+    /**
+     * Safely parses a double with a default fallback value.
+     */
+    private double parseDoubleSafe(String value, double defaultValue) {
+        try {
+<span class="fc" id="L567">            return Double.parseDouble(value.trim());</span>
+<span class="fc" id="L568">        } catch (Exception e) {</span>
+<span class="fc" id="L569">            return defaultValue;</span>
+        }
+    }
+
+    /**
+     * Safely retrieves an element from a string array.
+     */
+    private String getPart(String[] parts, int index) {
+<span class="pc bpc" id="L577" title="1 of 2 branches missed.">        return index &lt; parts.length ? parts[index] : &quot;&quot;;</span>
+    }
+
+    /**
+     * Normalizes the borrowedBy field (converts &quot;0.0&quot; or null to empty string).
+     */
+    private String normalizeBorrowedBy(String rawBorrowedBy) {
+<span class="fc bfc" id="L584" title="All 2 branches covered.">        String trimmed = rawBorrowedBy == null ? &quot;&quot; : rawBorrowedBy.trim();</span>
+<span class="fc bfc" id="L585" title="All 2 branches covered.">        return &quot;0.0&quot;.equals(trimmed) ? &quot;&quot; : trimmed;</span>
+    }
+
+    /**
+     * Saves all media data to 'books.txt'.
+     * Catches IOExceptions if writing fails.
+     */
+    void saveAllMediaToFile() {
+<span class="fc" id="L593">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {</span>
+<span class="fc bfc" id="L594" title="All 2 branches covered.">            for (Media m : mediaList) {</span>
+<span class="fc" id="L595">                writer.write(m.toFileFormat());</span>
+<span class="fc" id="L596">                writer.newLine();</span>
+            }
+<span class="nc" id="L598">        } catch (IOException e) {</span>
+<span class="nc" id="L599">            System.err.println(ERROR_MSG + e.getMessage()); // NOSONAR</span>
+        }
+<span class="fc" id="L601">    }</span>
+
+    /**
+     * Reloads books from file, refreshes the view, and checks for overdue items.
+     */
+    void reloadBooks() {
+<span class="fc" id="L607">        loadMediaFromFile();</span>
+<span class="fc" id="L608">        bookTable.refresh();</span>
+<span class="fc" id="L609">        checkOverdueAndNotify();</span>
+<span class="fc" id="L610">    }</span>
+
+    /**
+     * Checks for overdue items belonging to the current user and sends notifications via email.
+     */
+    void checkOverdueAndNotify() {
+<span class="pc bpc" id="L616" title="2 of 4 branches missed.">        if (accountUsername == null || membershipType == null) {</span>
+<span class="nc" id="L617">            return;</span>
+        }
+<span class="fc bfc" id="L619" title="All 4 branches covered.">        if (accountEmail == null || accountEmail.isEmpty()) {</span>
+<span class="fc" id="L620">            return;</span>
+        }
+
+<span class="fc bfc" id="L623" title="All 2 branches covered.">        for (Media m : mediaList) {</span>
+<span class="pc bpc" id="L624" title="1 of 4 branches missed.">            if (accountUsername.equals(m.getBorrowedBy()) &amp;&amp; m.isOverdue()) {</span>
+<span class="nc" id="L625">                m.calculateFine(membershipType);</span>
+
+<span class="nc" id="L627">                List&lt;Media&gt; singleList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L628">                singleList.add(m);</span>
+
+<span class="nc" id="L630">                overduePublisher.notifySubscribers(</span>
+<span class="nc" id="L631">                        accountUsername,</span>
+<span class="nc" id="L632">                        accountEmail,</span>
+<span class="nc" id="L633">                        singleList</span>
+                );
+            }
+        }
+<span class="fc" id="L637">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span>library-system (Dec 11, 2025 10:17:32 PM)</div></body></html>
