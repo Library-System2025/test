@@ -62,9 +62,9 @@ public class EmailService {
      *   <li>Builds a {@link MimeMessage} and attempts to send it via {@link Transport}.</li>
      *   <li>Logs basic success/failure information to {@code System.out} / {@code System.err}.</li>
      * </ul>
+     * <p>
      * If the recipient address is empty, the method returns without sending.
      * If Jakarta Mail throws a {@link MessagingException}, it is wrapped in a {@link RuntimeException}.
-     * </p>
      *
      * @param to      The recipient's email address. Must not be null or blank.
      * @param subject The subject line of the email.

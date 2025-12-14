@@ -46,16 +46,10 @@ class UserControllerTest {
         try {
             Platform.startup(() -> {});
         } catch (IllegalStateException e) {
-            // JavaFX platform already initialized; safe to ignore in tests.
+            // JavaFX platform already initialized
         }
         System.setProperty("EMAIL_USERNAME", "mock_user");
-        System.setProperty("EMAIL_" + "PASSWORD", "mock_cred");
-    }
-
-    /**
-     * Default constructor for the test class.
-     */
-    public UserControllerTest() {
+        System.setProperty("EMAIL_PASSWORD", "mock_cred");
     }
 
     /**
@@ -467,26 +461,21 @@ class UserControllerTest {
             Method updateItem = TableRow.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
             updateItem.setAccessible(true);
 
-            // empty / null
             updateItem.invoke(row, null, true);
 
-            // current user + overdue
             updateItem.invoke(row, new Book("B", "A", "1", "Overdue", "2000-01-01",
                     10.0, "TestUser", 0, 1), false);
 
-            // current user + borrowed
             updateItem.invoke(row, new Book("B", "A", "2", "Borrowed", "2099-01-01",
                     0.0, "TestUser", 0, 1), false);
 
-            // other user + borrowed
             updateItem.invoke(row, new Book("B", "A", "3", "Borrowed", "2099-01-01",
                     0.0, "Other", 0, 1), false);
 
-            // other user + available  -> يضلّ style فاضي
             updateItem.invoke(row, new Book("B", "A", "4", "Available", "2099-01-01",
                     0.0, "Other", 0, 1), false);
         } catch (Exception e) {
-            // ما نعمل fail عشان الـ CI ما ينهار لو JavaFX منع الreflection
+            // Ignored to prevent test failure on headless environments
         }
     }
 
@@ -511,14 +500,11 @@ class UserControllerTest {
             Method updateItemString = TableCell.class.getDeclaredMethod("updateItem", Object.class, boolean.class);
             updateItemString.setAccessible(true);
             
-            // empty / no data
             updateItemString.invoke(dueCell, null, true);
             
-            // row for current user
             injectTableRow(dueCell, createRow(myItem));
             updateItemString.invoke(dueCell, myItem.getDueDate(), false); 
             
-            // row for another user
             injectTableRow(dueCell, createRow(otherItem));
             updateItemString.invoke(dueCell, otherItem.getDueDate(), false);
 
@@ -528,8 +514,7 @@ class UserControllerTest {
             injectTableRow(fineCell, createRow(myItem));
             updateItemDouble.invoke(fineCell, 10.0, false);
         } catch (Exception e) {
-            // Same reasoning as above: on some CI/headless setups, reflective access to updateItem may fail.
-            // We ignore this to keep tests green while still ensuring the code is exercised.
+            // Ignored to prevent test failure on headless environments
         }
     }
 
@@ -550,6 +535,22 @@ class UserControllerTest {
         runOnFxThreadAndWait(() -> controller.handleReload());
         TableView<Media> table = getField(controller, "bookTable");
         assertTrue(table.getItems().stream().anyMatch(m -> "BadData".equals(m.getTitle())));
+    }
+
+    /**
+     * Tests behavior when the data file does not exist.
+     * 
+     * @throws InterruptedException If interrupted.
+     */
+    @Test
+    void testLoadNoFile() throws InterruptedException {
+        File file = new File(TEST_FILE);
+        if (file.exists()) {
+            file.delete();
+        }
+        runOnFxThreadAndWait(() -> controller.handleReload());
+        TableView<Media> table = getField(controller, "bookTable");
+        assertTrue(table.getItems().isEmpty());
     }
     
     /**

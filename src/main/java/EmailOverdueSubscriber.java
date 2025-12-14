@@ -9,10 +9,9 @@ import java.util.List;
  * <br>
  * If the provided email address is null or blank, the notification is skipped and
  * an informational message is logged instead of attempting to send.
- * </p>
  * 
  * @author Zainab
- * @version 1.1
+ * @version 1.0
  */
 public class EmailOverdueSubscriber implements OverdueSubscriber {
 
@@ -42,7 +41,6 @@ public class EmailOverdueSubscriber implements OverdueSubscriber {
      *   <li>Delegates the actual sending to {@link EmailService#sendEmail(String, String, String)}.</li>
      * </ul>
      * If the email parameter is null or blank, the method logs a message and exits without sending.
-     * </p>
      *
      * @param username     The name of the user with overdue items.
      * @param email        The recipient email address of the user.

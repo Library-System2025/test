@@ -38,6 +38,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class homepageController {
 
     private static final String ERROR_MSG = "Error: ";
+    private static final String ERROR_TITLE = "Error";
 
     @FXML private Label welcomeLabel;
     @FXML private Label addBookMessage;
@@ -573,7 +574,7 @@ public class homepageController {
         }
 
         if (hasLoans) {
-            showAlert("Error", "User has active loans.");
+            showAlert(ERROR_TITLE, "User has active loans.");
         } else {
             usersList.remove(selected);
             saveUsersToFile();
@@ -628,7 +629,7 @@ public class homepageController {
     void handleSendReminder() {
         if (emailService == null) {
             showAlert(
-                "Error",
+            		ERROR_TITLE,
                 "Email service is not configured. Please set EMAIL_USERNAME and EMAIL_PASSWORD in the .env file."
             );
             return;
@@ -644,7 +645,7 @@ public class homepageController {
         String email    = getUserEmail(username);
 
         if (email == null || email.isEmpty()) {
-            showAlert("Error", "This user has no email saved.");
+            showAlert(ERROR_TITLE, "This user has no email saved.");
             return;
         }
 
